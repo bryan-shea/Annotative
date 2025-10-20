@@ -1,73 +1,52 @@
 # Annotative
 
-**Simple, powerful code annotation for your IDE. Take notes, leave feedback, and share your thoughts directly in your editor.**
+**Simple, powerful code annotation for your IDE. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.**
 
-Annotative is a lightweight productivity tool that makes it effortless to annotate code, add inline feedback, and capture your thoughts. Whether you're reviewing code, learning, collaborating, or just documenting your work—Annotative helps you stay organized without leaving your editor.
+Select code, add notes with optional tags, and export as Markdown. Stay organized without leaving your editor.
 
-## What is Annotative?
+## Use Cases
 
-Annotative is a clean, intuitive code annotation tool for your IDE. Select any code, add a note, and keep working. Use it for:
-
-- **Reviewing AI-generated code** from Copilot, ChatGPT, Claude, or other models
+- **Review AI-generated code** from Copilot, ChatGPT, Claude, or other models
 - **Code reviews** and collaborative feedback on pull requests
 - **Note-taking** and quick documentation while coding
-- **Self-review and quality checks** before committing
+- **Self-review** and quality checks before committing
 - **Team collaboration** with exportable feedback
-- **Learning and auditing** code systematically
+- **Learning** by annotating code systematically
 
-**The core idea**: Select code → add a note → organize and export. That's it.
-
-## Key Features
-
-> **Note:** Currently available for VS Code. Future IDE support planned.
-
-- **Quick Annotation**: Select text and add notes instantly with keyboard shortcuts
-- **Flexible Tagging**: Optionally tag notes by type (bug, performance, security, style, improvement, docs, question)
-- **Organized View**: See all your annotations in a sidebar, organized by file
-- **Easy Export**: Export your notes as Markdown for sharing, pasting into chat, or team discussions
-- **Always Available**: Annotations stay in your workspace, ready when you need them
-- **No Setup Required**: Works out of the box with no dependencies
-- **Persistent Storage**: Annotations are automatically saved and restored between sessions
-
-## Quick Start
+## How It Works
 
 1. **Select code** you want to annotate
 2. **Right-click → "Add Annotation"** (or press `Ctrl+Shift+A`)
-3. **Add your note** (optionally tag it)
-4. **View in sidebar** with all your annotations organized by file
-5. **Export** when you're ready to share or discuss
+3. **Add your note** and optionally tag it (bug, performance, security, style, improvement, docs, question)
+4. **View in sidebar** with all annotations organized by file
+5. **Export as Markdown** to share with your team or paste into AI chats
 
-## Usage Examples
+## Features
 
-**Reviewing Code**: Highlight issues, add comments, export as feedback for your team
+- **Quick & Simple**: Keyboard shortcuts and context menus for fast annotation
+- **Visual Highlighting**: Annotated code is highlighted directly in your editor
+- **Smart Organization**: Sidebar view with all annotations organized by file
+- **Flexible Tagging**: Categorize annotations by type
+- **Resolution Tracking**: Mark annotations as resolved when issues are fixed
+- **Easy Export**: Generate Markdown for AI chats, team discussions, or documentation
+- **Persistent Storage**: Annotations auto-save and restore between sessions
+- **Zero Config**: Works out of the box, no setup required
 
-**Taking Notes**: Jot down thoughts and reminders while coding, search later
-
-**Collaborating**: Share annotations with teammates via exported Markdown
-
-**AI Workflows**: Export annotations to paste into ChatGPT, Copilot Chat, or Claude for discussion and iteration
-
-## Commands
-
-- `annotative.addAnnotation`: Add annotation to selected text
-- `annotative.removeAnnotation`: Remove an annotation
-- `annotative.toggleResolved`: Toggle resolved status of an annotation
-- `annotative.exportAnnotations`: Export all annotations to clipboard
-- `annotative.showExport`: Show export in a new document
-- `annotative.refresh`: Refresh the annotations view
+> **Note:** Currently available for VS Code. Future IDE support planned.
 
 ## Requirements
 
 - VS Code 1.105.0 or higher
-- No additional dependencies required
+- No additional dependencies
 
-## Extension Settings
+## Tips for AI Workflows
 
-This extension stores annotations locally in your workspace and automatically restores them between sessions.
+Export your annotations and paste directly into ChatGPT, Copilot Chat, or Claude to:
 
-## Tips
-
-**Export to Chat**: Copy exported annotations and paste directly into any AI chat (Copilot, ChatGPT, Claude, etc.) for discussions, code improvement, or documentation generation.
+- Discuss issues and get suggestions
+- Request code improvements
+- Generate documentation
+- Iterate on AI-generated code
 
 ## Licensing
 
@@ -94,14 +73,13 @@ Annotative is available under a **Dual License** model:
 
 ## Release Notes
 
-### 0.0.1
+### 1.0.0
 
 Initial release of Annotative
 
-- Line and selection highlighting
-- Annotation management with comments
-- Sidebar view for organization
-- Export functionality for GitHub Copilot integration
+- Code annotation with visual highlighting
+- Flexible tagging and categorization
+- Sidebar view with resolution tracking
+- Markdown export for AI chats and team collaboration
 - Keyboard shortcuts and context menus
-
-**Enjoy!**
+- Persistent workspace storage

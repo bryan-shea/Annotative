@@ -1,6 +1,8 @@
 # Contributing to Annotative
 
-Thank you for your interest in contributing to Annotative! This document provides guidelines for contributing to this VS Code extension.
+Thank you for your interest in contributing to Annotative!
+
+Annotative is a productivity tool for code annotation, designed to make reviewing AI-generated code, collaborating on pull requests, and taking notes effortless. This document provides guidelines for contributing.
 
 ## Development Setup
 

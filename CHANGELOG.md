@@ -1,9 +1,15 @@
 # Change Log
 
-All notable changes to the "annotative" extension will be documented in this file.
+All notable changes to the Annotative extension.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [1.0.0] - 2025-01-XX
 
-## [Unreleased]
+### Initial Release
 
-- Initial release
+- Code annotation with visual highlighting
+- Flexible tagging system (bug, performance, security, style, improvement, docs, question)
+- Sidebar view with resolution tracking
+- Markdown export for AI chats and team collaboration
+- Keyboard shortcuts (`Ctrl+Shift+A`) and context menus
+- Persistent workspace storage
+- Perfect for reviewing AI-generated code from Copilot, ChatGPT, Claude, and more
