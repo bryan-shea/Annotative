@@ -1,7 +1,7 @@
 {
   "name": "annotative",
   "displayName": "Annotative",
-  "description": "Highlight and annotate code lines with comments, similar to GitHub PR reviews",
+  "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
   "version": "1.0.0",
   "publisher": "bryan-shea",
   "license": "(MIT OR PROPRIETARY)",
@@ -9,17 +9,20 @@
     "vscode": "^1.105.0"
   },
   "categories": [
+    "AI",
     "Other"
   ],
   "keywords": [
     "annotation",
-    "code review",
+    "code-review",
+    "note-taking",
+    "feedback",
+    "collaboration",
     "comments",
-    "highlight",
+    "markup",
+    "productivity",
     "documentation",
-    "github",
-    "copilot",
-    "collaboration"
+    "review"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
