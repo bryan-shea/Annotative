@@ -48,6 +48,24 @@ Export your annotations as Markdown and paste them directly into GitHub Copilot 
 - Context sharing with team members
 - Code explanation requests
 
+## Licensing
+
+Annotative is available under a **Dual License** model:
+
+### Open Source (MIT License)
+
+- Free for personal, educational, and internal business use
+- Requires attribution
+- See [LICENSE](LICENSE) for full terms
+
+### Commercial License (In Development)
+
+- Currently being outlined and finalized
+- For future commercial distribution, resale, or enterprise use
+- See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for draft framework
+
+**Unsure which license applies?** See the [LICENSE](LICENSE) file for guidance, or contact the publisher.
+
 ## Known Issues
 
 - Annotations are stored locally and not synced across devices

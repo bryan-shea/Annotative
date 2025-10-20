@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { AnnotationManager } from './annotationManager';
 import { AnnotationProvider, TreeItem, AnnotationItem } from './ui/annotationProvider';
+import { AnnotationWebviewPanel } from './ui/annotationWebviewPanel';
 import { Annotation } from './types';
 
 let annotationManager: AnnotationManager;
@@ -31,13 +32,21 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const comment = await vscode.window.showInputBox({
-                prompt: 'Enter your annotation comment',
-                placeHolder: 'Type your comment here...'
-            });
+            const selectedText = editor.document.getText(selection);
 
-            if (comment) {
-                await annotationManager.addAnnotation(editor, selection, comment);
+            // Show the webview panel
+            const annotationData = await AnnotationWebviewPanel.createOrShow(
+                context.extensionUri,
+                selectedText
+            );
+
+            if (annotationData) {
+                await annotationManager.addAnnotation(
+                    editor,
+                    selection,
+                    annotationData.comment,
+                    annotationData.tags
+                );
                 annotationProvider.refresh();
                 vscode.window.showInformationMessage('Annotation added successfully!');
             }

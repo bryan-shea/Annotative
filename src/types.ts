@@ -9,6 +9,7 @@ export interface Annotation {
     author: string;
     timestamp: Date;
     resolved: boolean;
+    tags?: string[];
 }
 
 export interface AnnotationDecoration {

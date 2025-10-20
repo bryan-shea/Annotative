@@ -3,8 +3,8 @@
   "displayName": "Annotative",
   "description": "Highlight and annotate code lines with comments, similar to GitHub PR reviews",
   "version": "1.0.0",
-  "publisher": "TBD",
-  "license": "MIT",
+  "publisher": "bryan-shea",
+  "license": "(MIT OR PROPRIETARY)",
   "engines": {
     "vscode": "^1.105.0"
   },

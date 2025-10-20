@@ -32,7 +32,8 @@ export class AnnotationManager {
     async addAnnotation(
         editor: vscode.TextEditor,
         range: vscode.Range,
-        comment: string
+        comment: string,
+        tags?: string[]
     ): Promise<Annotation> {
         const filePath = editor.document.uri.fsPath;
         const selectedText = editor.document.getText(range);
@@ -45,7 +46,8 @@ export class AnnotationManager {
             comment,
             author: await this.getAuthor(),
             timestamp: new Date(),
-            resolved: false
+            resolved: false,
+            tags: tags || []
         };
 
         if (!this.annotations.has(filePath)) {

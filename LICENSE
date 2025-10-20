@@ -1,21 +1,80 @@
-MIT License
+ANNOTATIVE - DUAL LICENSE
 
-Copyright (c) 2025 Annotative
+This software is available under two licenses:
+
+1. MIT LICENSE (Open Source) - See below
+2. PROPRIETARY COMMERCIAL LICENSE - Available upon request
+
+================================================================================
+OPEN SOURCE MIT LICENSE
+================================================================================
+
+Copyright (c) 2025 Bryan Shea
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+to use, copy, modify, and merge copies of the Software, subject to the
+following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+================================================================================
+THIRD-PARTY LICENSES & ACKNOWLEDGEMENTS
+================================================================================
+
+This software uses the following open-source projects, each licensed under
+their respective terms:
+
+- VS Code Extension API: MIT License
+- TypeScript: Apache License 2.0
+- Webpack: MIT License
+- ESLint: MIT License
+- ts-loader: MIT License
+- @types packages: MIT License
+
+================================================================================
+COMMERCIAL LICENSE
+================================================================================
+
+For commercial use, distribution, resale, or to remove the MIT license terms,
+a Proprietary Commercial License Agreement is available.
+
+⚠️ NOTE: Commercial licensing terms are currently being outlined and finalized.
+This is an early-stage project, and commercial license details are subject to
+change as the product evolves.
+
+For commercial licensing inquiries or to discuss terms, please contact:
+bryan-shea
+
+Commercial licensing may include options such as:
+
+- Single Developer License
+- Team/Organization License
+- Enterprise License
+- OEM/Reseller License
+- Custom Commercial Terms
+
+================================================================================
+LICENSE SELECTION
+================================================================================
+
+By using this software, you agree to be bound by either:
+
+A) The MIT License terms above (for non-commercial, educational, or
+internal business use), OR
+
+B) A Proprietary Commercial License Agreement (if you have purchased or
+wish to purchase commercial rights)
+
+If you are unsure which license applies to your use case, please contact
+the copyright holder for clarification before use.
