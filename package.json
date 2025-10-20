@@ -1,0 +1,159 @@
+{
+  "name": "annotative",
+  "displayName": "Annotative",
+  "description": "Highlight and annotate code lines with comments, similar to GitHub PR reviews",
+  "version": "1.0.0",
+  "publisher": "TBD",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "annotation",
+    "code review",
+    "comments",
+    "highlight",
+    "documentation",
+    "github",
+    "copilot",
+    "collaboration"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "annotative.addAnnotation",
+        "title": "Add Annotation",
+        "icon": "$(comment-add)"
+      },
+      {
+        "command": "annotative.removeAnnotation",
+        "title": "Remove Annotation",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.toggleResolved",
+        "title": "Toggle Resolved Status",
+        "icon": "$(check)"
+      },
+      {
+        "command": "annotative.goToAnnotation",
+        "title": "Go to Annotation",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "annotative.exportAnnotations",
+        "title": "Export Annotations to Clipboard",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "annotative.showExport",
+        "title": "Show Export in New Document",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "annotative.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "annotative",
+          "title": "Annotative",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "annotative": [
+        {
+          "id": "annotativeView",
+          "name": "Annotations",
+          "when": "true"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "annotative.addAnnotation",
+          "when": "editorHasSelection",
+          "group": "annotative"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "annotative.refresh",
+          "when": "view == annotativeView",
+          "group": "navigation"
+        },
+        {
+          "command": "annotative.exportAnnotations",
+          "when": "view == annotativeView",
+          "group": "navigation"
+        },
+        {
+          "command": "annotative.showExport",
+          "when": "view == annotativeView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "annotative.toggleResolved",
+          "when": "view == annotativeView && viewItem == unresolvedAnnotation",
+          "group": "inline"
+        },
+        {
+          "command": "annotative.toggleResolved",
+          "when": "view == annotativeView && viewItem == resolvedAnnotation",
+          "group": "inline"
+        },
+        {
+          "command": "annotative.removeAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "inline"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "annotative.addAnnotation",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.3",
+    "ts-loader": "^9.5.4",
+    "webpack": "^5.102.0",
+    "webpack-cli": "^6.0.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
