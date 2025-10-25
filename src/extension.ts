@@ -269,7 +269,8 @@ export function activate(context: vscode.ExtensionContext) {
                 context.extensionUri,
                 annotation.text,
                 annotation.comment,
-                annotation.tags
+                annotation.tags,
+                false // isReadOnly
             );
 
             if (annotationData) {
@@ -282,6 +283,28 @@ export function activate(context: vscode.ExtensionContext) {
                 annotationProvider.refresh();
                 vscode.window.showInformationMessage('Annotation updated successfully!');
             }
+        }
+    );
+
+    // Command: View annotation (read-only)
+    const viewAnnotationCommand = vscode.commands.registerCommand(
+        'annotative.viewAnnotation',
+        async (item: AnnotationItem) => {
+            const annotation = item.annotation;
+
+            // Show the webview panel in read-only mode with location info
+            await AnnotationWebviewPanel.createOrShow(
+                context.extensionUri,
+                annotation.text,
+                annotation.comment,
+                annotation.tags,
+                true, // isReadOnly
+                annotation.filePath,
+                {
+                    start: annotation.range.start.line,
+                    end: annotation.range.end.line
+                }
+            );
         }
     );
 
@@ -398,6 +421,7 @@ export function activate(context: vscode.ExtensionContext) {
         searchAnnotationsCommand,
         clearFiltersCommand,
         editAnnotationCommand,
+        viewAnnotationCommand,
         undoLastAnnotationCommand,
         resolveAllCommand,
         deleteResolvedCommand,

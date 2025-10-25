@@ -89,6 +89,11 @@
         "icon": "$(edit)"
       },
       {
+        "command": "annotative.viewAnnotation",
+        "title": "View Annotation Details",
+        "icon": "$(eye)"
+      },
+      {
         "command": "annotative.undoLastAnnotation",
         "title": "Undo Last Annotation",
         "icon": "$(discard)"
@@ -199,24 +204,29 @@
       ],
       "view/item/context": [
         {
-          "command": "annotative.editAnnotation",
+          "command": "annotative.viewAnnotation",
           "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
           "group": "inline@1"
         },
         {
+          "command": "annotative.editAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "inline@2"
+        },
+        {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == unresolvedAnnotation",
-          "group": "inline@2"
+          "group": "inline@3"
         },
         {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == resolvedAnnotation",
-          "group": "inline@2"
+          "group": "inline@3"
         },
         {
           "command": "annotative.removeAnnotation",
           "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@3"
+          "group": "inline@4"
         }
       ]
     },
