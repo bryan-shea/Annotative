@@ -2,10 +2,20 @@ import * as vscode from 'vscode';
 import { AnnotationManager } from './annotationManager';
 import { AnnotationProvider, TreeItem, AnnotationItem } from './ui/annotationProvider';
 import { AnnotationWebviewPanel } from './ui/annotationWebviewPanel';
+import { AnnotationDashboard } from './ui/annotationDashboard';
+import { CopilotExporter } from './copilotExporter';
 import { Annotation } from './types';
 
 let annotationManager: AnnotationManager;
 let annotationProvider: AnnotationProvider;
+let dashboard: AnnotationDashboard | undefined;
+
+function refreshAllViews() {
+    annotationProvider.refresh();
+    if (dashboard) {
+        dashboard.updateAnnotations(annotationManager.getAllAnnotations());
+    }
+}
 
 function navigateToNextAnnotation(manager: AnnotationManager, direction: 1 | -1): void {
     const editor = vscode.window.activeTextEditor;
@@ -61,6 +71,124 @@ export function activate(context: vscode.ExtensionContext) {
         showCollapseAll: true
     });
 
+    // Auto-open dashboard on activation if there are annotations
+    // Users can disable this by closing the dashboard - it won't auto-open again in the same session
+    const hasOpenedDashboard = context.workspaceState.get<boolean>('hasOpenedDashboard', false);
+    const annotations = annotationManager.getAllAnnotations();
+
+    if (!hasOpenedDashboard && annotations.length > 0) {
+        // Open dashboard automatically if there are annotations
+        vscode.commands.executeCommand('annotative.showDashboard');
+        context.workspaceState.update('hasOpenedDashboard', true);
+    }
+
+    // Dashboard message handler
+    function handleDashboardMessage(message: any) {
+        switch (message.command) {
+            case 'refresh':
+                if (dashboard) {
+                    dashboard.updateAnnotations(annotationManager.getAllAnnotations());
+                }
+                break;
+            case 'goToAnnotation':
+                const annotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
+                if (annotation) {
+                    vscode.commands.executeCommand('annotative.goToAnnotation', annotation);
+                }
+                break;
+            case 'viewAnnotation':
+                const viewAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
+                if (viewAnnotation) {
+                    const item: AnnotationItem = {
+                        annotation: viewAnnotation,
+                        collapsibleState: vscode.TreeItemCollapsibleState.None
+                    } as AnnotationItem;
+                    vscode.commands.executeCommand('annotative.viewAnnotation', item);
+                }
+                break;
+            case 'editAnnotation':
+                const editAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
+                if (editAnnotation) {
+                    const item: AnnotationItem = {
+                        annotation: editAnnotation,
+                        collapsibleState: vscode.TreeItemCollapsibleState.None
+                    } as AnnotationItem;
+                    vscode.commands.executeCommand('annotative.editAnnotation', item);
+                }
+                break;
+            case 'toggleResolved':
+                const toggleAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
+                if (toggleAnnotation) {
+                    annotationManager.toggleResolvedStatus(toggleAnnotation.id, toggleAnnotation.filePath).then(() => {
+                        annotationProvider.refresh();
+                        if (dashboard) {
+                            dashboard.updateAnnotations(annotationManager.getAllAnnotations());
+                        }
+                    });
+                }
+                break;
+            case 'removeAnnotation':
+                const removeAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
+                if (removeAnnotation) {
+                    vscode.window.showWarningMessage(
+                        'Are you sure you want to remove this annotation?',
+                        'Yes', 'No'
+                    ).then(confirmed => {
+                        if (confirmed === 'Yes' && removeAnnotation) {
+                            annotationManager.removeAnnotation(removeAnnotation.id, removeAnnotation.filePath).then(() => {
+                                annotationProvider.refresh();
+                                if (dashboard) {
+                                    dashboard.updateAnnotations(annotationManager.getAllAnnotations());
+                                }
+                            });
+                        }
+                    });
+                }
+                break;
+            case 'addAnnotation':
+                vscode.commands.executeCommand('annotative.addAnnotation');
+                break;
+            case 'export':
+                vscode.commands.executeCommand('annotative.exportAnnotations');
+                break;
+            case 'exportCopilot':
+                vscode.commands.executeCommand('annotative.exportForCopilot');
+                break;
+            case 'exportSelected':
+                if (message.selectedIds && message.selectedIds.length > 0) {
+                    vscode.commands.executeCommand('annotative.exportSelectedForCopilot', message.selectedIds);
+                } else {
+                    vscode.window.showInformationMessage('No annotations selected');
+                }
+                break;
+            case 'resolveAll':
+                vscode.commands.executeCommand('annotative.resolveAll');
+                break;
+            case 'deleteResolved':
+                vscode.commands.executeCommand('annotative.deleteResolved');
+                break;
+            case 'showShortcuts':
+                vscode.window.showInformationMessage(
+                    'Keyboard Shortcuts:\n' +
+                    'Ctrl+Shift+A: Add annotation\n' +
+                    'Ctrl+E: Export\n' +
+                    'Alt+↑/↓: Navigate annotations\n' +
+                    '?: Show shortcuts',
+                    { modal: true }
+                );
+                break;
+        }
+    }
+
+    // Command: Show Dashboard
+    const showDashboardCommand = vscode.commands.registerCommand(
+        'annotative.showDashboard',
+        () => {
+            dashboard = AnnotationDashboard.createOrShow(context.extensionUri, handleDashboardMessage);
+            dashboard.updateAnnotations(annotationManager.getAllAnnotations());
+        }
+    );
+
     // Register commands
 
     // Command: Add annotation to selected text
@@ -88,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
                     annotationData.comment,
                     annotationData.tags
                 );
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage('Annotation added successfully!');
             }
         }
@@ -105,7 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (confirmed === 'Yes') {
                 await annotationManager.removeAnnotation(item.annotation.id, item.annotation.filePath);
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage('Annotation removed successfully!');
             }
         }
@@ -116,7 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
         'annotative.toggleResolved',
         async (item: AnnotationItem) => {
             await annotationManager.toggleResolvedStatus(item.annotation.id, item.annotation.filePath);
-            annotationProvider.refresh();
+            refreshAllViews();
 
             const status = item.annotation.resolved ? 'unresolved' : 'resolved';
             vscode.window.showInformationMessage(`Annotation marked as ${status}!`);
@@ -175,7 +303,7 @@ export function activate(context: vscode.ExtensionContext) {
     const refreshCommand = vscode.commands.registerCommand(
         'annotative.refresh',
         () => {
-            annotationProvider.refresh();
+            refreshAllViews();
         }
     );
 
@@ -280,7 +408,7 @@ export function activate(context: vscode.ExtensionContext) {
                     annotationData.comment,
                     annotationData.tags
                 );
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage('Annotation updated successfully!');
             }
         }
@@ -314,7 +442,7 @@ export function activate(context: vscode.ExtensionContext) {
         () => {
             const undoneAnnotation = annotationManager.undoLastAnnotation();
             if (undoneAnnotation) {
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage('Last annotation removed');
             } else {
                 vscode.window.showWarningMessage('No annotation to undo');
@@ -336,7 +464,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (confirmed === 'Yes') {
                 const count = await annotationManager.resolveAll(filePath);
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage(`${count} annotation(s) marked as resolved`);
             }
         }
@@ -356,7 +484,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (confirmed === 'Yes') {
                 const count = await annotationManager.deleteResolved(filePath);
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage(`${count} resolved annotation(s) deleted`);
             }
         }
@@ -373,7 +501,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (confirmed === 'Yes') {
                 const count = await annotationManager.deleteAll();
-                annotationProvider.refresh();
+                refreshAllViews();
                 vscode.window.showInformationMessage(`${count} annotation(s) deleted`);
             }
         }
@@ -395,6 +523,91 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // Command: Export for GitHub Copilot
+    const exportForCopilotCommand = vscode.commands.registerCommand(
+        'annotative.exportForCopilot',
+        async () => {
+            const annotations = annotationManager.getAllAnnotations();
+            if (annotations.length === 0) {
+                vscode.window.showInformationMessage('No annotations to export');
+                return;
+            }
+
+            const markdown = CopilotExporter.exportForCopilotChat(annotations);
+
+            // Copy to clipboard
+            await vscode.env.clipboard.writeText(markdown);
+
+            const action = await vscode.window.showInformationMessage(
+                `Exported ${annotations.length} annotation(s) to clipboard! Paste into GitHub Copilot Chat.`,
+                'Save to Workspace',
+                'View Output'
+            );
+
+            if (action === 'Save to Workspace') {
+                const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+                if (workspaceRoot) {
+                    await CopilotExporter.exportToWorkspace(annotations, workspaceRoot);
+                    vscode.window.showInformationMessage('Saved to .copilot/annotations folder');
+                } else {
+                    vscode.window.showWarningMessage('No workspace folder found');
+                }
+            } else if (action === 'View Output') {
+                const doc = await vscode.workspace.openTextDocument({
+                    content: markdown,
+                    language: 'markdown'
+                });
+                await vscode.window.showTextDocument(doc);
+            }
+        }
+    );
+
+    // Command: Export selected annotations for GitHub Copilot
+    const exportSelectedForCopilotCommand = vscode.commands.registerCommand(
+        'annotative.exportSelectedForCopilot',
+        async (selectedIds: string[]) => {
+            if (!selectedIds || selectedIds.length === 0) {
+                vscode.window.showInformationMessage('No annotations selected');
+                return;
+            }
+
+            const allAnnotations = annotationManager.getAllAnnotations();
+            const selectedAnnotations = allAnnotations.filter(a => selectedIds.includes(a.id));
+
+            if (selectedAnnotations.length === 0) {
+                vscode.window.showWarningMessage('Selected annotations not found');
+                return;
+            }
+
+            const markdown = CopilotExporter.exportForCopilotChat(selectedAnnotations);
+
+            // Copy to clipboard
+            await vscode.env.clipboard.writeText(markdown);
+
+            const action = await vscode.window.showInformationMessage(
+                `Exported ${selectedAnnotations.length} selected annotation(s) to clipboard! Paste into GitHub Copilot Chat.`,
+                'Save to Workspace',
+                'View Output'
+            );
+
+            if (action === 'Save to Workspace') {
+                const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+                if (workspaceRoot) {
+                    await CopilotExporter.exportToWorkspace(selectedAnnotations, workspaceRoot);
+                    vscode.window.showInformationMessage('Saved to .copilot/annotations folder');
+                } else {
+                    vscode.window.showWarningMessage('No workspace folder found');
+                }
+            } else if (action === 'View Output') {
+                const doc = await vscode.workspace.openTextDocument({
+                    content: markdown,
+                    language: 'markdown'
+                });
+                await vscode.window.showTextDocument(doc);
+            }
+        }
+    );
+
     // Listen for active editor changes to update decorations
     const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(editor => {
         if (editor) {
@@ -409,11 +622,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register all disposables
     context.subscriptions.push(
+        showDashboardCommand,
         addAnnotationCommand,
         removeAnnotationCommand,
         toggleResolvedCommand,
         goToAnnotationCommand,
         exportAnnotationsCommand,
+        exportForCopilotCommand,
+        exportSelectedForCopilotCommand,
         showExportCommand,
         refreshCommand,
         filterByStatusCommand,

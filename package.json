@@ -29,6 +29,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "annotative.showDashboard",
+        "title": "Annotative: Show Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
         "command": "annotative.addAnnotation",
         "title": "Add Annotation",
         "icon": "$(comment-add)"
@@ -152,6 +157,12 @@
       ],
       "view/title": [
         {
+          "command": "annotative.showDashboard",
+          "when": "view == annotativeView",
+          "group": "navigation@0",
+          "icon": "$(dashboard)"
+        },
+        {
           "command": "annotative.refresh",
           "when": "view == annotativeView",
           "group": "navigation@1"
@@ -231,6 +242,12 @@
       ]
     },
     "keybindings": [
+      {
+        "command": "annotative.showDashboard",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "true"
+      },
       {
         "command": "annotative.addAnnotation",
         "key": "ctrl+shift+a",
