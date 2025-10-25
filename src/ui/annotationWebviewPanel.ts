@@ -14,14 +14,21 @@ export class AnnotationWebviewPanel {
     private constructor(
         panel: vscode.WebviewPanel,
         private extensionUri: vscode.Uri,
-        private selectedText: string
+        private selectedText: string,
+        private initialComment?: string,
+        private initialTags?: string[]
     ) {
         this.panel = panel;
         this.panel.webview.html = this.getWebviewContent();
         this.setWebviewMessageListener();
     }
 
-    public static createOrShow(extensionUri: vscode.Uri, selectedText: string): Promise<WebviewAnnotationData | undefined> {
+    public static createOrShow(
+        extensionUri: vscode.Uri,
+        selectedText: string,
+        initialComment?: string,
+        initialTags?: string[]
+    ): Promise<WebviewAnnotationData | undefined> {
         // If we already have a panel, show it
         if (AnnotationWebviewPanel.currentPanel) {
             AnnotationWebviewPanel.currentPanel.panel.reveal(vscode.ViewColumn.Beside);
@@ -33,7 +40,7 @@ export class AnnotationWebviewPanel {
         // Create a new panel
         const panel = vscode.window.createWebviewPanel(
             'annotationWebview',
-            'Add Annotation',
+            initialComment ? 'Edit Annotation' : 'Add Annotation',
             vscode.ViewColumn.Beside,
             {
                 enableScripts: true,
@@ -42,7 +49,7 @@ export class AnnotationWebviewPanel {
             }
         );
 
-        const webviewPanel = new AnnotationWebviewPanel(panel, extensionUri, selectedText);
+        const webviewPanel = new AnnotationWebviewPanel(panel, extensionUri, selectedText, initialComment, initialTags);
         AnnotationWebviewPanel.currentPanel = webviewPanel;
 
         return new Promise((resolve) => {
@@ -110,6 +117,11 @@ export class AnnotationWebviewPanel {
         );
 
         const nonce = this.getNonce();
+        const isEditing = !!this.initialComment;
+        const title = isEditing ? 'Edit Annotation' : 'Add Annotation';
+        const buttonText = isEditing ? 'Update Annotation' : 'Add Annotation';
+        const initialCommentValue = this.escapeHtml(this.initialComment || '');
+        const initialTagsValue = this.escapeHtml(this.initialTags?.join(', ') || '');
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -118,12 +130,12 @@ export class AnnotationWebviewPanel {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this.panel.webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'">
     <link rel="stylesheet" href="${styleUri}">
-    <title>Add Annotation</title>
+    <title>${title}</title>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Add Annotation</h1>
+            <h1>${title}</h1>
             <p class="subtitle">Annotate the selected code</p>
         </div>
 
@@ -141,7 +153,7 @@ export class AnnotationWebviewPanel {
                     rows="6"
                     placeholder="Enter your annotation comment..."
                     required
-                ></textarea>
+                >${initialCommentValue}</textarea>
                 <small class="char-count">0 / 500 characters</small>
             </div>
 
@@ -152,11 +164,12 @@ export class AnnotationWebviewPanel {
                     id="tags"
                     name="tags"
                     placeholder="e.g., bug, review, refactor"
+                    value="${initialTagsValue}"
                 />
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn btn-primary">Add Annotation</button>
+                <button type="submit" class="btn btn-primary">${buttonText}</button>
                 <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
             </div>
         </form>

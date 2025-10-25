@@ -2,7 +2,7 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "bryan-shea",
   "license": "(MIT OR PROPRIETARY)",
   "engines": {
@@ -62,6 +62,61 @@
         "command": "annotative.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "annotative.filterByStatus",
+        "title": "Filter by Status",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "annotative.filterByTag",
+        "title": "Filter by Tag",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "annotative.searchAnnotations",
+        "title": "Search Annotations",
+        "icon": "$(search)"
+      },
+      {
+        "command": "annotative.clearFilters",
+        "title": "Clear All Filters",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "annotative.editAnnotation",
+        "title": "Edit Annotation",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "annotative.undoLastAnnotation",
+        "title": "Undo Last Annotation",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "annotative.resolveAll",
+        "title": "Resolve All Annotations",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "annotative.deleteResolved",
+        "title": "Delete Resolved Annotations",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.deleteAll",
+        "title": "Delete All Annotations",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.nextAnnotation",
+        "title": "Go to Next Annotation",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "annotative.previousAnnotation",
+        "title": "Go to Previous Annotation",
+        "icon": "$(arrow-up)"
       }
     ],
     "viewsContainers": {
@@ -94,34 +149,74 @@
         {
           "command": "annotative.refresh",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "annotative.filterByStatus",
+          "when": "view == annotativeView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "annotative.filterByTag",
+          "when": "view == annotativeView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "annotative.searchAnnotations",
+          "when": "view == annotativeView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "annotative.clearFilters",
+          "when": "view == annotativeView",
+          "group": "1_filters@1"
         },
         {
           "command": "annotative.exportAnnotations",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "2_export@1"
         },
         {
           "command": "annotative.showExport",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "2_export@2"
+        },
+        {
+          "command": "annotative.resolveAll",
+          "when": "view == annotativeView",
+          "group": "3_bulk@1"
+        },
+        {
+          "command": "annotative.deleteResolved",
+          "when": "view == annotativeView",
+          "group": "3_bulk@2"
+        },
+        {
+          "command": "annotative.deleteAll",
+          "when": "view == annotativeView",
+          "group": "3_bulk@3"
         }
       ],
       "view/item/context": [
         {
+          "command": "annotative.editAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "inline@1"
+        },
+        {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == unresolvedAnnotation",
-          "group": "inline"
+          "group": "inline@2"
         },
         {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == resolvedAnnotation",
-          "group": "inline"
+          "group": "inline@2"
         },
         {
           "command": "annotative.removeAnnotation",
           "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline"
+          "group": "inline@3"
         }
       ]
     },
@@ -131,6 +226,30 @@
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a",
         "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "annotative.undoLastAnnotation",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.nextAnnotation",
+        "key": "alt+down",
+        "mac": "alt+down",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.previousAnnotation",
+        "key": "alt+up",
+        "mac": "alt+up",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.searchAnnotations",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "view == annotativeView"
       }
     ]
   },
@@ -143,7 +262,9 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "dev": "npm run watch",
+    "clean": "rimraf dist out"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",

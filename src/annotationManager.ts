@@ -7,6 +7,7 @@ export class AnnotationManager {
     private annotations: Map<string, Annotation[]> = new Map();
     private storageFilePath: string;
     private decorationType: vscode.TextEditorDecorationType;
+    private annotationHistory: Annotation[] = []; // For undo functionality
 
     constructor(private context: vscode.ExtensionContext) {
         this.storageFilePath = path.join(
@@ -55,6 +56,7 @@ export class AnnotationManager {
         }
 
         this.annotations.get(filePath)!.push(annotation);
+        this.annotationHistory.push(annotation); // Track for undo
         await this.saveAnnotations();
         this.updateDecorations(editor);
 
@@ -93,6 +95,168 @@ export class AnnotationManager {
                 }
             }
         }
+    }
+
+    async editAnnotation(annotationId: string, filePath: string, comment: string, tags?: string[]): Promise<void> {
+        const fileAnnotations = this.annotations.get(filePath);
+        if (fileAnnotations) {
+            const annotation = fileAnnotations.find(a => a.id === annotationId);
+            if (annotation) {
+                annotation.comment = comment;
+                annotation.tags = tags || [];
+                await this.saveAnnotations();
+
+                // Update decorations for the active editor if it matches
+                const activeEditor = vscode.window.activeTextEditor;
+                if (activeEditor && activeEditor.document.uri.fsPath === filePath) {
+                    this.updateDecorations(activeEditor);
+                }
+            }
+        }
+    }
+
+    getAnnotation(annotationId: string, filePath: string): Annotation | undefined {
+        const fileAnnotations = this.annotations.get(filePath);
+        return fileAnnotations?.find(a => a.id === annotationId);
+    }
+
+    undoLastAnnotation(): Annotation | undefined {
+        if (this.annotationHistory.length === 0) {
+            return undefined;
+        }
+
+        const lastAnnotation = this.annotationHistory.pop();
+        if (lastAnnotation) {
+            const fileAnnotations = this.annotations.get(lastAnnotation.filePath);
+            if (fileAnnotations) {
+                const index = fileAnnotations.findIndex(a => a.id === lastAnnotation.id);
+                if (index !== -1) {
+                    fileAnnotations.splice(index, 1);
+                    this.saveAnnotations();
+
+                    // Update decorations for the active editor if it matches
+                    const activeEditor = vscode.window.activeTextEditor;
+                    if (activeEditor && activeEditor.document.uri.fsPath === lastAnnotation.filePath) {
+                        this.updateDecorations(activeEditor);
+                    }
+                }
+            }
+        }
+
+        return lastAnnotation;
+    }
+
+    async resolveAll(filePath?: string): Promise<number> {
+        let resolvedCount = 0;
+
+        if (filePath) {
+            // Resolve all annotations in a specific file
+            const fileAnnotations = this.annotations.get(filePath);
+            if (fileAnnotations) {
+                fileAnnotations.forEach(annotation => {
+                    if (!annotation.resolved) {
+                        annotation.resolved = true;
+                        resolvedCount++;
+                    }
+                });
+            }
+        } else {
+            // Resolve all annotations in all files
+            this.annotations.forEach(fileAnnotations => {
+                fileAnnotations.forEach(annotation => {
+                    if (!annotation.resolved) {
+                        annotation.resolved = true;
+                        resolvedCount++;
+                    }
+                });
+            });
+        }
+
+        if (resolvedCount > 0) {
+            await this.saveAnnotations();
+
+            // Update decorations for the active editor
+            const activeEditor = vscode.window.activeTextEditor;
+            if (activeEditor) {
+                this.updateDecorations(activeEditor);
+            }
+        }
+
+        return resolvedCount;
+    }
+
+    async deleteResolved(filePath?: string): Promise<number> {
+        let deletedCount = 0;
+
+        if (filePath) {
+            // Delete resolved annotations in a specific file
+            const fileAnnotations = this.annotations.get(filePath);
+            if (fileAnnotations) {
+                const unresolvedAnnotations = fileAnnotations.filter(a => !a.resolved);
+                deletedCount = fileAnnotations.length - unresolvedAnnotations.length;
+                this.annotations.set(filePath, unresolvedAnnotations);
+            }
+        } else {
+            // Delete resolved annotations in all files
+            this.annotations.forEach((fileAnnotations, path) => {
+                const unresolvedAnnotations = fileAnnotations.filter(a => !a.resolved);
+                deletedCount += fileAnnotations.length - unresolvedAnnotations.length;
+                this.annotations.set(path, unresolvedAnnotations);
+            });
+        }
+
+        if (deletedCount > 0) {
+            await this.saveAnnotations();
+
+            // Update decorations for the active editor
+            const activeEditor = vscode.window.activeTextEditor;
+            if (activeEditor) {
+                this.updateDecorations(activeEditor);
+            }
+        }
+
+        return deletedCount;
+    }
+
+    async deleteAll(filePath?: string): Promise<number> {
+        let deletedCount = 0;
+
+        if (filePath) {
+            // Delete all annotations in a specific file
+            const fileAnnotations = this.annotations.get(filePath);
+            if (fileAnnotations) {
+                deletedCount = fileAnnotations.length;
+                this.annotations.delete(filePath);
+            }
+        } else {
+            // Delete all annotations in all files
+            this.annotations.forEach(fileAnnotations => {
+                deletedCount += fileAnnotations.length;
+            });
+            this.annotations.clear();
+        }
+
+        if (deletedCount > 0) {
+            await this.saveAnnotations();
+
+            // Update decorations for the active editor
+            const activeEditor = vscode.window.activeTextEditor;
+            if (activeEditor) {
+                this.updateDecorations(activeEditor);
+            }
+        }
+
+        return deletedCount;
+    }
+
+    getAllTags(): string[] {
+        const tagSet = new Set<string>();
+        this.annotations.forEach(fileAnnotations => {
+            fileAnnotations.forEach(annotation => {
+                annotation.tags?.forEach(tag => tagSet.add(tag));
+            });
+        });
+        return Array.from(tagSet).sort();
     }
 
     getAnnotationsForFile(filePath: string): Annotation[] {
