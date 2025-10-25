@@ -320,25 +320,11 @@ export class CopilotExporter {
     }
 
     /**
-     * Get tag emojis
+     * Get tag emojis - Removed, no longer using emojis
      */
     private static getTagEmojis(tags: string[]): string {
-        const emojiMap: { [key: string]: string } = {
-            bug: '🐛',
-            performance: '⚡',
-            security: '🔒',
-            style: '🎨',
-            docs: '📝',
-            documentation: '📝',
-            question: '❓',
-            improvement: '💡',
-            refactor: '♻️',
-            test: '🧪'
-        };
-
-        return tags
-            .map(t => emojiMap[t.toLowerCase()] || '💬')
-            .join(' ');
+        // Return empty string since we're not using emojis
+        return '';
     }
 
     /**
@@ -360,14 +346,14 @@ export class CopilotExporter {
             const relativePath = vscode.workspace.asRelativePath(filePath);
             const unresolvedCount = fileAnnotations.filter(a => !a.resolved).length;
 
-            output += `## 📄 \`${relativePath}\`\n\n`;
+            output += `## \`${relativePath}\`\n\n`;
             output += `**Status:** ${unresolvedCount} unresolved, ${fileAnnotations.length - unresolvedCount} resolved\n\n`;
 
             fileAnnotations.forEach((annotation, index) => {
                 const lineStart = annotation.range.start.line + 1;
                 const lineEnd = annotation.range.end.line + 1;
                 const lineRange = lineStart === lineEnd ? `Line ${lineStart}` : `Lines ${lineStart}-${lineEnd}`;
-                const status = annotation.resolved ? '✅' : '🔍';
+                const status = annotation.resolved ? '[Resolved]' : '[Open]';
                 const tags = annotation.tags && annotation.tags.length > 0
                     ? ` \`${annotation.tags.join('` `')}\``
                     : '';
@@ -480,7 +466,7 @@ export class CopilotExporter {
             const lineStart = annotation.range.start.line + 1;
             const lineEnd = annotation.range.end.line + 1;
             const lineRange = lineStart === lineEnd ? `L${lineStart}` : `L${lineStart}-${lineEnd}`;
-            const status = annotation.resolved ? '✅' : '❌';
+            const status = annotation.resolved ? '[Resolved]' : '[Open]';
 
             output += `${index + 1}. ${status} ${relativePath}:${lineRange}\n`;
             output += `   ${annotation.comment}\n`;
@@ -591,7 +577,7 @@ export class CopilotExporter {
             const lineStart = annotation.range.start.line + 1;
             const lineEnd = annotation.range.end.line + 1;
             const lineRange = lineStart === lineEnd ? `Line ${lineStart}` : `Lines ${lineStart}-${lineEnd}`;
-            const status = annotation.resolved ? '✅ Resolved' : '🔍 Unresolved';
+            const status = annotation.resolved ? 'Resolved' : 'Unresolved';
 
             content += `## Annotation ${index + 1}: ${lineRange}\n\n`;
             content += `**Status:** ${status}\n\n`;

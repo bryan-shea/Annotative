@@ -213,21 +213,21 @@ export class AnnotationDashboard {
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-content">
-                <h1>📝 Annotative</h1>
+                <h1>Annotative</h1>
                 <p class="tagline">Code annotations made simple</p>
             </div>
             <div class="header-actions">
                 <button class="btn btn-primary" id="addAnnotationBtn" title="Add new annotation (Ctrl+Shift+A)">
-                    <span class="icon">➕</span> Add Annotation
+                    <span class="icon">+</span> Add Annotation
                 </button>
                 <button class="btn btn-secondary" id="exportBtn" title="Export to Markdown">
-                    <span class="icon">📋</span> Export
+                    <span class="icon">Export</span>
                 </button>
                 <button class="btn btn-secondary" id="exportCopilotBtn" title="Export all annotations for GitHub Copilot">
-                    <span class="icon">🤖</span> Export for Copilot
+                    <span class="icon">Copilot</span>
                 </button>
                 <button class="btn btn-accent" id="exportSelectedBtn" title="Export selected annotations" disabled>
-                    <span class="icon">✨</span> Export Selected
+                    <span class="icon">Export</span> Selected
                 </button>
             </div>
         </header>
@@ -235,35 +235,35 @@ export class AnnotationDashboard {
         <!-- Stats Section -->
         <section class="stats-section">
             <div class="stat-card">
-                <div class="stat-icon">📊</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <div class="stat-value" id="totalCount">0</div>
                     <div class="stat-label">Total</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🔍</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <div class="stat-value" id="unresolvedCount">0</div>
                     <div class="stat-label">Unresolved</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">✅</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <div class="stat-value" id="resolvedCount">0</div>
                     <div class="stat-label">Resolved</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📁</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <div class="stat-value" id="fileCount">0</div>
                     <div class="stat-label">Files</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">☑️</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <div class="stat-value" id="selectedCount">0</div>
                     <div class="stat-label">Selected</div>
@@ -274,7 +274,7 @@ export class AnnotationDashboard {
         <!-- Filters and Search -->
         <section class="filters-section">
             <div class="search-box">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon"></span>
                 <input
                     type="text"
                     id="searchInput"
@@ -303,7 +303,7 @@ export class AnnotationDashboard {
 
                 <button class="btn btn-link" id="clearFiltersBtn">Clear Filters</button>
                 <button class="btn btn-link" id="selectAllBtn" title="Select/deselect all visible annotations">
-                    <span class="icon">☑️</span> Select All
+                    <span class="icon"></span> Select All
                 </button>
             </div>
         </section>
@@ -314,17 +314,17 @@ export class AnnotationDashboard {
                 <h2>Annotations</h2>
                 <div class="view-options">
                     <button class="view-btn active" data-view="grouped" title="Group by file">
-                        <span class="icon">📂</span>
+                        <span class="icon">Files</span>
                     </button>
                     <button class="view-btn" data-view="list" title="List view">
-                        <span class="icon">📋</span>
+                        <span class="icon">List</span>
                     </button>
                 </div>
             </div>
 
             <div id="annotationsList" class="annotations-list">
                 <div class="empty-state">
-                    <div class="empty-icon">📝</div>
+                    <div class="empty-icon"></div>
                     <h3>No annotations yet</h3>
                     <p>Select some code and press <kbd>Ctrl+Shift+A</kbd> to add your first annotation.</p>
                 </div>
@@ -335,10 +335,10 @@ export class AnnotationDashboard {
         <footer class="dashboard-footer">
             <div class="quick-actions">
                 <button class="quick-action-btn" id="resolveAllBtn" title="Resolve all annotations">
-                    <span class="icon">✅</span> Resolve All
+                    <span class="icon"></span> Resolve All
                 </button>
                 <button class="quick-action-btn" id="deleteResolvedBtn" title="Delete resolved annotations">
-                    <span class="icon">🗑️</span> Delete Resolved
+                    <span class="icon"></span> Delete Resolved
                 </button>
             </div>
             <div class="keyboard-hint">

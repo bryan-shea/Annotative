@@ -35,7 +35,7 @@ export function registerChatParticipant(
                         await handleDefaultRequest(stream, annotationManager, request);
                 }
             } catch (error) {
-                stream.markdown(`\n\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+                stream.markdown(`\n\nError: ${error instanceof Error ? error.message : String(error)}`);
             }
 
             return {};
@@ -79,7 +79,7 @@ async function handleIssuesCommand(
     }
 
     if (annotations.length === 0) {
-        stream.markdown('✅ No unresolved annotations found!\n');
+        stream.markdown('No unresolved annotations found!\n');
         return;
     }
 
@@ -96,7 +96,7 @@ async function handleIssuesCommand(
 
     byFile.forEach((fileAnnotations, filePath) => {
         const relativePath = vscode.workspace.asRelativePath(filePath);
-        stream.markdown(`\n**📄 ${relativePath}** (${fileAnnotations.length} issues)\n\n`);
+        stream.markdown(`\n**${relativePath}** (${fileAnnotations.length} issues)\n\n`);
 
         fileAnnotations.forEach(annotation => {
             const lineStart = annotation.range.start.line + 1;
@@ -272,14 +272,14 @@ async function handleReviewCommand(
         unresolved.forEach((annotation, idx) => {
             const lineStart = annotation.range.start.line + 1;
             const lineEnd = annotation.range.end.line + 1;
-            const emoji = annotation.tags ? getTagEmoji(annotation.tags[0]) : '💬';
+            const tagLabel = annotation.tags && annotation.tags.length > 0 ? `[${annotation.tags[0]}]` : '';
 
-            stream.markdown(`${idx + 1}. ${emoji} **Lines ${lineStart}-${lineEnd}**: ${annotation.comment}\n`);
+            stream.markdown(`${idx + 1}. ${tagLabel} **Lines ${lineStart}-${lineEnd}**: ${annotation.comment}\n`);
         });
 
         stream.markdown(`\n\nWould you like me to suggest fixes? Use \`@annotative /fix\` to get detailed suggestions.`);
     } else {
-        stream.markdown(`✅ All annotations have been resolved! Great work!\n`);
+        stream.markdown(`All annotations have been resolved! Great work!\n`);
     }
 }
 
@@ -383,21 +383,11 @@ function prioritizeAnnotations(annotations: Annotation[]): Annotation[] {
 }
 
 /**
- * Get emoji for tag
+ * Get emoji for tag - Removed, no longer using emojis
  */
 function getTagEmoji(tag: string): string {
-    const emojiMap: { [key: string]: string } = {
-        bug: '🐛',
-        security: '🔒',
-        performance: '⚡',
-        style: '🎨',
-        docs: '📝',
-        question: '❓',
-        improvement: '💡',
-        refactor: '♻️',
-        test: '🧪'
-    };
-    return emojiMap[tag.toLowerCase()] || '💬';
+    // Return empty string since we're not using emojis
+    return '';
 }
 
 /**
@@ -433,7 +423,7 @@ export function registerChatVariableIfAvailable(
                         const formatted = annotations.map(a => {
                             const lineStart = a.range.start.line + 1;
                             const lineEnd = a.range.end.line + 1;
-                            const status = a.resolved ? '✅' : '🔍';
+                            const status = a.resolved ? '[Resolved]' : '[Open]';
                             const tags = a.tags && a.tags.length > 0 ? ` [${a.tags.join(', ')}]` : '';
 
                             return {

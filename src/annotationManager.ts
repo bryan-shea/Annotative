@@ -21,7 +21,7 @@ export class AnnotationManager {
             borderRadius: '2px',
             isWholeLine: false,
             after: {
-                contentText: ' 💬',
+                contentText: '',
                 color: '#ffc107',
                 fontWeight: 'bold'
             }
@@ -319,10 +319,10 @@ export class AnnotationManager {
 
         annotationsByFile.forEach((annotations, filePath) => {
             const relativePath = vscode.workspace.asRelativePath(filePath);
-            markdown += `## 📄 ${relativePath}\n\n`;
+            markdown += `## ${relativePath}\n\n`;
 
             annotations.forEach((annotation, index) => {
-                const statusIcon = annotation.resolved ? '✅' : '🔍';
+                const statusIcon = annotation.resolved ? '[Resolved]' : '[Open]';
                 markdown += `### ${statusIcon} Annotation ${index + 1}\n\n`;
                 markdown += `**Author:** ${annotation.author}  \n`;
                 markdown += `**Date:** ${annotation.timestamp.toLocaleString()}  \n`;

@@ -179,7 +179,7 @@ export class AnnotationWebviewPanel {
 
         ${locationInfo ? `
         <div class="location-section">
-            <label>📁 Location:</label>
+            <label>Location:</label>
             <div class="location-info">
                 <code>${this.escapeHtml(locationInfo)}</code>
             </div>

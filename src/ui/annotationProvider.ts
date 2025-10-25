@@ -144,7 +144,7 @@ export class AnnotationItem extends vscode.TreeItem {
         public readonly annotation: Annotation,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
-        const statusIcon = annotation.resolved ? '✅' : '🔍';
+        const statusIcon = annotation.resolved ? '[Resolved]' : '[Open]';
         const preview = annotation.comment.length > 50
             ? annotation.comment.substring(0, 47) + '...'
             : annotation.comment;

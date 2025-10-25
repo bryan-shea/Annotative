@@ -220,7 +220,7 @@
     function showEmptyState() {
         elements.annotationsList.innerHTML = `
             <div class="empty-state">
-                <div class="empty-icon">📝</div>
+                <div class="empty-icon"></div>
                 <h3>No annotations found</h3>
                 <p>Try adjusting your filters or add a new annotation with <kbd>Ctrl+Shift+A</kbd></p>
             </div>
@@ -246,7 +246,7 @@
             html += `
                 <div class="file-group">
                     <div class="file-group-header">
-                        <span class="file-group-icon">📄</span>
+                        <span class="file-group-icon"></span>
                         <span class="file-group-path">${escapeHtml(filePath)}</span>
                         <span class="file-group-count">${unresolvedCount}/${fileAnnotations.length}</span>
                     </div>
@@ -273,7 +273,7 @@
         const lineEnd = annotation.range.end.line + 1;
         const lineDisplay = lineStart === lineEnd ? `Line ${lineStart}` : `Lines ${lineStart}-${lineEnd}`;
         const statusClass = annotation.resolved ? 'resolved' : 'unresolved';
-        const statusText = annotation.resolved ? '✅ Resolved' : '🔍 Unresolved';
+        const statusText = annotation.resolved ? 'Resolved' : 'Unresolved';
         const isSelected = selectedAnnotations.has(annotation.id);
         const tagsHtml = annotation.tags && annotation.tags.length > 0
             ? `<div class="annotation-tags">${annotation.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>`
@@ -292,21 +292,21 @@
                         />
                     </div>
                     <div class="annotation-meta">
-                        <div class="annotation-location">📁 ${escapeHtml(relativePath)} (${lineDisplay})</div>
+                        <div class="annotation-location">${escapeHtml(relativePath)} (${lineDisplay})</div>
                         <span class="annotation-status ${statusClass}">${statusText}</span>
                     </div>
                     <div class="annotation-actions">
                         <button class="action-btn view-btn-action" data-id="${annotation.id}" title="View details">
-                            👁️
+                            View
                         </button>
                         <button class="action-btn edit-btn-action" data-id="${annotation.id}" title="Edit">
-                            ✏️
+                            Edit
                         </button>
                         <button class="action-btn toggle-btn-action" data-id="${annotation.id}" title="Toggle resolved">
-                            ${annotation.resolved ? '↩️' : '✓'}
+                            ${annotation.resolved ? 'Reopen' : 'Resolve'}
                         </button>
                         <button class="action-btn delete-btn-action" data-id="${annotation.id}" title="Delete">
-                            🗑️
+                            Delete
                         </button>
                     </div>
                 </div>
@@ -318,8 +318,8 @@
                 ${tagsHtml}
 
                 <div class="annotation-footer">
-                    <span>👤 ${escapeHtml(annotation.author)}</span>
-                    <span>📅 ${formatDate(annotation.timestamp)}</span>
+                    <span>${escapeHtml(annotation.author)}</span>
+                    <span>${formatDate(annotation.timestamp)}</span>
                 </div>
             </div>
         `;
