@@ -1,5 +1,19 @@
 import * as vscode from 'vscode';
 
+export interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+}
+
+export interface AIConversation {
+    id: string;
+    timestamp: Date;
+    messages: ChatMessage[];
+    model: string;
+    resolved: boolean;
+}
+
 export interface Annotation {
     id: string;
     filePath: string;
@@ -10,6 +24,7 @@ export interface Annotation {
     timestamp: Date;
     resolved: boolean;
     tags?: string[];
+    aiConversations?: AIConversation[];
 }
 
 export interface AnnotationDecoration {
@@ -25,4 +40,19 @@ export interface ExportData {
     annotations: Annotation[];
     exportedAt: Date;
     workspaceName: string;
+}
+
+export interface ExportOptions {
+    format: 'copilot' | 'chatgpt' | 'claude' | 'generic';
+    includeResolved: boolean;
+    contextLines: number;
+    includeImports: boolean;
+    includeFunction: boolean;
+}
+
+export interface CopilotExportOptions {
+    contextLines?: number;
+    includeImports?: boolean;
+    includeFunction?: boolean;
+    smartContext?: boolean;
 }

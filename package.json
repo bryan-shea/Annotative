@@ -39,6 +39,11 @@
         "icon": "$(comment-add)"
       },
       {
+        "command": "annotative.addAnnotationFromTemplate",
+        "title": "Add Annotation from Template",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "annotative.removeAnnotation",
         "title": "Remove Annotation",
         "icon": "$(trash)"
@@ -127,6 +132,31 @@
         "command": "annotative.previousAnnotation",
         "title": "Go to Previous Annotation",
         "icon": "$(arrow-up)"
+      },
+      {
+        "command": "annotative.askCopilotAboutAnnotation",
+        "title": "Ask Copilot About This",
+        "icon": "$(copilot)"
+      },
+      {
+        "command": "annotative.copyAsCopilotContext",
+        "title": "Copy as Copilot Context",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "annotative.exportByIntent",
+        "title": "Export by Intent (Review/Bugs/Optimization/Docs)",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "annotative.exportForAI",
+        "title": "Export for AI Tool (Copilot/ChatGPT/Claude)",
+        "icon": "$(export)"
+      },
+      {
+        "command": "annotative.batchAIReview",
+        "title": "Batch AI Review (Review All Annotations)",
+        "icon": "$(checklist)"
       }
     ],
     "viewsContainers": {
@@ -152,7 +182,12 @@
         {
           "command": "annotative.addAnnotation",
           "when": "editorHasSelection",
-          "group": "annotative"
+          "group": "annotative@1"
+        },
+        {
+          "command": "annotative.addAnnotationFromTemplate",
+          "when": "editorHasSelection",
+          "group": "annotative@2"
         }
       ],
       "view/title": [
@@ -198,6 +233,16 @@
           "group": "2_export@2"
         },
         {
+          "command": "annotative.exportForAI",
+          "when": "view == annotativeView",
+          "group": "2_export@3"
+        },
+        {
+          "command": "annotative.batchAIReview",
+          "when": "view == annotativeView",
+          "group": "2_export@4"
+        },
+        {
           "command": "annotative.resolveAll",
           "when": "view == annotativeView",
           "group": "3_bulk@1"
@@ -238,9 +283,45 @@
           "command": "annotative.removeAnnotation",
           "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
           "group": "inline@4"
+        },
+        {
+          "command": "annotative.askCopilotAboutAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "copilot@1"
+        },
+        {
+          "command": "annotative.copyAsCopilotContext",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "copilot@2"
         }
       ]
     },
+    "chatParticipants": [
+      {
+        "id": "annotative.participant",
+        "name": "annotative",
+        "description": "Code annotation assistant for reviewing and managing annotations",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "issues",
+            "description": "Show all unresolved annotations in current file or workspace"
+          },
+          {
+            "name": "explain",
+            "description": "Explain a specific annotation with detailed analysis"
+          },
+          {
+            "name": "fix",
+            "description": "Get AI suggestions to fix annotated issues"
+          },
+          {
+            "name": "review",
+            "description": "Review current file with annotation context"
+          }
+        ]
+      }
+    ],
     "keybindings": [
       {
         "command": "annotative.showDashboard",
@@ -277,8 +358,75 @@
         "key": "ctrl+shift+f",
         "mac": "cmd+shift+f",
         "when": "view == annotativeView"
+      },
+      {
+        "command": "annotative.copyAsCopilotContext",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "view == annotativeView && viewItem =~ /Annotation/"
+      },
+      {
+        "command": "annotative.exportByIntent",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "view == annotativeView"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Annotative",
+      "properties": {
+        "annotative.export.contextLines": {
+          "type": "number",
+          "default": 5,
+          "description": "Number of context lines to include before and after annotations in exports"
+        },
+        "annotative.export.includeImports": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include related imports in code context"
+        },
+        "annotative.export.includeFunction": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include full function/class definition when possible"
+        },
+        "annotative.export.copilotOptimized": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Copilot-optimized format for exports"
+        },
+        "annotative.copilot.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copilot integration features"
+        },
+        "annotative.copilot.autoAttachContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically attach annotation context when invoking Copilot"
+        },
+        "annotative.copilot.preferredFormat": {
+          "type": "string",
+          "enum": [
+            "conversational",
+            "structured",
+            "compact"
+          ],
+          "default": "conversational",
+          "description": "Preferred export format for Copilot Chat"
+        },
+        "annotative.copilot.showInlineButtons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline 'Ask Copilot' buttons in annotation tree"
+        },
+        "annotative.copilot.autoOpenChat": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open Copilot Chat when using 'Ask Copilot' commands"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
