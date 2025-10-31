@@ -5,7 +5,7 @@ Copyright © 2025 Bryan Shea
 
 ---
 
-## ⚠️ DEVELOPMENT STATUS
+## DEVELOPMENT STATUS
 
 This Commercial License Agreement is **currently being outlined and developed**.
 Terms, pricing, and conditions are subject to change as Annotative evolves.
