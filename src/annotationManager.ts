@@ -6,7 +6,7 @@ import { Annotation, AnnotationStorage, ExportData } from './types';
 export class AnnotationManager {
     private annotations: Map<string, Annotation[]> = new Map();
     private storageFilePath: string;
-    private decorationType: vscode.TextEditorDecorationType;
+    private decorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map();
     private annotationHistory: Annotation[] = []; // For undo functionality
 
     constructor(private context: vscode.ExtensionContext) {
@@ -15,26 +15,48 @@ export class AnnotationManager {
             'annotations.json'
         );
 
-        this.decorationType = vscode.window.createTextEditorDecorationType({
-            backgroundColor: 'rgba(255, 193, 7, 0.2)',
-            border: '1px solid rgba(255, 193, 7, 0.5)',
-            borderRadius: '2px',
-            isWholeLine: false,
-            after: {
-                contentText: '',
-                color: '#ffc107',
-                fontWeight: 'bold'
-            }
-        });
-
         this.loadAnnotations();
+    }
+
+    // Create or get a decoration type for a specific color
+    private getDecorationTypeForColor(color: string): vscode.TextEditorDecorationType {
+        if (!this.decorationTypes.has(color)) {
+            // Convert hex to rgba for background (20% opacity)
+            const rgbaBackground = this.hexToRgba(color, 0.2);
+            const rgbaBorder = this.hexToRgba(color, 0.5);
+
+            const decorationType = vscode.window.createTextEditorDecorationType({
+                backgroundColor: rgbaBackground,
+                border: `1px solid ${rgbaBorder}`,
+                borderRadius: '2px',
+                isWholeLine: false,
+                after: {
+                    contentText: '',
+                    color: color,
+                    fontWeight: 'bold'
+                }
+            });
+
+            this.decorationTypes.set(color, decorationType);
+        }
+
+        return this.decorationTypes.get(color)!;
+    }
+
+    // Helper to convert hex color to rgba
+    private hexToRgba(hex: string, alpha: number): string {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     async addAnnotation(
         editor: vscode.TextEditor,
         range: vscode.Range,
         comment: string,
-        tags?: string[]
+        tags?: string[],
+        color?: string
     ): Promise<Annotation> {
         const filePath = editor.document.uri.fsPath;
         const selectedText = editor.document.getText(range);
@@ -48,7 +70,8 @@ export class AnnotationManager {
             author: await this.getAuthor(),
             timestamp: new Date(),
             resolved: false,
-            tags: tags || []
+            tags: tags || [],
+            color: color || '#ffc107' // Default to yellow
         };
 
         if (!this.annotations.has(filePath)) {
@@ -97,13 +120,16 @@ export class AnnotationManager {
         }
     }
 
-    async editAnnotation(annotationId: string, filePath: string, comment: string, tags?: string[]): Promise<void> {
+    async editAnnotation(annotationId: string, filePath: string, comment: string, tags?: string[], color?: string): Promise<void> {
         const fileAnnotations = this.annotations.get(filePath);
         if (fileAnnotations) {
             const annotation = fileAnnotations.find(a => a.id === annotationId);
             if (annotation) {
                 annotation.comment = comment;
                 annotation.tags = tags || [];
+                if (color) {
+                    annotation.color = color;
+                }
                 await this.saveAnnotations();
 
                 // Update decorations for the active editor if it matches
@@ -274,17 +300,36 @@ export class AnnotationManager {
     updateDecorations(editor: vscode.TextEditor): void {
         const filePath = editor.document.uri.fsPath;
         const fileAnnotations = this.getAnnotationsForFile(filePath);
+        const unresolvedAnnotations = fileAnnotations.filter(annotation => !annotation.resolved);
 
-        const decorationOptions: vscode.DecorationOptions[] = fileAnnotations
-            .filter(annotation => !annotation.resolved)
-            .map(annotation => ({
+        // Group annotations by color
+        const annotationsByColor = new Map<string, vscode.DecorationOptions[]>();
+
+        unresolvedAnnotations.forEach(annotation => {
+            const color = annotation.color || '#ffc107'; // Default to yellow
+
+            if (!annotationsByColor.has(color)) {
+                annotationsByColor.set(color, []);
+            }
+
+            annotationsByColor.get(color)!.push({
                 range: annotation.range,
                 hoverMessage: new vscode.MarkdownString(
                     `**Annotation by ${annotation.author}**\n\n${annotation.comment}\n\n*${annotation.timestamp.toLocaleString()}*`
                 )
-            }));
+            });
+        });
 
-        editor.setDecorations(this.decorationType, decorationOptions);
+        // Clear all existing decorations first
+        this.decorationTypes.forEach(decorationType => {
+            editor.setDecorations(decorationType, []);
+        });
+
+        // Apply decorations for each color group
+        annotationsByColor.forEach((decorationOptions, color) => {
+            const decorationType = this.getDecorationTypeForColor(color);
+            editor.setDecorations(decorationType, decorationOptions);
+        });
     }
 
     async exportAnnotations(): Promise<ExportData> {
@@ -404,6 +449,10 @@ export class AnnotationManager {
     }
 
     dispose(): void {
-        this.decorationType.dispose();
+        // Dispose all decoration types
+        this.decorationTypes.forEach(decorationType => {
+            decorationType.dispose();
+        });
+        this.decorationTypes.clear();
     }
 }

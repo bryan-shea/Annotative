@@ -1,21 +1,27 @@
 import * as vscode from 'vscode';
 import { AnnotationManager } from './annotationManager';
 import { AnnotationProvider, TreeItem, AnnotationItem } from './ui/annotationProvider';
-import { AnnotationWebviewPanel } from './ui/annotationWebviewPanel';
-import { AnnotationDashboard } from './ui/annotationDashboard';
 import { CopilotExporter } from './copilotExporter';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import { Annotation } from './types';
 
 let annotationManager: AnnotationManager;
 let annotationProvider: AnnotationProvider;
-let dashboard: AnnotationDashboard | undefined;
+
+// Predefined color palette for annotations
+const ANNOTATION_COLORS = [
+    { label: '🟡 Yellow (Default)', value: '#ffc107', description: 'General notes and comments' },
+    { label: '🔴 Red', value: '#f44336', description: 'Bugs and critical issues' },
+    { label: '🟠 Orange', value: '#ff9800', description: 'Warnings and improvements' },
+    { label: '🔵 Blue', value: '#2196f3', description: 'Information and documentation' },
+    { label: '🟢 Green', value: '#4caf50', description: 'Optimizations and enhancements' },
+    { label: '🟣 Purple', value: '#9c27b0', description: 'Security and important notes' },
+    { label: '🟤 Brown', value: '#795548', description: 'Technical debt' },
+    { label: '⚪ Gray', value: '#9e9e9e', description: 'Low priority or archived' }
+];
 
 function refreshAllViews() {
     annotationProvider.refresh();
-    if (dashboard) {
-        dashboard.updateAnnotations(annotationManager.getAllAnnotations());
-    }
 }
 
 function navigateToNextAnnotation(manager: AnnotationManager, direction: 1 | -1): void {
@@ -82,124 +88,6 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(chatVariable);
     }
 
-    // Auto-open dashboard on activation if there are annotations
-    // Users can disable this by closing the dashboard - it won't auto-open again in the same session
-    const hasOpenedDashboard = context.workspaceState.get<boolean>('hasOpenedDashboard', false);
-    const annotations = annotationManager.getAllAnnotations();
-
-    if (!hasOpenedDashboard && annotations.length > 0) {
-        // Open dashboard automatically if there are annotations
-        vscode.commands.executeCommand('annotative.showDashboard');
-        context.workspaceState.update('hasOpenedDashboard', true);
-    }
-
-    // Dashboard message handler
-    function handleDashboardMessage(message: any) {
-        switch (message.command) {
-            case 'refresh':
-                if (dashboard) {
-                    dashboard.updateAnnotations(annotationManager.getAllAnnotations());
-                }
-                break;
-            case 'goToAnnotation':
-                const annotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
-                if (annotation) {
-                    vscode.commands.executeCommand('annotative.goToAnnotation', annotation);
-                }
-                break;
-            case 'viewAnnotation':
-                const viewAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
-                if (viewAnnotation) {
-                    const item: AnnotationItem = {
-                        annotation: viewAnnotation,
-                        collapsibleState: vscode.TreeItemCollapsibleState.None
-                    } as AnnotationItem;
-                    vscode.commands.executeCommand('annotative.viewAnnotation', item);
-                }
-                break;
-            case 'editAnnotation':
-                const editAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
-                if (editAnnotation) {
-                    const item: AnnotationItem = {
-                        annotation: editAnnotation,
-                        collapsibleState: vscode.TreeItemCollapsibleState.None
-                    } as AnnotationItem;
-                    vscode.commands.executeCommand('annotative.editAnnotation', item);
-                }
-                break;
-            case 'toggleResolved':
-                const toggleAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
-                if (toggleAnnotation) {
-                    annotationManager.toggleResolvedStatus(toggleAnnotation.id, toggleAnnotation.filePath).then(() => {
-                        annotationProvider.refresh();
-                        if (dashboard) {
-                            dashboard.updateAnnotations(annotationManager.getAllAnnotations());
-                        }
-                    });
-                }
-                break;
-            case 'removeAnnotation':
-                const removeAnnotation = annotationManager.getAllAnnotations().find(a => a.id === message.id);
-                if (removeAnnotation) {
-                    vscode.window.showWarningMessage(
-                        'Are you sure you want to remove this annotation?',
-                        'Yes', 'No'
-                    ).then(confirmed => {
-                        if (confirmed === 'Yes' && removeAnnotation) {
-                            annotationManager.removeAnnotation(removeAnnotation.id, removeAnnotation.filePath).then(() => {
-                                annotationProvider.refresh();
-                                if (dashboard) {
-                                    dashboard.updateAnnotations(annotationManager.getAllAnnotations());
-                                }
-                            });
-                        }
-                    });
-                }
-                break;
-            case 'addAnnotation':
-                vscode.commands.executeCommand('annotative.addAnnotation');
-                break;
-            case 'export':
-                vscode.commands.executeCommand('annotative.exportAnnotations');
-                break;
-            case 'exportCopilot':
-                vscode.commands.executeCommand('annotative.exportForCopilot');
-                break;
-            case 'exportSelected':
-                if (message.selectedIds && message.selectedIds.length > 0) {
-                    vscode.commands.executeCommand('annotative.exportSelectedForCopilot', message.selectedIds);
-                } else {
-                    vscode.window.showInformationMessage('No annotations selected');
-                }
-                break;
-            case 'resolveAll':
-                vscode.commands.executeCommand('annotative.resolveAll');
-                break;
-            case 'deleteResolved':
-                vscode.commands.executeCommand('annotative.deleteResolved');
-                break;
-            case 'showShortcuts':
-                vscode.window.showInformationMessage(
-                    'Keyboard Shortcuts:\n' +
-                    'Ctrl+Shift+A: Add annotation\n' +
-                    'Ctrl+E: Export\n' +
-                    'Alt+↑/↓: Navigate annotations\n' +
-                    '?: Show shortcuts',
-                    { modal: true }
-                );
-                break;
-        }
-    }
-
-    // Command: Show Dashboard
-    const showDashboardCommand = vscode.commands.registerCommand(
-        'annotative.showDashboard',
-        () => {
-            dashboard = AnnotationDashboard.createOrShow(context.extensionUri, handleDashboardMessage);
-            dashboard.updateAnnotations(annotationManager.getAllAnnotations());
-        }
-    );
-
     // Command: Add annotation to selected text
     const addAnnotationCommand = vscode.commands.registerTextEditorCommand(
         'annotative.addAnnotation',
@@ -210,24 +98,46 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const annotationData = await AnnotationWebviewPanel.createOrShow(
-                context.extensionUri,
-                editor.document.getText(selection),
-                '',
-                [],
-                false // Not read-only
-            );
+            // Get comment via input box
+            const comment = await vscode.window.showInputBox({
+                prompt: 'Enter annotation comment',
+                placeHolder: 'What do you want to note about this code?',
+                validateInput: (value) => {
+                    return value.trim().length === 0 ? 'Comment cannot be empty' : null;
+                }
+            });
 
-            if (annotationData) {
-                await annotationManager.addAnnotation(
-                    editor,
-                    selection,
-                    annotationData.comment,
-                    annotationData.tags
-                );
-                refreshAllViews();
-                vscode.window.showInformationMessage('Annotation added successfully!');
+            if (!comment) {
+                return;
             }
+
+            // Get color via quick pick
+            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
+                placeHolder: 'Select a color for this annotation'
+            });
+
+            const color = selectedColor?.value || '#ffc107'; // Default to yellow
+
+            // Get tags via quick pick (multi-select)
+            const availableTags = [
+                'bug', 'performance', 'security', 'style',
+                'improvement', 'docs', 'question', 'ai-review'
+            ];
+
+            const selectedTags = await vscode.window.showQuickPick(availableTags, {
+                placeHolder: 'Select tags (optional)',
+                canPickMany: true
+            });
+
+            await annotationManager.addAnnotation(
+                editor,
+                selection,
+                comment,
+                selectedTags || [],
+                color
+            );
+            refreshAllViews();
+            vscode.window.showInformationMessage('Annotation added successfully!');
         }
     );
 
@@ -509,25 +419,48 @@ export function activate(context: vscode.ExtensionContext) {
         async (item: AnnotationItem) => {
             const annotation = item.annotation;
 
-            // Show the webview panel with existing data
-            const annotationData = await AnnotationWebviewPanel.createOrShow(
-                context.extensionUri,
-                annotation.text,
-                annotation.comment,
-                annotation.tags,
-                false // isReadOnly
-            );
+            // Get updated comment via input box
+            const comment = await vscode.window.showInputBox({
+                prompt: 'Edit annotation comment',
+                value: annotation.comment,
+                validateInput: (value) => {
+                    return value.trim().length === 0 ? 'Comment cannot be empty' : null;
+                }
+            });
 
-            if (annotationData) {
-                await annotationManager.editAnnotation(
-                    annotation.id,
-                    annotation.filePath,
-                    annotationData.comment,
-                    annotationData.tags
-                );
-                refreshAllViews();
-                vscode.window.showInformationMessage('Annotation updated successfully!');
+            if (!comment) {
+                return;
             }
+
+            // Get updated color via quick pick
+            const currentColor = ANNOTATION_COLORS.find(c => c.value === annotation.color);
+            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
+                placeHolder: 'Select a color for this annotation'
+            });
+
+            const color = selectedColor?.value || annotation.color || '#ffc107';
+
+            // Get updated tags via quick pick (multi-select)
+            const availableTags = [
+                'bug', 'performance', 'security', 'style',
+                'improvement', 'docs', 'question', 'ai-review'
+            ];
+
+            const selectedTags = await vscode.window.showQuickPick(availableTags, {
+                placeHolder: 'Select tags (optional)',
+                canPickMany: true,
+                // Pre-select existing tags
+            });
+
+            await annotationManager.editAnnotation(
+                annotation.id,
+                annotation.filePath,
+                comment,
+                selectedTags !== undefined ? selectedTags : annotation.tags,
+                color
+            );
+            refreshAllViews();
+            vscode.window.showInformationMessage('Annotation updated successfully!');
         }
     );
 
@@ -537,18 +470,16 @@ export function activate(context: vscode.ExtensionContext) {
         async (item: AnnotationItem) => {
             const annotation = item.annotation;
 
-            // Show the webview panel in read-only mode with location info
-            await AnnotationWebviewPanel.createOrShow(
-                context.extensionUri,
-                annotation.text,
-                annotation.comment,
-                annotation.tags,
-                true, // isReadOnly
-                annotation.filePath,
-                {
-                    start: annotation.range.start.line,
-                    end: annotation.range.end.line
-                }
+            // Navigate to the annotation
+            await vscode.commands.executeCommand('annotative.goToAnnotation', annotation);
+
+            // Show details in information message
+            const tagsStr = annotation.tags && annotation.tags.length > 0 ? annotation.tags.join(', ') : 'none';
+            const resolvedStr = annotation.resolved ? '✓ Resolved' : '○ Unresolved';
+
+            vscode.window.showInformationMessage(
+                `${resolvedStr}\nTags: ${tagsStr}\nComment: ${annotation.comment}`,
+                { modal: false }
             );
         }
     );
@@ -1021,7 +952,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register all disposables
     context.subscriptions.push(
-        showDashboardCommand,
         addAnnotationCommand,
         addAnnotationFromTemplateCommand,
         removeAnnotationCommand,

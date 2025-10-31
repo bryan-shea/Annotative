@@ -33,3 +33,9 @@ yarn-error.log*
 # Development files
 docs/*
 logs/*
+.github/agents/*
+scripts/check-extension-compliance.js
+.vscode-agent.md
+Annotative.code-workspace
+src/AGENT.md
+src/ui/AGENT.md

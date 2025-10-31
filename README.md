@@ -17,35 +17,38 @@ Select code, add notes with optional tags, and export as Markdown. Stay organize
 
 1. **Select code** you want to annotate
 2. **Right-click → "Add Annotation"** (or press `Ctrl+Shift+A`)
-3. **Add your note** and optionally tag it (bug, performance, security, style, improvement, docs, question)
-4. **View in sidebar** with all annotations organized by file
-5. **Export as Markdown** to share with your team or paste into AI chats
+3. **Enter your note** in the input box
+4. **Choose a color** to visually distinguish the annotation (8 colors available)
+5. **Select tags** (optional) to categorize the annotation
+6. **View in sidebar** with all annotations organized by file
+7. **Export as Markdown** to share with your team or paste into AI chats
 
 ## Features
 
 ### Core Functionality
 
 - **Quick & Simple**: Keyboard shortcuts and context menus for fast annotation
-- **Visual Highlighting**: Annotated code is highlighted directly in your editor
+- **Color-Coded Annotations**: Choose from 8 colors (Yellow, Red, Orange, Blue, Green, Purple, Brown, Gray) to visually distinguish different types of annotations
+- **Visual Highlighting**: Annotated code is highlighted directly in your editor with your chosen color
 - **Smart Organization**: Sidebar view with all annotations organized by file
-- **Flexible Tagging**: Categorize annotations by type (bug, performance, security, style, improvement, docs, question)
+- **Flexible Tagging**: Categorize annotations by type (bug, performance, security, style, improvement, docs, question, ai-review)
 - **Resolution Tracking**: Mark annotations as resolved when issues are fixed
 - **Easy Export**: Generate Markdown for AI chats, team discussions, or documentation
 - **Persistent Storage**: Annotations auto-save and restore between sessions
 - **Zero Config**: Works out of the box, no setup required
+- **Template Support**: Quick templates for common annotation scenarios (AI review, optimization, security, etc.)
 
-### Advanced Features (New!)
+### Advanced Features
 
 - **Filter by Status**: Show all, unresolved only, or resolved only annotations
 - **Filter by Tag**: Filter annotations by specific tags to focus on what matters
 - **Search Annotations**: Find annotations by comment text, code, author, or tags
-- **Edit Annotations**: Modify comments and tags after creation
-- **Bulk Operations**:
-  - Resolve all annotations at once
-  - Delete all resolved annotations
-  - Delete all annotations
+- **Edit Annotations**: Modify comments, tags, and colors after creation
+- **Bulk Operations**: Resolve all, delete resolved, or delete all annotations
 - **Keyboard Navigation**: Jump to next/previous annotation with `Alt+Up/Down`
 - **Undo Support**: Quickly undo the last annotation with `Ctrl+Shift+Z`
+- **Copilot Integration**: Direct integration with GitHub Copilot Chat (@annotative participant)
+- **Multiple Export Formats**: Export for Copilot, ChatGPT, Claude, or generic AI tools
 
 > **Note:** Currently available for VS Code. Future IDE support planned.
 
@@ -84,23 +87,16 @@ Export your annotations and paste directly into ChatGPT, Copilot Chat, or Claude
 - Generate documentation
 - Iterate on AI-generated code
 
-## Licensing
+## License
 
-Annotative is available under a **Dual License** model:
+Annotative is **fully open source** and available under the [MIT License](LICENSE).
 
-### Open Source (MIT License)
+- Free for personal, educational, commercial, and enterprise use
+- Modify, distribute, and use in your projects
+- No restrictions on commercial use
+- Requires attribution in derivative works
 
-- Free for personal, educational, and internal business use
-- Requires attribution
-- See [LICENSE](LICENSE) for full terms
-
-### Commercial License (In Development)
-
-- Currently being outlined and finalized
-- For future commercial distribution, resale, or enterprise use
-- See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for draft framework
-
-**Unsure which license applies?** See the [LICENSE](LICENSE) file for guidance, or contact the publisher.
+See [LICENSE](LICENSE) for full terms.
 
 ## Known Issues
 
@@ -108,6 +104,31 @@ Annotative is available under a **Dual License** model:
 - Line number references may shift if code is modified extensively
 
 ## Release Notes
+
+### 1.2.0 (Latest)
+
+Simplified UI and enhanced visual customization:
+
+#### Visual Enhancements
+
+- **Color Picker**: Choose from 8 colors to visually distinguish annotations
+  - 🟡 Yellow (Default) - General notes
+  - 🔴 Red - Bugs and critical issues
+  - 🟠 Orange - Warnings and improvements
+  - 🔵 Blue - Information and documentation
+  - 🟢 Green - Optimizations and enhancements
+  - 🟣 Purple - Security and important notes
+  - 🟤 Brown - Technical debt
+  - ⚪ Gray - Low priority or archived
+- Color-coded highlighting in editor
+- Edit annotation colors after creation
+
+#### UI Simplification
+
+- Removed complex dashboard webview
+- Simple input boxes for adding/editing annotations
+- Streamlined annotation workflow
+- Native VS Code UI components throughout
 
 ### 1.1.0 (Phase 1: Quick Wins)
 

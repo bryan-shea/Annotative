@@ -1,40 +1,112 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
+// Build, test, and package tasks for Annotative extension
+// See: https://code.visualstudio.com/docs/editor/tasks
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"type": "npm",
-			"script": "watch-tests",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": "build"
-		},
-		{
-			"label": "tasks: watch-tests",
-			"dependsOn": [
-				"npm: watch",
-				"npm: watch-tests"
-			],
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "watch",
+      "problemMatcher": "$ts-webpack-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "group": "watchers"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "npm: watch"
+    },
+    {
+      "type": "npm",
+      "script": "watch-tests",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "group": "watchers"
+      },
+      "group": "build",
+      "label": "npm: watch-tests"
+    },
+    {
+      "type": "npm",
+      "script": "compile",
+      "problemMatcher": ["$tsc"],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "label": "npm: compile"
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "label": "npm: test"
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "label": "npm: lint"
+    },
+    {
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/check-extension-compliance.js", "--verbose"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "label": "Check Compliance"
+    },
+    {
+      "type": "shell",
+      "command": "npx",
+      "args": ["vsce", "package"],
+      "problemMatcher": [],
+      "dependsOn": ["npm: compile", "npm: lint", "Check Compliance"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "label": "Package Extension"
+    },
+    {
+      "label": "Full Quality Check",
+      "dependsOn": [
+        "npm: compile",
+        "npm: lint",
+        "Check Compliance",
+        "npm: test"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "tasks: watch-tests",
+      "dependsOn": ["npm: watch", "npm: watch-tests"],
+      "problemMatcher": []
+    }
+  ]
 }

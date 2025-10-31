@@ -2,9 +2,9 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "bryan-shea",
-  "license": "(MIT OR PROPRIETARY)",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -28,11 +28,6 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "annotative.showDashboard",
-        "title": "Annotative: Show Dashboard",
-        "icon": "$(dashboard)"
-      },
       {
         "command": "annotative.addAnnotation",
         "title": "Add Annotation",
@@ -192,12 +187,6 @@
       ],
       "view/title": [
         {
-          "command": "annotative.showDashboard",
-          "when": "view == annotativeView",
-          "group": "navigation@0",
-          "icon": "$(dashboard)"
-        },
-        {
           "command": "annotative.refresh",
           "when": "view == annotativeView",
           "group": "navigation@1"
@@ -323,12 +312,6 @@
       }
     ],
     "keybindings": [
-      {
-        "command": "annotative.showDashboard",
-        "key": "ctrl+shift+d",
-        "mac": "cmd+shift+d",
-        "when": "true"
-      },
       {
         "command": "annotative.addAnnotation",
         "key": "ctrl+shift+a",

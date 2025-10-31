@@ -2,6 +2,39 @@
 
 All notable changes to the Annotative extension.
 
+## [1.2.0] - 2025-10-31
+
+### Major Update: Simplified UI & Color Customization
+
+#### Added
+
+- **Color Picker for Annotations**
+  - Choose from 8 colors to visually distinguish annotations
+  - Colors: Yellow (default), Red, Orange, Blue, Green, Purple, Brown, Gray
+  - Each color has a descriptive purpose (bugs, security, documentation, etc.)
+  - Color-coded highlighting in the editor
+  - Edit annotation colors after creation
+
+#### Changed
+
+- **Simplified User Interface**
+
+  - Removed complex dashboard webview
+  - Replaced with simple input boxes for adding/editing annotations
+  - Uses native VS Code UI components for better performance
+  - Streamlined annotation workflow
+
+- **License Change**
+  - Changed from dual license model to fully open source MIT license
+  - Free for all uses including commercial and enterprise
+  - No restrictions on distribution or resale
+
+#### Improved
+
+- Multi-color decoration system with proper grouping
+- Better visual distinction between different annotation types
+- Faster, more responsive UI interactions
+
 ## [1.1.0] - 2025-10-25
 
 ### Phase 1: Quick Wins - Enhanced User Experience
