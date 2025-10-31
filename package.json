@@ -2,9 +2,9 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "publisher": "bryan-shea",
-  "license": "(MIT OR PROPRIETARY)",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -32,6 +32,11 @@
         "command": "annotative.addAnnotation",
         "title": "Add Annotation",
         "icon": "$(comment-add)"
+      },
+      {
+        "command": "annotative.addAnnotationFromTemplate",
+        "title": "Add Annotation from Template",
+        "icon": "$(sparkle)"
       },
       {
         "command": "annotative.removeAnnotation",
@@ -62,6 +67,91 @@
         "command": "annotative.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "annotative.filterByStatus",
+        "title": "Filter by Status",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "annotative.filterByTag",
+        "title": "Filter by Tag",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "annotative.searchAnnotations",
+        "title": "Search Annotations",
+        "icon": "$(search)"
+      },
+      {
+        "command": "annotative.clearFilters",
+        "title": "Clear All Filters",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "annotative.editAnnotation",
+        "title": "Edit Annotation",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "annotative.viewAnnotation",
+        "title": "View Annotation Details",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "annotative.undoLastAnnotation",
+        "title": "Undo Last Annotation",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "annotative.resolveAll",
+        "title": "Resolve All Annotations",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "annotative.deleteResolved",
+        "title": "Delete Resolved Annotations",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.deleteAll",
+        "title": "Delete All Annotations",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.nextAnnotation",
+        "title": "Go to Next Annotation",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "annotative.previousAnnotation",
+        "title": "Go to Previous Annotation",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "annotative.askCopilotAboutAnnotation",
+        "title": "Ask Copilot About This",
+        "icon": "$(copilot)"
+      },
+      {
+        "command": "annotative.copyAsCopilotContext",
+        "title": "Copy as Copilot Context",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "annotative.exportByIntent",
+        "title": "Export by Intent (Review/Bugs/Optimization/Docs)",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "annotative.exportForAI",
+        "title": "Export for AI Tool (Copilot/ChatGPT/Claude)",
+        "icon": "$(export)"
+      },
+      {
+        "command": "annotative.batchAIReview",
+        "title": "Batch AI Review (Review All Annotations)",
+        "icon": "$(checklist)"
       }
     ],
     "viewsContainers": {
@@ -87,52 +177,239 @@
         {
           "command": "annotative.addAnnotation",
           "when": "editorHasSelection",
-          "group": "annotative"
+          "group": "annotative@1"
+        },
+        {
+          "command": "annotative.addAnnotationFromTemplate",
+          "when": "editorHasSelection",
+          "group": "annotative@2"
         }
       ],
       "view/title": [
         {
           "command": "annotative.refresh",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "annotative.filterByStatus",
+          "when": "view == annotativeView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "annotative.filterByTag",
+          "when": "view == annotativeView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "annotative.searchAnnotations",
+          "when": "view == annotativeView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "annotative.clearFilters",
+          "when": "view == annotativeView",
+          "group": "1_filters@1"
         },
         {
           "command": "annotative.exportAnnotations",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "2_export@1"
         },
         {
           "command": "annotative.showExport",
           "when": "view == annotativeView",
-          "group": "navigation"
+          "group": "2_export@2"
+        },
+        {
+          "command": "annotative.exportForAI",
+          "when": "view == annotativeView",
+          "group": "2_export@3"
+        },
+        {
+          "command": "annotative.batchAIReview",
+          "when": "view == annotativeView",
+          "group": "2_export@4"
+        },
+        {
+          "command": "annotative.resolveAll",
+          "when": "view == annotativeView",
+          "group": "3_bulk@1"
+        },
+        {
+          "command": "annotative.deleteResolved",
+          "when": "view == annotativeView",
+          "group": "3_bulk@2"
+        },
+        {
+          "command": "annotative.deleteAll",
+          "when": "view == annotativeView",
+          "group": "3_bulk@3"
         }
       ],
       "view/item/context": [
         {
+          "command": "annotative.viewAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "inline@1"
+        },
+        {
+          "command": "annotative.editAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "inline@2"
+        },
+        {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == unresolvedAnnotation",
-          "group": "inline"
+          "group": "inline@3"
         },
         {
           "command": "annotative.toggleResolved",
           "when": "view == annotativeView && viewItem == resolvedAnnotation",
-          "group": "inline"
+          "group": "inline@3"
         },
         {
           "command": "annotative.removeAnnotation",
           "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline"
+          "group": "inline@4"
+        },
+        {
+          "command": "annotative.askCopilotAboutAnnotation",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "copilot@1"
+        },
+        {
+          "command": "annotative.copyAsCopilotContext",
+          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
+          "group": "copilot@2"
         }
       ]
     },
+    "chatParticipants": [
+      {
+        "id": "annotative.participant",
+        "name": "annotative",
+        "description": "Code annotation assistant for reviewing and managing annotations",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "issues",
+            "description": "Show all unresolved annotations in current file or workspace"
+          },
+          {
+            "name": "explain",
+            "description": "Explain a specific annotation with detailed analysis"
+          },
+          {
+            "name": "fix",
+            "description": "Get AI suggestions to fix annotated issues"
+          },
+          {
+            "name": "review",
+            "description": "Review current file with annotation context"
+          }
+        ]
+      }
+    ],
     "keybindings": [
       {
         "command": "annotative.addAnnotation",
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a",
         "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "annotative.undoLastAnnotation",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.nextAnnotation",
+        "key": "alt+down",
+        "mac": "alt+down",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.previousAnnotation",
+        "key": "alt+up",
+        "mac": "alt+up",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "annotative.searchAnnotations",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "view == annotativeView"
+      },
+      {
+        "command": "annotative.copyAsCopilotContext",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "view == annotativeView && viewItem =~ /Annotation/"
+      },
+      {
+        "command": "annotative.exportByIntent",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "view == annotativeView"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Annotative",
+      "properties": {
+        "annotative.export.contextLines": {
+          "type": "number",
+          "default": 5,
+          "description": "Number of context lines to include before and after annotations in exports"
+        },
+        "annotative.export.includeImports": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include related imports in code context"
+        },
+        "annotative.export.includeFunction": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include full function/class definition when possible"
+        },
+        "annotative.export.copilotOptimized": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Copilot-optimized format for exports"
+        },
+        "annotative.copilot.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copilot integration features"
+        },
+        "annotative.copilot.autoAttachContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically attach annotation context when invoking Copilot"
+        },
+        "annotative.copilot.preferredFormat": {
+          "type": "string",
+          "enum": [
+            "conversational",
+            "structured",
+            "compact"
+          ],
+          "default": "conversational",
+          "description": "Preferred export format for Copilot Chat"
+        },
+        "annotative.copilot.showInlineButtons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline 'Ask Copilot' buttons in annotation tree"
+        },
+        "annotative.copilot.autoOpenChat": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open Copilot Chat when using 'Ask Copilot' commands"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -143,7 +420,9 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "dev": "npm run watch",
+    "clean": "rimraf dist out"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
