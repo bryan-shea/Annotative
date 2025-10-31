@@ -1,17 +1,17 @@
 # Annotative
 
-**Simple, powerful code annotation for your IDE. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.**
+**Simple, powerful code annotation for VS Code. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.**
 
-Select code, add notes with optional tags, and export as Markdown. Stay organized without leaving your editor.
+Highlight code, add notes with color-coding and tags, then export as Markdown. Stay organized without leaving your editor.
 
-## Use Cases
+## Why Annotative?
 
-- **Review AI-generated code** from Copilot, ChatGPT, Claude, or other models
-- **Code reviews** and collaborative feedback on pull requests
-- **Note-taking** and quick documentation while coding
-- **Self-review** and quality checks before committing
-- **Team collaboration** with exportable feedback
-- **Learning** by annotating code systematically
+- **Review AI-generated code** - Flag issues in Copilot, ChatGPT, or Claude suggestions
+- **Collaborative code reviews** - Leave feedback that's easy to share and discuss
+- **Documentation on the fly** - Capture insights while coding
+- **Self-review before commits** - Catch issues during your own quality checks
+- **Team knowledge sharing** - Export annotations for team discussions
+- **Learning tool** - Annotate code systematically as you study new concepts
 
 ## How It Works
 
@@ -32,12 +32,29 @@ Select code, add notes with optional tags, and export as Markdown. Stay organize
 - **Persistent Storage**: Annotations auto-save and restore between sessions
 - **Zero Config**: Works out of the box, no setup required
 
-> **Note:** Currently available for VS Code. Future IDE support planned.
+- **Flexible Tagging** - Categorize with tags: bug, performance, security, style, improvement, docs, question, ai-review
+
+- **Templates** - Quick-start templates for common scenarios (AI review, security audit, optimization, etc.)
+
+- **Resolution Tracking** - Mark annotations as resolved when addressed
+
+- **Easy Export** - One-click export to Markdown for sharing or pasting into AI chats
+
+### Power Features
+
+- **Filtering** - Show only unresolved, filter by tag, or search across all annotations
+- **Edit Anytime** - Change comments, tags, or colors after creation
+- **Keyboard Navigation** - Jump between annotations with `Alt+Up/Down`
+- **Bulk Operations** - Resolve all, delete resolved, or clear everything at once
+- **Undo Support** - Made a mistake? Undo the last annotation instantly
+- **Copilot Integration** - Built-in @annotative chat participant for seamless AI workflows
+- **Multi-Format Export** - Optimized exports for Copilot, ChatGPT, Claude, or generic use
+- **Persistent Storage** - Annotations auto-save and restore between sessions
+- **Zero Configuration** - Works immediately, no setup required
 
 ## Requirements
 
-- VS Code 1.105.0 or higher
-- No additional dependencies
+Annotative works seamlessly with AI tools:
 
 ## Tips for AI Workflows
 
@@ -66,12 +83,15 @@ Annotative is available under a **Dual License** model:
 
 **Unsure which license applies?** See the [LICENSE](LICENSE) file for guidance, or contact the publisher.
 
-## Known Issues
+## What's New
 
-- Annotations are stored locally and not synced across devices
-- Line number references may shift if code is modified extensively
+### Version 1.2.0
 
-## Release Notes
+- **8-color annotation system** for visual organization
+- **Simplified UI** with native VS Code input boxes
+- **Edit colors** on existing annotations
+- **Improved performance** with streamlined interface
+- **MIT License** - now fully open source
 
 ### 1.0.0
 
