@@ -1,3 +1,9 @@
+## [1.2.6] - 2025-11-05
+
+### Changes
+- 6202d85 chore: revert to built-in selection icon
+
+
 ## [1.2.5] - 2025-11-05
 
 ### Changes
