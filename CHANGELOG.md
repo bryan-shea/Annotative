@@ -1,3 +1,12 @@
+## [1.2.2] - 2025-11-05
+
+### Changes
+- 3459cb9 Merge branch 'main' of https://github.com/bryan-shea/Annotative
+- b0eaefc fix: sidebar icon monochrome design
+- 4d61a40 Merge branch 'main' of https://github.com/bryan-shea/Annotative
+- 8af7a37 chore: fix sidebar icon with proper monochrome design
+
+
 ## [1.2.1] - 2025-11-05
 
 ### Changes
