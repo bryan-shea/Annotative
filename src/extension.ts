@@ -8,16 +8,16 @@ import { Annotation } from './types';
 let annotationManager: AnnotationManager;
 let annotationProvider: AnnotationProvider;
 
-// Predefined color palette for annotations
+// Predefined color palette for annotations - user's visual preference only
 const ANNOTATION_COLORS = [
-    { label: '🟡 Yellow (Default)', value: '#ffc107', description: 'General notes and comments' },
-    { label: '🔴 Red', value: '#f44336', description: 'Bugs and critical issues' },
-    { label: '🟠 Orange', value: '#ff9800', description: 'Warnings and improvements' },
-    { label: '🔵 Blue', value: '#2196f3', description: 'Information and documentation' },
-    { label: '🟢 Green', value: '#4caf50', description: 'Optimizations and enhancements' },
-    { label: '🟣 Purple', value: '#9c27b0', description: 'Security and important notes' },
-    { label: '🟤 Brown', value: '#795548', description: 'Technical debt' },
-    { label: '⚪ Gray', value: '#9e9e9e', description: 'Low priority or archived' }
+    { label: '🟡 Yellow', value: '#ffc107' },
+    { label: '🔴 Red', value: '#f44336' },
+    { label: '🟠 Orange', value: '#ff9800' },
+    { label: '🔵 Blue', value: '#2196f3' },
+    { label: '🟢 Green', value: '#4caf50' },
+    { label: '🟣 Purple', value: '#9c27b0' },
+    { label: '🟤 Brown', value: '#795548' },
+    { label: '⚪ Gray', value: '#9e9e9e' }
 ];
 
 function refreshAllViews() {
@@ -111,13 +111,6 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            // Get color via quick pick
-            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
-                placeHolder: 'Select a color for this annotation'
-            });
-
-            const color = selectedColor?.value || '#ffc107'; // Default to yellow
-
             // Get tags via quick pick (multi-select)
             const availableTags = [
                 'bug', 'performance', 'security', 'style',
@@ -128,6 +121,13 @@ export function activate(context: vscode.ExtensionContext) {
                 placeHolder: 'Select tags (optional)',
                 canPickMany: true
             });
+
+            // Get color via quick pick
+            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
+                placeHolder: 'Choose a color (visual preference only)'
+            });
+
+            const color = selectedColor?.value || '#ffc107'; // Default to yellow
 
             await annotationManager.addAnnotation(
                 editor,
@@ -938,6 +938,170 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // Command: Toggle group-by view (file/tag/status)
+    const toggleGroupByCommand = vscode.commands.registerCommand(
+        'annotative.toggleGroupBy',
+        async () => {
+            const options = [
+                { label: 'Group by File', value: 'file' as const },
+                { label: 'Group by Tag', value: 'tag' as const },
+                { label: 'Group by Status', value: 'status' as const }
+            ];
+
+            const selected = await vscode.window.showQuickPick(options, {
+                placeHolder: 'Choose view organization'
+            });
+
+            if (selected) {
+                annotationProvider.setGroupBy(selected.value);
+                vscode.window.showInformationMessage(`Now grouping by ${selected.label.split(' ')[2]}`);
+            }
+        }
+    );
+
+    // Command: Bulk tag annotations
+    const bulkTagCommand = vscode.commands.registerCommand(
+        'annotative.bulkTag',
+        async () => {
+            const selected = annotationProvider.getSelectedAnnotations();
+            if (selected.length === 0) {
+                vscode.window.showWarningMessage('Please select annotations first');
+                return;
+            }
+
+            const availableTags = [
+                'bug', 'performance', 'security', 'style',
+                'improvement', 'docs', 'question', 'ai-review'
+            ];
+
+            const newTags = await vscode.window.showQuickPick(availableTags, {
+                placeHolder: `Add tags to ${selected.length} selected annotation(s)`,
+                canPickMany: true
+            });
+
+            if (newTags && newTags.length > 0) {
+                for (const annotation of selected) {
+                    const updated = new Set(annotation.tags || []);
+                    newTags.forEach(tag => updated.add(tag));
+                    await annotationManager.editAnnotation(
+                        annotation.id,
+                        annotation.filePath,
+                        annotation.comment,
+                        Array.from(updated),
+                        annotation.color
+                    );
+                }
+                annotationProvider.deselectAllAnnotations();
+                refreshAllViews();
+                vscode.window.showInformationMessage(`Tagged ${selected.length} annotation(s)`);
+            }
+        }
+    );
+
+    // Command: Bulk resolve annotations
+    const bulkResolveCommand = vscode.commands.registerCommand(
+        'annotative.bulkResolve',
+        async () => {
+            const selected = annotationProvider.getSelectedAnnotations();
+            if (selected.length === 0) {
+                vscode.window.showWarningMessage('Please select annotations first');
+                return;
+            }
+
+            const confirmed = await vscode.window.showWarningMessage(
+                `Mark ${selected.length} selected annotation(s) as resolved?`,
+                'Yes', 'No'
+            );
+
+            if (confirmed === 'Yes') {
+                for (const annotation of selected) {
+                    await annotationManager.toggleResolvedStatus(annotation.id, annotation.filePath);
+                }
+                annotationProvider.deselectAllAnnotations();
+                refreshAllViews();
+                vscode.window.showInformationMessage(`Resolved ${selected.length} annotation(s)`);
+            }
+        }
+    );
+
+    // Command: Bulk delete annotations
+    const bulkDeleteCommand = vscode.commands.registerCommand(
+        'annotative.bulkDelete',
+        async () => {
+            const selected = annotationProvider.getSelectedAnnotations();
+            if (selected.length === 0) {
+                vscode.window.showWarningMessage('Please select annotations first');
+                return;
+            }
+
+            const confirmed = await vscode.window.showWarningMessage(
+                `Delete ${selected.length} selected annotation(s)? This cannot be undone.`,
+                'Yes', 'No'
+            );
+
+            if (confirmed === 'Yes') {
+                for (const annotation of selected) {
+                    await annotationManager.removeAnnotation(annotation.id, annotation.filePath);
+                }
+                annotationProvider.deselectAllAnnotations();
+                refreshAllViews();
+                vscode.window.showInformationMessage(`Deleted ${selected.length} annotation(s)`);
+            }
+        }
+    );
+
+    // Command: Bulk change color
+    const bulkColorCommand = vscode.commands.registerCommand(
+        'annotative.bulkColor',
+        async () => {
+            const selected = annotationProvider.getSelectedAnnotations();
+            if (selected.length === 0) {
+                vscode.window.showWarningMessage('Please select annotations first');
+                return;
+            }
+
+            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
+                placeHolder: `Change color for ${selected.length} selected annotation(s)`
+            });
+
+            if (selectedColor) {
+                for (const annotation of selected) {
+                    await annotationManager.editAnnotation(
+                        annotation.id,
+                        annotation.filePath,
+                        annotation.comment,
+                        annotation.tags,
+                        selectedColor.value
+                    );
+                }
+                annotationProvider.deselectAllAnnotations();
+                refreshAllViews();
+                vscode.window.showInformationMessage(`Changed color for ${selected.length} annotation(s)`);
+            }
+        }
+    );
+
+    // Command: Select all visible annotations
+    const selectAllCommand = vscode.commands.registerCommand(
+        'annotative.selectAll',
+        () => {
+            annotationProvider.selectAllAnnotations();
+            refreshAllViews();
+            const count = annotationProvider.getSelectedCount();
+            vscode.window.showInformationMessage(`Selected ${count} annotation(s)`);
+        }
+    );
+
+    // Command: Deselect all annotations
+    const deselectAllCommand = vscode.commands.registerCommand(
+        'annotative.deselectAll',
+        () => {
+            annotationProvider.deselectAllAnnotations();
+            refreshAllViews();
+            vscode.window.showInformationMessage('Deselected all annotations');
+        }
+    );
+
     // Listen for active editor changes to update decorations
     const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(editor => {
         if (editor) {
@@ -979,6 +1143,13 @@ export function activate(context: vscode.ExtensionContext) {
         deleteAllCommand,
         nextAnnotationCommand,
         previousAnnotationCommand,
+        toggleGroupByCommand,
+        bulkTagCommand,
+        bulkResolveCommand,
+        bulkDeleteCommand,
+        bulkColorCommand,
+        selectAllCommand,
+        deselectAllCommand,
         onDidChangeActiveTextEditor,
         treeView,
         annotationManager

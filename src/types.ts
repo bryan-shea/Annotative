@@ -24,7 +24,7 @@ export interface Annotation {
     timestamp: Date;
     resolved: boolean;
     tags?: string[];
-    color?: string; // Hex color code for visual distinction
+    color?: string; // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
 }
 
