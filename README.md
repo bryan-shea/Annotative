@@ -1,60 +1,53 @@
 # Annotative
 
-**Simple, powerful code annotation for VS Code. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.**
+Simple, powerful code annotation for VS Code. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.
 
-Highlight code, add notes with color-coding and tags, then export as Markdown. Stay organized without leaving your editor.
+Highlight code, add notes with tags, choose colors, and export as Markdown. Stay organized without leaving your editor.
 
 ## Why Annotative?
 
-- **Review AI-generated code** - Flag issues in Copilot, ChatGPT, or Claude suggestions
-- **Collaborative code reviews** - Leave feedback that's easy to share and discuss
-- **Documentation on the fly** - Capture insights while coding
-- **Self-review before commits** - Catch issues during your own quality checks
-- **Team knowledge sharing** - Export annotations for team discussions and AI chats
-- **Learning tool** - Annotate code systematically as you study new concepts
+- Review AI-generated code - Flag issues in Copilot, ChatGPT, or Claude suggestions
+- Collaborative code reviews - Leave feedback that's easy to share and discuss
+- Documentation on the fly - Capture insights while coding
+- Self-review before commits - Catch issues during your own quality checks
+- Team knowledge sharing - Export annotations for team discussions and AI chats
+- Learning tool - Annotate code systematically as you study new concepts
 
 ## How It Works
 
-1. **Select code** you want to annotate
-2. **Right-click → "Add Annotation"** (or press `Ctrl+Shift+A`)
-3. **Enter your note** in the input box
-4. **Choose a color** to visually distinguish the annotation (8 colors available)
-5. **Select tags** (optional) to categorize the annotation
-6. **View in sidebar** with all annotations organized by file
-7. **Export as Markdown** to share with your team or paste into AI chats
+1. Select code you want to annotate
+2. Press Ctrl+Shift+A or right-click and select "Add Annotation"
+3. Enter your note
+4. Add tags to categorize (bug, performance, security, etc.)
+5. Choose a color for visual preference
+6. View in sidebar with flexible organization options
+7. Export as Markdown or share with your team
 
 ## Core Features
 
-- **Quick & Simple**: Keyboard shortcuts and context menus for fast annotation
-- **8 Color-Coded Annotations**: Choose from 8 colors to visually distinguish different types of issues
-  - 🟡 Yellow (Default) - General notes
-  - 🔴 Red - Bugs and critical issues
-  - 🟠 Orange - Warnings and improvements
-  - 🔵 Blue - Information and documentation
-  - 🟢 Green - Optimizations and enhancements
-  - 🟣 Purple - Security and important notes
-  - 🟤 Brown - Technical debt
-  - ⚪ Gray - Low priority or archived
-- **Visual Highlighting**: Annotated code is highlighted directly in your editor with your chosen color
-- **Smart Organization**: Sidebar view with all annotations organized by file
-- **Flexible Tagging**: Categorize annotations by type (bug, performance, security, style, improvement, docs, question, ai-review)
-- **Resolution Tracking**: Mark annotations as resolved when issues are fixed
-- **Easy Export**: Generate Markdown for AI chats, team discussions, or documentation
-- **Persistent Storage**: Annotations auto-save and restore between sessions
-- **Zero Config**: Works out of the box, no setup required
+- **Quick & Simple** - Keyboard shortcuts and context menus for fast annotation
+- **8 Color Options** - Choose colors based on personal preference
+- **Flexible Tagging** - Categorize annotations: bug, performance, security, style, improvement, docs, question, ai-review
+- **Visual Highlighting** - Annotated code is highlighted directly in your editor
+- **Smart Organization** - View annotations organized by file, tag, or status
+- **Resolution Tracking** - Mark annotations as resolved when issues are fixed
+- **Easy Export** - Generate Markdown for AI chats, team discussions, or documentation
+- **Persistent Storage** - Annotations auto-save and restore between sessions
+- **Zero Config** - Works out of the box, no setup required
 
-### Advanced Features
+## Advanced Features
 
-- **Filter by Status**: Show all, unresolved only, or resolved only annotations
-- **Filter by Tag**: Filter annotations by specific tags to focus on what matters
-- **Search Annotations**: Find annotations across your workspace
-- **Edit Annotations**: Modify comments, tags, and colors after creation
-- **Bulk Operations**: Resolve all, delete resolved, or delete all annotations
-- **Keyboard Navigation**: Jump to next/previous annotation with `Alt+Up/Down`
-- **Undo Support**: Quickly undo the last annotation with `Ctrl+Shift+Z`
-- **Copilot Integration**: Direct integration with GitHub Copilot Chat (@annotative participant)
-- **Multi-Format Export**: Optimized exports for Copilot, ChatGPT, Claude, or generic AI tools
-- **Template Support**: Quick templates for common annotation scenarios
+- **Multiple Organization Modes** - Group annotations by file, semantic tags, or resolution status
+- **Bulk Operations** - Select multiple annotations and tag, resolve, delete, or change color in batch
+- **Filter by Status** - Show all, unresolved only, or resolved only annotations
+- **Filter by Tag** - Filter annotations by specific tags to focus on what matters
+- **Search Annotations** - Find annotations across your workspace
+- **Edit Annotations** - Modify comments, tags, and colors after creation
+- **Keyboard Navigation** - Jump to next/previous annotation with Alt+Up/Down
+- **Undo Support** - Quickly undo the last annotation with Ctrl+Shift+Z
+- **Copilot Integration** - Direct integration with GitHub Copilot Chat (@annotative participant)
+- **Multi-Format Export** - Optimized exports for Copilot, ChatGPT, Claude, or generic AI tools
+- **Template Support** - Quick templates for common annotation scenarios
 
 ## Keyboard Shortcuts
 
@@ -132,49 +125,58 @@ Annotations are stored per workspace in `.annotative/annotations.json`:
 
 ### For Code Reviews
 
-1. Use **Red** for bugs and critical issues
-2. Use **Orange** for warnings and potential problems
-3. Use **Blue** for documentation needs
+1. Use red for bugs and critical issues
+2. Use orange for warnings and potential problems
+3. Use blue for documentation needs
 4. Export and share with team
 
 ### For AI-Generated Code Review
 
-1. Tag annotations with **ai-review**
-2. Use **Red** for issues, **Green** for optimizations
+1. Tag annotations with "ai-review"
+2. Use red for issues, green for optimizations
 3. Export and ask Copilot/ChatGPT for fixes
 
 ### For Team Collaboration
 
-1. Use **consistent tags** across your team
-2. Use **colors strategically** (Red = urgent, Green = nice-to-have)
-3. Export annotations for discussions
+1. Establish consistent tags across your team
+2. Use colors strategically based on team conventions
+3. Export annotations for discussions and knowledge sharing
+
+### For Organizing Many Annotations
+
+1. Use "Group by Tag" to see all similar issues together
+2. Use "Group by Status" to separate open vs resolved
+3. Use bulk tagging to categorize groups of annotations at once
+4. Use bulk actions to efficiently manage large annotation sets
 
 ## License
 
-Annotative is **fully open source** and available under the [MIT License](LICENSE).
+Annotative is fully open source and available under the MIT License.
 
 - Free for personal, educational, commercial, and enterprise use
 - Modify and distribute freely
 - No restrictions on commercial use
 
-## Changelog
+See [LICENSE](LICENSE) for details.
 
-### Version 1.2.0 - Simplified UI & Color Customization
+## Recent Updates
 
-- **8-color annotation system** with visual coding
-- **Simplified user interface** using native VS Code components
-- **Edit colors** on existing annotations
-- **Improved performance** with streamlined workflow
-- **MIT License** - fully open source
+### Version 1.3.0 - Bulk Operations & Flexible Organization
 
-For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+- Decoupled colors from annotation types - colors are now purely visual preference
+- Multiple organization modes: group by file, tag, or status
+- Bulk annotation operations: tag, resolve, delete, and change color in batches
+- Multi-select annotations with visual checkboxes
+- Improved sidebar with status indicators and inline tags
+- Enhanced flexibility for managing large annotation sets
+- Simplified color picker without forced associations
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
 ## Support
 
-- **Issues**: [Report bugs on GitHub](https://github.com/bryan-shea/Annotative/issues)
-- **Discussions**: [Join GitHub Discussions](https://github.com/bryan-shea/Annotative/discussions)
-- **Features**: [Suggest features](https://github.com/bryan-shea/Annotative/issues/new?labels=enhancement)
+- Issues: Report bugs on GitHub
+- Discussions: Join GitHub Discussions
+- Features: Suggest features on GitHub
 
----
-
-Made with ❤️ for developers who care about code quality
+Made for developers who care about code quality.

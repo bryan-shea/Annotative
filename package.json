@@ -168,7 +168,7 @@
         {
           "id": "annotative",
           "title": "Annotative",
-          "icon": "$(comment-discussion)"
+          "icon": "media/icon-sidebar.svg"
         }
       ]
     },
@@ -431,7 +431,8 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "dev": "npm run watch",
-    "clean": "rimraf dist out"
+    "clean": "rimraf dist out",
+    "commit": "node scripts/commit.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
