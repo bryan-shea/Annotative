@@ -1,0 +1,21 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="62" fill="#0E90D4" opacity="0.1"/>
+
+  <!-- Document with annotation marks -->
+  <rect x="24" y="16" width="80" height="96" rx="4" fill="#0E90D4"/>
+
+  <!-- Highlight/underline effect -->
+  <rect x="32" y="32" width="64" height="4" rx="2" fill="#FFD700"/>
+  <rect x="32" y="48" width="48" height="4" rx="2" fill="#FF6B6B"/>
+  <rect x="32" y="64" width="56" height="4" rx="2" fill="#4ECDC4"/>
+  <rect x="32" y="80" width="52" height="4" rx="2" fill="#FF6B9D"/>
+
+  <!-- Comment bubble/annotation indicator -->
+  <g>
+    <path d="M 80 96 L 92 108 L 92 96 Z" fill="#0E90D4"/>
+    <rect x="44" y="90" width="48" height="16" rx="2" fill="#0E90D4"/>
+    <line x1="48" y1="96" x2="84" y2="96" stroke="white" stroke-width="1.5"/>
+    <line x1="48" y1="100" x2="80" y2="100" stroke="white" stroke-width="1.5"/>
+  </g>
+</svg>

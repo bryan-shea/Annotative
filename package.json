@@ -5,6 +5,15 @@
   "version": "1.2.0",
   "publisher": "bryan-shea",
   "license": "MIT",
+  "icon": "media/icon.png",
+  "homepage": "https://github.com/bryan-shea/Annotative",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bryan-shea/Annotative"
+  },
+  "bugs": {
+    "url": "https://github.com/bryan-shea/Annotative/issues"
+  },
   "engines": {
     "vscode": "^1.105.0"
   },

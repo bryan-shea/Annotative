@@ -1,0 +1,61 @@
+name: Publish to VS Code Marketplace
+
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Compile and verify
+              run: npm run package
+
+            - name: Run linting
+              run: npm run lint
+
+            - name: Run tests
+              run: npm test
+
+            - name: Install VSCE
+              run: npm install -g vsce
+
+            - name: Package extension
+              run: vsce package
+
+            - name: Publish to VS Code Marketplace
+              run: vsce publish -p ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+
+            - name: Create GitHub Release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: Release ${{ github.ref }}
+                  body: |
+                      See CHANGELOG.md for details on this release.
+                  draft: false
+                  prerelease: false
+
+            - name: Upload .vsix to Release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./annotative-*.vsix
+                  asset_name: annotative-${{ github.ref_name }}.vsix
+                  asset_content_type: application/zip

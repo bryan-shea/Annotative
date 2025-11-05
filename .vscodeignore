@@ -1,14 +1,39 @@
+# Development files
 .vscode/**
 .vscode-test/**
+.vscode-agent.md
 out/**
 node_modules/**
 src/**
+test-files/**
+docs/**
+
+# Configuration files
 .gitignore
 .yarnrc
+.env
+.env.local
 webpack.config.js
+tsconfig.json
+eslint.config.mjs
 vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
+
+# Build artifacts
 **/*.map
 **/*.ts
 **/.vscode-test.*
+logs/**
+*.log
+
+# CI/CD
+.github/**
+.gitlab-ci.yml
+.circleci/**
+
+# Documentation
+CONTRIBUTING.md
+README-DEV.md
+
+# Media (except icon)
+media/**
+!media/icon.png
