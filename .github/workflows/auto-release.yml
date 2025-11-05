@@ -100,7 +100,9 @@ jobs:
               run: npm run lint
 
             - name: Run tests
-              run: npm test
+              run: xvfb-run -a npm test
+              env:
+                  DISPLAY: ":99.0"
 
             - name: Check compliance
               run: node scripts/check-extension-compliance.js
