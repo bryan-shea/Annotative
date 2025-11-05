@@ -434,6 +434,7 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "dev": "npm run watch",
+	"ci": "git add . && npm run changeset:enhanced && git push origin main --no-verify",
     "clean": "rimraf dist out",
     "changeset": "node scripts/changeset.js",
     "changeset:enhanced": "node scripts/changeset-enhanced.js",
