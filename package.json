@@ -438,7 +438,8 @@
     "changeset": "node scripts/changeset.js",
     "changeset:enhanced": "node scripts/changeset-enhanced.js",
     "version:check": "node scripts/calculate-version.js",
-    "version:validate-msg": "node scripts/validate-commit-msg.js"
+    "version:validate-msg": "node scripts/validate-commit-msg.js",
+    "deploy": "vsce publish --no-git-tag-version"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
