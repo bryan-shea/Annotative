@@ -12,12 +12,16 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Run tests
-echo "🧪 Running tests..."
-npm test
-if [ $? -ne 0 ]; then
-  echo "❌ Tests failed. Fix tests and try again."
-  exit 1
+# Run tests (skip on Windows - tests run in CI)
+if [ "$OSTYPE" != "msys" ] && [ "$OSTYPE" != "win32" ]; then
+  echo "🧪 Running tests..."
+  npm test
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Fix tests and try again."
+    exit 1
+  fi
+else
+  echo "⏭️  Skipping tests on Windows (run locally with: npm test)"
 fi
 
-echo "✅ Pre-push checks passed\n"
+echo "✅ Pre-push checks passed"

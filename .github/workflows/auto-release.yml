@@ -59,9 +59,17 @@ jobs:
                     if [ -z "$LAST_TAG" ]; then
                       # No tags yet, check all commits or just HEAD
                       COMMITS=$(git log HEAD~1..HEAD --pretty=format:%B 2>/dev/null || git log HEAD --pretty=format:%B)
+                      HAS_COMMITS=true
                     else
                       # Check commits since last tag
                       COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:%B)
+                      # Check if there are commits since last tag
+                      COMMIT_COUNT=$(git rev-list --count $LAST_TAG..HEAD)
+                      if [ "$COMMIT_COUNT" -gt 0 ]; then
+                        HAS_COMMITS=true
+                      else
+                        HAS_COMMITS=false
+                      fi
                     fi
 
                     if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
@@ -69,6 +77,9 @@ jobs:
                     elif echo "$COMMITS" | grep -qE "^feat"; then
                       NEW_VERSION="$MAJOR.$((MINOR+1)).0"
                     elif echo "$COMMITS" | grep -qE "^fix"; then
+                      NEW_VERSION="$MAJOR.$MINOR.$((PATCH+1))"
+                    elif [ "$HAS_COMMITS" = "true" ]; then
+                      # Always bump patch version if there are commits (even if not semantic)
                       NEW_VERSION="$MAJOR.$MINOR.$((PATCH+1))"
                     else
                       NEW_VERSION=$CURRENT_VERSION
