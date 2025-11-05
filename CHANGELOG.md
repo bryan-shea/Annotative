@@ -1,3 +1,9 @@
+## [1.2.3] - 2025-11-05
+
+### Changes
+- b6e3423 chore: add pre-push commit hooks for CI/CD
+
+
 ## [1.2.2] - 2025-11-05
 
 ### Changes

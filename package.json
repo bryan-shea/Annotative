@@ -2,7 +2,7 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/icon.png",
