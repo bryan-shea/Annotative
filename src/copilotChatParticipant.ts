@@ -402,11 +402,17 @@ export function registerChatVariableIfAvailable(
     // Check if chat variable API is available
     if (typeof (vscode.chat as any).registerVariable === 'function') {
         try {
-            return (vscode.chat as any).registerVariable(
+            const chatAPI = vscode.chat as unknown as {
+                registerVariable: (name: string, desc: string, options: {
+                    resolve: (name: string, context: unknown, token: unknown) => Promise<unknown[]>;
+                }) => vscode.Disposable;
+            };
+
+            return chatAPI.registerVariable(
                 'annotations',
                 'annotations',
                 {
-                    resolve: async (name: string, context: any, token: any) => {
+                    resolve: async (name: string, context: unknown, token: unknown) => {
                         const editor = vscode.window.activeTextEditor;
                         if (!editor) {
                             return [];
@@ -438,7 +444,8 @@ export function registerChatVariableIfAvailable(
                 }
             );
         } catch (error) {
-            console.warn('Chat variable registration failed:', error);
+            // Log warning for debugging - chat variable registration failed
+            vscode.window.showWarningMessage('Chat variable registration failed. Some Copilot features may not work properly.');
             return undefined;
         }
     }

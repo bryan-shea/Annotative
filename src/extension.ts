@@ -66,7 +66,7 @@ function navigateToNextAnnotation(manager: AnnotationManager, direction: 1 | -1)
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Annotative extension is now active!');
+    // Extension activation - Annotative is now active
 
     // Initialize annotation manager
     annotationManager = new AnnotationManager(context);
