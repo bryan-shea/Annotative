@@ -1,18 +1,15 @@
-<svg width="24" height="24" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Document with annotation marks - greyscaled -->
-  <rect x="24" y="16" width="80" height="96" rx="4" fill="#808080"/>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document body outline - monochrome white for activity bar theming -->
+  <rect x="20" y="12" width="88" height="104" rx="5" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round"/>
 
-  <!-- Highlight/underline effect - greyscaled -->
-  <rect x="32" y="32" width="64" height="4" rx="2" fill="#A9A9A9"/>
-  <rect x="32" y="48" width="48" height="4" rx="2" fill="#A9A9A9"/>
-  <rect x="32" y="64" width="56" height="4" rx="2" fill="#A9A9A9"/>
-  <rect x="32" y="80" width="52" height="4" rx="2" fill="#A9A9A9"/>
+  <!-- Document content lines - representing text/annotations -->
+  <line x1="32" y1="32" x2="96" y2="32" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="32" y1="50" x2="80" y2="50" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="32" y1="68" x2="88" y2="68" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="32" y1="86" x2="84" y2="86" stroke="white" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- Comment bubble/annotation indicator - greyscaled -->
-  <g>
-    <path d="M 80 96 L 92 108 L 92 96 Z" fill="#808080"/>
-    <rect x="44" y="90" width="48" height="16" rx="2" fill="#808080"/>
-    <line x1="48" y1="96" x2="84" y2="96" stroke="white" stroke-width="1.5"/>
-    <line x1="48" y1="100" x2="80" y2="100" stroke="white" stroke-width="1.5"/>
-  </g>
+  <!-- Annotation comment bubble - top right corner -->
+  <circle cx="92" cy="32" r="12" fill="none" stroke="white" stroke-width="3"/>
+  <!-- Small tail indicator -->
+  <path d="M 98 42 L 104 48 L 98 48 Z" fill="white"/>
 </svg>
