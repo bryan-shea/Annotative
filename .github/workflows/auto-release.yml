@@ -1,0 +1,194 @@
+name: Auto Release to Marketplace
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            force_version:
+                description: "Force a specific version (e.g., 1.3.0) or leave blank for auto-detect"
+                required: false
+                type: string
+
+jobs:
+    release:
+        name: Release Extension
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Get last tag
+              id: last_tag
+              run: |
+                  LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+                  echo "tag=${LAST_TAG}" >> $GITHUB_OUTPUT
+                  echo "Last tag: ${LAST_TAG:-none}"
+
+            - name: Calculate version bump
+              id: version
+              env:
+                  FORCE_VERSION: ${{ github.event.inputs.force_version }}
+                  LAST_TAG: ${{ steps.last_tag.outputs.tag }}
+              run: |
+                  if [ -n "$FORCE_VERSION" ]; then
+                    echo "version=$FORCE_VERSION" >> $GITHUB_OUTPUT
+                    echo "Using forced version: $FORCE_VERSION"
+                  else
+                    # Parse commits to determine version bump
+                    CURRENT_VERSION=$(node -p "require('./package.json').version")
+                    MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+                    MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+                    PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+
+                    if [ -z "$LAST_TAG" ]; then
+                      # No tags yet, use current version or default
+                      NEW_VERSION=$CURRENT_VERSION
+                    else
+                      # Check commit messages for version bump indicators
+                      COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:%B)
+
+                      if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
+                        NEW_VERSION="$((MAJOR+1)).0.0"
+                      elif echo "$COMMITS" | grep -qE "^feat"; then
+                        NEW_VERSION="$MAJOR.$((MINOR+1)).0"
+                      elif echo "$COMMITS" | grep -qE "^fix"; then
+                        NEW_VERSION="$MAJOR.$MINOR.$((PATCH+1))"
+                      else
+                        NEW_VERSION=$CURRENT_VERSION
+                      fi
+                    fi
+
+                    echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+                    echo "Auto-detected version: $NEW_VERSION"
+                  fi
+
+            - name: Check if version changed
+              id: version_check
+              run: |
+                  CURRENT=$(node -p "require('./package.json').version")
+                  NEW_VERSION=${{ steps.version.outputs.version }}
+                  if [ "$CURRENT" = "$NEW_VERSION" ]; then
+                    echo "changed=false" >> $GITHUB_OUTPUT
+                    echo "Version unchanged: $CURRENT"
+                  else
+                    echo "changed=true" >> $GITHUB_OUTPUT
+                    echo "Version will change from $CURRENT to $NEW_VERSION"
+                  fi
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Compile extension
+              run: npm run compile
+
+            - name: Run linting
+              run: npm run lint
+
+            - name: Run tests
+              run: npm test
+
+            - name: Check compliance
+              run: node scripts/check-extension-compliance.js
+
+            - name: Update package.json
+              if: steps.version_check.outputs.changed == 'true'
+              run: |
+                  npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+
+            - name: Update CHANGELOG.md
+              if: steps.version_check.outputs.changed == 'true'
+              run: |
+                  DATE=$(date +"%Y-%m-%d")
+                  NEW_VERSION=${{ steps.version.outputs.version }}
+
+                  # Get commit summary since last tag
+                  if [ -n "${{ steps.last_tag.outputs.tag }}" ]; then
+                    SUMMARY=$(git log ${{ steps.last_tag.outputs.tag }}..HEAD --oneline | sed 's/^/- /')
+                  else
+                    SUMMARY=$(git log HEAD --oneline | head -20 | sed 's/^/- /')
+                  fi
+
+                  CHANGELOG_ENTRY="## [$NEW_VERSION] - $DATE
+
+                  ### Changes
+                  $SUMMARY
+
+                  "
+
+                  # Prepend to CHANGELOG.md
+                  (echo "$CHANGELOG_ENTRY" && cat CHANGELOG.md) > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
+
+            - name: Commit version changes
+              if: steps.version_check.outputs.changed == 'true'
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add package.json CHANGELOG.md
+                  git commit -m "chore: release v${{ steps.version.outputs.version }}"
+
+            - name: Create and push tag
+              if: steps.version_check.outputs.changed == 'true'
+              run: |
+                  git tag -a v${{ steps.version.outputs.version }} -m "Release v${{ steps.version.outputs.version }}"
+                  git push origin main
+                  git push origin v${{ steps.version.outputs.version }}
+
+            - name: Package extension
+              run: npm run package
+
+            - name: Create .vsix file
+              run: npx -y @vscode/vsce package ${{ steps.version.outputs.version }}
+
+            - name: Publish to VS Code Marketplace
+              if: env.MARKETPLACE_TOKEN != ''
+              env:
+                  MARKETPLACE_TOKEN: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+              run: |
+                  npx -y @vscode/vsce publish -p "$MARKETPLACE_TOKEN"
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v1
+              if: steps.version_check.outputs.changed == 'true'
+              with:
+                  tag_name: v${{ steps.version.outputs.version }}
+                  name: Release v${{ steps.version.outputs.version }}
+                  draft: false
+                  prerelease: false
+                  files: annotative-*.vsix
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: extension-package-${{ steps.version.outputs.version }}
+                  path: annotative-*.vsix
+                  retention-days: 30
+
+            - name: Report Status
+              if: always()
+              run: |
+                  echo "### Release Status" >> $GITHUB_STEP_SUMMARY
+                  if [ "${{ steps.version_check.outputs.changed }}" = "true" ]; then
+                    echo "✅ Released v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+                    echo "- Package: annotative-${{ steps.version.outputs.version }}.vsix" >> $GITHUB_STEP_SUMMARY
+                    echo "- Marketplace: https://marketplace.visualstudio.com/items?itemName=bryan-shea.annotative" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "ℹ️ No version change detected - skipped release" >> $GITHUB_STEP_SUMMARY
+                  fi

@@ -34,7 +34,7 @@ yarn-error.log*
 docs/*
 .github/agents/*
 logs/*
-scripts/*
+scripts/dev/*
 src/ui/AGENT.md
 src/AGENT.md
 .vscode-agent.md

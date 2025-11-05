@@ -421,6 +421,9 @@
     }
   },
   "scripts": {
+    "prepare": "husky install",
+    "prepare:husky": "husky install && npm run husky:make-executable",
+    "husky:make-executable": "chmod +x .husky/*",
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
@@ -432,7 +435,10 @@
     "test": "vscode-test",
     "dev": "npm run watch",
     "clean": "rimraf dist out",
-    "commit": "node scripts/commit.js"
+    "changeset": "node scripts/changeset.js",
+    "changeset:enhanced": "node scripts/changeset-enhanced.js",
+    "version:check": "node scripts/calculate-version.js",
+    "version:validate-msg": "node scripts/validate-commit-msg.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
@@ -441,6 +447,7 @@
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "eslint": "^9.36.0",
+    "husky": "^9.1.7",
     "typescript": "^5.9.3",
     "ts-loader": "^9.5.4",
     "webpack": "^5.102.0",

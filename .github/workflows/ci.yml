@@ -1,0 +1,48 @@
+name: CI - Validate Code Quality
+
+on:
+    pull_request:
+        branches: [main, develop]
+    push:
+        branches: [main, develop]
+
+jobs:
+    validate:
+        name: Validate Extension
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Compile TypeScript
+              run: npm run compile
+
+            - name: Run linting
+              run: npm run lint
+
+            - name: Run unit tests
+              run: npm test
+
+            - name: Check extension compliance
+              run: node scripts/check-extension-compliance.js
+
+            - name: Package extension
+              run: npm run package
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: annotative-build
+                  path: dist/
+                  retention-days: 5

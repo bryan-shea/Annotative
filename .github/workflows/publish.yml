@@ -1,4 +1,4 @@
-name: Publish to VS Code Marketplace
+name: Publish to VS Code Marketplace (Tag Triggered)
 
 on:
     push:
@@ -7,21 +7,27 @@ on:
 
 jobs:
     publish:
+        name: Publish Extension
         runs-on: ubuntu-latest
+        timeout-minutes: 20
+        permissions:
+            contents: write
 
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-            - name: Install Node.js
+            - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
+                  cache: "npm"
 
             - name: Install dependencies
               run: npm ci
 
-            - name: Compile and verify
-              run: npm run package
+            - name: Compile extension
+              run: npm run compile
 
             - name: Run linting
               run: npm run lint
@@ -29,33 +35,29 @@ jobs:
             - name: Run tests
               run: npm test
 
-            - name: Install VSCE
-              run: npm install -g vsce
+            - name: Check compliance
+              run: node scripts/check-extension-compliance.js
 
             - name: Package extension
-              run: vsce package
+              run: npm run package
+
+            - name: Create .vsix file
+              run: npx -y @vscode/vsce package
 
             - name: Publish to VS Code Marketplace
-              run: vsce publish -p ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+              if: env.MARKETPLACE_TOKEN != ''
+              env:
+                  MARKETPLACE_TOKEN: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+              run: |
+                  npx -y @vscode/vsce publish -p "$MARKETPLACE_TOKEN"
 
             - name: Create GitHub Release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              uses: softprops/action-gh-release@v1
               with:
                   tag_name: ${{ github.ref }}
-                  release_name: Release ${{ github.ref }}
-                  body: |
-                      See CHANGELOG.md for details on this release.
+                  name: Release ${{ github.ref_name }}
                   draft: false
                   prerelease: false
-
-            - name: Upload .vsix to Release
-              uses: actions/upload-release-asset@v1
+                  files: annotative-*.vsix
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./annotative-*.vsix
-                  asset_name: annotative-${{ github.ref_name }}.vsix
-                  asset_content_type: application/zip

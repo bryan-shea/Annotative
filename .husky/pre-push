@@ -1,0 +1,23 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Pre-push hook: validation before pushing to remote
+echo "🔍 Running pre-push checks..."
+
+# Compile TypeScript
+echo "🔨 Compiling TypeScript..."
+npm run compile
+if [ $? -ne 0 ]; then
+  echo "❌ Compilation failed. Fix errors and try again."
+  exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+npm test
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Fix tests and try again."
+  exit 1
+fi
+
+echo "✅ Pre-push checks passed\n"
