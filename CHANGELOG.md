@@ -1,3 +1,10 @@
+## [1.2.5] - 2025-11-05
+
+### Changes
+- b89e570 Merge branch 'main' of https://github.com/bryan-shea/Annotative
+- 22cff5a chore: update icon stroke to adapt to current theme colors
+
+
 ## [1.2.4] - 2025-11-05
 
 ### Changes
