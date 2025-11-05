@@ -154,15 +154,15 @@ jobs:
             - name: Package extension
               run: npm run package
 
-            - name: Create .vsix file
-              if: steps.version_check.outputs.changed == 'true'
-              run: npx -y @vscode/vsce package
-
             - name: Publish to VS Code Marketplace
               if: steps.version_check.outputs.changed == 'true'
               env:
                   VSCE_PAT: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
               run: npm run deploy
+
+            - name: Create .vsix file for GitHub Release
+              if: steps.version_check.outputs.changed == 'true'
+              run: npx -y @vscode/vsce package
 
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v1
