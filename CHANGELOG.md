@@ -1,3 +1,28 @@
+## [1.2.1] - 2025-11-05
+
+### Changes
+- 9ce8643 fix: disable Husky git hooks in CI environment
+- 295a3a6 fix: create .vsix file after publishing for GitHub releases
+- ee6ea95 fix: detect version bumps when no git tags exist
+- d2c5e0d feat: complete automated CI/CD and release infrastructure
+- 95d887e chore: trigger workflow with updated PAT
+- b0916e8 fix: add @vscode/vsce as dev dependency for publishing
+- 3f8490b feat: configure automated marketplace publishing
+- 3d9c930 fix: resolve extension compliance issues
+- a6d464e fix: clean up GitHub workflows and fix VS Code test display issues
+- 6c5a404 fix: update package-lock.json for husky dependency
+- 2e3e50d feat: Add enhanced changeset CLI with manual version control
+- 80d2f39 Merge pull request #7 from bryan-shea/update/1.3.0
+- 4acac6f feat: simplify annotations and add bulk operations
+- fa414d3 feat: add GitHub Actions workflow for publishing to VS Code Marketplace, update .vscodeignore, and enhance README with new features
+- 0e1b109 refactor: simplify UI and remove outdated features from README
+- c8a57e0 Merge branch 'main' of https://github.com/bryan-shea/Annotative
+- 60eddf9 Update .gitignore to include additional development files and directories
+- 0af2de1 Merge pull request #6 from bryan-shea/enhancement/ui-features
+- c410c5d feat: update version to 1.2.0 and simplify annotation management
+- 3c3962f refactor: Remove emojis from UI elements and update related text for clarity
+
+
 # Change Log
 
 All notable changes to the Annotative extension.
