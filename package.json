@@ -168,7 +168,7 @@
         {
           "id": "annotative",
           "title": "Annotative",
-          "icon": "media/icon-sidebar.svg"
+          "icon": "$(selection)"
         }
       ]
     },
