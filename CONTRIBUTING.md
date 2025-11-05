@@ -22,6 +22,7 @@ Annotative is a productivity tool for code annotation, designed to make reviewin
 
 - `npm run test` - Run tests
 - Test manually by pressing `F5` to launch debug mode
+- **Important**: Always test locally before pushing to GitHub - see [LOCAL_TESTING_GUIDE.md](docs/LOCAL_TESTING_GUIDE.md)
 
 ## Pull Request Guidelines
 
