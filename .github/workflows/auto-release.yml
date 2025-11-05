@@ -55,22 +55,23 @@ jobs:
                     MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
                     PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
 
+                    # Check commit messages for version bump indicators
                     if [ -z "$LAST_TAG" ]; then
-                      # No tags yet, use current version or default
-                      NEW_VERSION=$CURRENT_VERSION
+                      # No tags yet, check all commits or just HEAD
+                      COMMITS=$(git log HEAD~1..HEAD --pretty=format:%B 2>/dev/null || git log HEAD --pretty=format:%B)
                     else
-                      # Check commit messages for version bump indicators
+                      # Check commits since last tag
                       COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:%B)
+                    fi
 
-                      if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
-                        NEW_VERSION="$((MAJOR+1)).0.0"
-                      elif echo "$COMMITS" | grep -qE "^feat"; then
-                        NEW_VERSION="$MAJOR.$((MINOR+1)).0"
-                      elif echo "$COMMITS" | grep -qE "^fix"; then
-                        NEW_VERSION="$MAJOR.$MINOR.$((PATCH+1))"
-                      else
-                        NEW_VERSION=$CURRENT_VERSION
-                      fi
+                    if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
+                      NEW_VERSION="$((MAJOR+1)).0.0"
+                    elif echo "$COMMITS" | grep -qE "^feat"; then
+                      NEW_VERSION="$MAJOR.$((MINOR+1)).0"
+                    elif echo "$COMMITS" | grep -qE "^fix"; then
+                      NEW_VERSION="$MAJOR.$MINOR.$((PATCH+1))"
+                    else
+                      NEW_VERSION=$CURRENT_VERSION
                     fi
 
                     echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
