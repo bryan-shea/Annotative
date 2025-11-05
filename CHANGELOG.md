@@ -1,3 +1,9 @@
+## [1.2.4] - 2025-11-05
+
+### Changes
+- afb294c chore: fix custom icon per activity bar
+
+
 ## [1.2.3] - 2025-11-05
 
 ### Changes
