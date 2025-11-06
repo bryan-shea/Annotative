@@ -15,7 +15,10 @@ export type WebviewToExtensionCommand =
   | 'delete'
   | 'resolveAll'
   | 'deleteResolved'
-  | 'edit';
+  | 'edit'
+  | 'addTag'
+  | 'removeTag'
+  | 'manageTags';
 
 export interface WebviewMessage {
   command: WebviewToExtensionCommand;
@@ -23,6 +26,8 @@ export interface WebviewMessage {
   id?: string;
   filePath?: string;
   resolved?: boolean;
+  tag?: string;
+  tags?: string[];
   [key: string]: unknown;
 }
 

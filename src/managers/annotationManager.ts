@@ -17,6 +17,8 @@ export class AnnotationManager {
     private decorations: AnnotationDecorations;
     private storage: AnnotationStorageManager;
     private exporter: AnnotationExporter;
+    private onDidChangeAnnotationsEmitter = new vscode.EventEmitter<void>();
+    public readonly onDidChangeAnnotations = this.onDidChangeAnnotationsEmitter.event;
 
     constructor(private context: vscode.ExtensionContext) {
         this.tagManager = new TagManager();
@@ -85,15 +87,19 @@ export class AnnotationManager {
         tags?: string[],
         color?: string
     ): Promise<Annotation> {
-        return this.crud.addAnnotation(editor, range, comment, tags, color);
+        const result = await this.crud.addAnnotation(editor, range, comment, tags, color);
+        this.notifyAnnotationsChanged();
+        return result;
     }
 
     async removeAnnotation(annotationId: string, filePath: string): Promise<void> {
-        return this.crud.removeAnnotation(annotationId, filePath);
+        await this.crud.removeAnnotation(annotationId, filePath);
+        this.notifyAnnotationsChanged();
     }
 
     async toggleResolvedStatus(annotationId: string, filePath: string): Promise<void> {
-        return this.crud.toggleResolvedStatus(annotationId, filePath);
+        await this.crud.toggleResolvedStatus(annotationId, filePath);
+        this.notifyAnnotationsChanged();
     }
 
     async editAnnotation(
@@ -103,7 +109,8 @@ export class AnnotationManager {
         tags?: string[],
         color?: string
     ): Promise<void> {
-        return this.crud.editAnnotation(annotationId, filePath, comment, tags, color);
+        await this.crud.editAnnotation(annotationId, filePath, comment, tags, color);
+        this.notifyAnnotationsChanged();
     }
 
     getAnnotation(annotationId: string, filePath: string): Annotation | undefined {
@@ -111,19 +118,33 @@ export class AnnotationManager {
     }
 
     async undoLastAnnotation(): Promise<Annotation | undefined> {
-        return this.crud.undoLastAnnotation();
+        const result = await this.crud.undoLastAnnotation();
+        this.notifyAnnotationsChanged();
+        return result;
     }
 
     async resolveAll(filePath?: string): Promise<number> {
-        return this.crud.resolveAll(filePath);
+        const result = await this.crud.resolveAll(filePath);
+        if (result > 0) {
+            this.notifyAnnotationsChanged();
+        }
+        return result;
     }
 
     async deleteResolved(filePath?: string): Promise<number> {
-        return this.crud.deleteResolved(filePath);
+        const result = await this.crud.deleteResolved(filePath);
+        if (result > 0) {
+            this.notifyAnnotationsChanged();
+        }
+        return result;
     }
 
     async deleteAll(filePath?: string): Promise<number> {
-        return this.crud.deleteAll(filePath);
+        const result = await this.crud.deleteAll(filePath);
+        if (result > 0) {
+            this.notifyAnnotationsChanged();
+        }
+        return result;
     }
 
     // ============== Query Operations ==============
@@ -184,9 +205,17 @@ export class AnnotationManager {
     }
 
     /**
+     * Notify listeners that annotations have changed
+     */
+    private notifyAnnotationsChanged(): void {
+        this.onDidChangeAnnotationsEmitter.fire();
+    }
+
+    /**
      * Dispose resources
      */
     dispose(): void {
         this.decorations.dispose();
+        this.onDidChangeAnnotationsEmitter.dispose();
     }
 }

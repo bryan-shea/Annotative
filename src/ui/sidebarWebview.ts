@@ -68,6 +68,15 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
     }
 
     /**
+     * Refresh annotations in the webview
+     */
+    refreshAnnotations() {
+        if (this.view) {
+            this.loadInitialData(this.view.webview);
+        }
+    }
+
+    /**
      * Get the webview URI for a resource file
      */
     private getWebviewUri(webview: vscode.Webview, ...pathSegments: string[]): vscode.Uri {
@@ -155,6 +164,27 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
                         // Refresh webview after changes
                         setTimeout(() => this.loadInitialData(webview), 100);
                         break;
+
+                    case 'addTag':
+                        if (message.id && message.tag) {
+                            await this.handleAddTag(message.id, message.tag);
+                            setTimeout(() => this.loadInitialData(webview), 100);
+                        }
+                        break;
+
+                    case 'removeTag':
+                        if (message.id && message.tag) {
+                            await this.handleRemoveTag(message.id, message.tag);
+                            setTimeout(() => this.loadInitialData(webview), 100);
+                        }
+                        break;
+
+                    case 'manageTags':
+                        if (message.id && message.tags) {
+                            await this.handleManageTags(message.id, message.tags);
+                            setTimeout(() => this.loadInitialData(webview), 100);
+                        }
+                        break;
                 }
             },
             null,
@@ -238,6 +268,84 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             await this.annotationManager.deleteResolved();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to delete resolved: ${error}`);
+        }
+    }
+
+    /**
+     * Add a tag to an annotation
+     */
+    private async handleAddTag(id: string, tag: string) {
+        try {
+            const allAnnotations = this.annotationManager.getAllAnnotations();
+            const annotation = allAnnotations.find((a) => a.id === id);
+
+            if (annotation) {
+                const currentTags = annotation.tags?.map((t: any) =>
+                    typeof t === 'string' ? t : t.id
+                ) || [];
+
+                if (!currentTags.includes(tag)) {
+                    const updatedTags = [...currentTags, tag];
+                    await this.annotationManager.editAnnotation(
+                        id,
+                        annotation.filePath,
+                        annotation.comment,
+                        updatedTags,
+                        annotation.color
+                    );
+                }
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to add tag: ${error}`);
+        }
+    }
+
+    /**
+     * Remove a tag from an annotation
+     */
+    private async handleRemoveTag(id: string, tag: string) {
+        try {
+            const allAnnotations = this.annotationManager.getAllAnnotations();
+            const annotation = allAnnotations.find((a) => a.id === id);
+
+            if (annotation) {
+                const currentTags = annotation.tags?.map((t: any) =>
+                    typeof t === 'string' ? t : t.id
+                ) || [];
+
+                const updatedTags = currentTags.filter(t => t !== tag);
+                await this.annotationManager.editAnnotation(
+                    id,
+                    annotation.filePath,
+                    annotation.comment,
+                    updatedTags,
+                    annotation.color
+                );
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to remove tag: ${error}`);
+        }
+    }
+
+    /**
+     * Manage tags for an annotation (update full tag list)
+     */
+    private async handleManageTags(id: string, tags: string[]) {
+        try {
+            const allAnnotations = this.annotationManager.getAllAnnotations();
+            const annotation = allAnnotations.find((a) => a.id === id);
+
+            if (annotation) {
+                await this.annotationManager.editAnnotation(
+                    id,
+                    annotation.filePath,
+                    annotation.comment,
+                    tags,
+                    annotation.color
+                );
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to manage tags: ${error}`);
         }
     }
 

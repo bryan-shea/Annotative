@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 export interface HtmlBuilderOptions {
   cssUri: string;
   jsUri: string;
+  codiconUri?: string;
   nonce: string;
   cspSource: string;
 }
@@ -17,15 +18,16 @@ export interface HtmlBuilderOptions {
  * Generate the complete webview HTML
  */
 export function generateWebviewHtml(options: HtmlBuilderOptions): string {
-  const { cssUri, jsUri, nonce, cspSource } = options;
+  const { cssUri, jsUri, codiconUri, nonce, cspSource } = options;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource}; script-src 'nonce-${nonce}'; img-src ${cspSource}">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline' https://cdn.jsdelivr.net; font-src ${cspSource} https://cdn.jsdelivr.net; script-src 'nonce-${nonce}'; img-src ${cspSource}">
     <link rel="stylesheet" href="${cssUri}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
     <title>Annotations</title>
 </head>
 <body>
@@ -44,25 +46,6 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
                     <select id="filter-tag" class="filter-select" title="Filter by tag">
                         <option value="all">All Tags</option>
                     </select>
-                </div>
-
-                <!-- Search Row -->
-                <div class="search-row">
-                    <input
-                        id="search-input"
-                        type="text"
-                        class="search-input"
-                        placeholder="Search annotations..."
-                        aria-label="Search annotations"
-                    />
-                    <button
-                        id="btn-clear-search"
-                        class="icon-button search-clear"
-                        title="Clear search"
-                        aria-label="Clear"
-                    >
-                        <span class="icon">close</span>
-                    </button>
                 </div>
 
                 <!-- Group By Row -->
@@ -117,7 +100,7 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
                     class="action-button action-resolve"
                     title="Mark all visible as resolved"
                 >
-                    <span class="icon">check</span>
+                    <i class="codicon codicon-check"></i>
                     <span class="action-label">Resolve All</span>
                 </button>
                 <button
@@ -125,7 +108,7 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
                     class="action-button action-delete"
                     title="Delete all resolved annotations"
                 >
-                    <span class="icon">delete</span>
+                    <i class="codicon codicon-trash"></i>
                     <span class="action-label">Delete Resolved</span>
                 </button>
             </div>
@@ -135,22 +118,37 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
     <!-- Context Menu -->
     <div id="annotation-context-menu" class="context-menu" style="display: none">
         <button class="context-menu-item" data-action="edit">
-            <span class="icon">edit</span>
+            <i class="codicon codicon-edit"></i>
             <span>Edit</span>
         </button>
         <button class="context-menu-item" data-action="toggle">
-            <span class="icon">check_circle</span>
+            <i class="codicon codicon-pass"></i>
             <span>Toggle Resolution</span>
         </button>
         <button class="context-menu-item" data-action="navigate">
-            <span class="icon">arrow_forward</span>
+            <i class="codicon codicon-go-to-file"></i>
             <span>Go to Location</span>
         </button>
         <div class="context-menu-separator"></div>
         <button class="context-menu-item danger" data-action="delete">
-            <span class="icon">delete</span>
+            <i class="codicon codicon-trash"></i>
             <span>Delete</span>
         </button>
+    </div>
+
+    <!-- Tag Picker Modal -->
+    <div id="tag-picker-modal" class="modal" style="display: none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Tag</h3>
+                <button class="modal-close" id="tag-picker-close">
+                    <i class="codicon codicon-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="tag-picker-list" class="tag-picker-list"></div>
+            </div>
+        </div>
     </div>
 
     <script nonce="${nonce}" src="${jsUri}"><\/script>

@@ -14,7 +14,6 @@ const state = {
   filters: {
     status: 'all',
     tag: 'all',
-    search: '',
     groupBy: 'file',
   },
 };
@@ -23,10 +22,7 @@ const state = {
 const elements = {
   statusFilter: document.getElementById('filter-status'),
   tagFilter: document.getElementById('filter-tag'),
-  searchInput: document.getElementById('search-input'),
   groupBySelect: document.getElementById('groupby-select'),
-  clearSearchBtn: document.getElementById('btn-clear-search'),
-  refreshBtn: document.getElementById('btn-refresh'),
   resolveAllBtn: document.getElementById('btn-resolve-all'),
   deleteResolvedBtn: document.getElementById('btn-delete-resolved'),
   annotationsList: document.getElementById('annotations-list'),
@@ -88,6 +84,44 @@ class AnnotationHandlers {
     });
   }
 
+  handleAddTagPrompt(annotation) {
+    // Available tags
+    const availableTags = [
+      'bug', 'performance', 'security', 'style',
+      'improvement', 'docs', 'question', 'ai-review'
+    ];
+
+    // Get current tags
+    const currentTags = annotation.tags?.map((t) => (typeof t === 'string' ? t : t.id)) || [];
+    const filteredTags = availableTags.filter((tag) => !currentTags.includes(tag));
+
+    if (filteredTags.length === 0) {
+      console.log('All tags already added');
+      return;
+    }
+
+    // Show tag picker modal
+    showTagPicker(annotation, filteredTags, (tag) => {
+      this.handleAddTag(annotation.id, tag);
+    });
+  }
+
+  handleAddTag(annotationId, tag) {
+    this.vscode.postMessage({
+      command: 'addTag',
+      id: annotationId,
+      tag: tag,
+    });
+  }
+
+  handleRemoveTag(annotationId, tag) {
+    this.vscode.postMessage({
+      command: 'removeTag',
+      id: annotationId,
+      tag: tag,
+    });
+  }
+
   attachCardHandlers(annotation) {
     const card = document.querySelector(`[data-annotation-id="${annotation.id}"]`);
     if (!card) return;
@@ -116,8 +150,31 @@ class AnnotationHandlers {
       });
     }
 
-    card.addEventListener('click', () => {
-      // Could open detail panel in future
+    // Add tag button
+    const addTagBtn = card.querySelector('[data-action="addTag"]');
+    if (addTagBtn) {
+      addTagBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleAddTagPrompt(annotation);
+      });
+    }
+
+    // Remove tag buttons
+    const removeTagBtns = card.querySelectorAll('[data-action="removeTag"]');
+    removeTagBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tag = btn.dataset.tag;
+        this.handleRemoveTag(annotation.id, tag);
+      });
+    });
+
+    // Make entire card clickable to navigate
+    card.addEventListener('click', (e) => {
+      // Only navigate if not clicking on action buttons or tags
+      if (!e.target.closest('.card-action-btn') && !e.target.closest('.tag-remove') && !e.target.closest('.tag-add')) {
+        this.handleNavigate(annotation);
+      }
     });
   }
 
@@ -142,14 +199,6 @@ function filterAnnotations(annotations, filters) {
         return tagId === filters.tag;
       });
       if (!hasTag) {
-        return false;
-      }
-    }
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const searchText = `${ann.comment} ${ann.filePath}`.toLowerCase();
-      if (!searchText.includes(searchLower)) {
         return false;
       }
     }
@@ -246,9 +295,29 @@ function createAnnotationCard(annotation) {
       const tagEl = document.createElement('span');
       tagEl.className = `tag tag-${tagId}`;
       tagEl.textContent = tagId;
+
+      // Add remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'tag-remove';
+      removeBtn.innerHTML = '<i class="codicon codicon-close"></i>';
+      removeBtn.title = `Remove ${tagId} tag`;
+      removeBtn.dataset.action = 'removeTag';
+      removeBtn.dataset.annotationId = annotation.id;
+      removeBtn.dataset.tag = tagId;
+
+      tagEl.appendChild(removeBtn);
       tagsContainer.appendChild(tagEl);
     });
   }
+
+  // Add "+" button to add tags
+  const addTagBtn = document.createElement('button');
+  addTagBtn.className = 'tag tag-add';
+  addTagBtn.innerHTML = '<i class="codicon codicon-add"></i> Tag';
+  addTagBtn.title = 'Add tag';
+  addTagBtn.dataset.action = 'addTag';
+  addTagBtn.dataset.annotationId = annotation.id;
+  tagsContainer.appendChild(addTagBtn);
 
   footer.appendChild(tagsContainer);
 
@@ -257,21 +326,23 @@ function createAnnotationCard(annotation) {
 
   const gotoBtn = document.createElement('button');
   gotoBtn.className = 'card-action-btn';
-  gotoBtn.textContent = 'goto';
+  gotoBtn.innerHTML = '<i class="codicon codicon-arrow-right"></i>';
   gotoBtn.title = 'Go to annotation';
   gotoBtn.dataset.action = 'navigate';
   gotoBtn.dataset.annotationId = annotation.id;
 
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'card-action-btn';
-  toggleBtn.textContent = annotation.resolved ? 'undo' : 'check';
+  toggleBtn.innerHTML = annotation.resolved
+    ? '<i class="codicon codicon-debug-restart"></i>'
+    : '<i class="codicon codicon-check"></i>';
   toggleBtn.title = annotation.resolved ? 'Mark as unresolved' : 'Mark as resolved';
   toggleBtn.dataset.action = 'toggle';
   toggleBtn.dataset.annotationId = annotation.id;
 
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'card-action-btn';
-  deleteBtn.textContent = 'delete';
+  deleteBtn.innerHTML = '<i class="codicon codicon-trash"></i>';
   deleteBtn.title = 'Delete annotation';
   deleteBtn.dataset.action = 'delete';
   deleteBtn.dataset.annotationId = annotation.id;
@@ -332,7 +403,7 @@ function renderAnnotationsList(container, annotations, groupBy) {
   if (annotations.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">list_alt</div>
+        <i class="codicon codicon-note empty-icon"></i>
         <h3 class="empty-title">No Annotations</h3>
         <p class="empty-text">
           Select code and press <code>Ctrl+Shift+A</code> to add an annotation
@@ -381,21 +452,6 @@ function setupEventListeners() {
   elements.groupBySelect?.addEventListener('change', (e) => {
     state.filters.groupBy = e.target.value;
     applyFiltersAndRender();
-  });
-
-  elements.searchInput?.addEventListener('input', debounce((e) => {
-    state.filters.search = e.target.value;
-    applyFiltersAndRender();
-  }, 300));
-
-  elements.clearSearchBtn?.addEventListener('click', () => {
-    elements.searchInput.value = '';
-    state.filters.search = '';
-    applyFiltersAndRender();
-  });
-
-  elements.refreshBtn?.addEventListener('click', () => {
-    requestAnnotations();
   });
 
   elements.resolveAllBtn?.addEventListener('click', () => {
@@ -502,6 +558,63 @@ function debounce(fn, delay) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn.apply(this, args), delay);
   };
+}
+
+// ==================== Tag Picker Modal ====================
+function showTagPicker(annotation, availableTags, onSelect) {
+  const modal = document.getElementById('tag-picker-modal');
+  const list = document.getElementById('tag-picker-list');
+  const closeBtn = document.getElementById('tag-picker-close');
+
+  if (!modal || !list || !closeBtn) {
+    return;
+  }
+
+  // Clear previous items
+  list.innerHTML = '';
+
+  // Create tag picker items
+  availableTags.forEach((tagId) => {
+    const item = document.createElement('button');
+    item.className = 'tag-picker-item';
+
+    const tagEl = document.createElement('span');
+    tagEl.className = `tag tag-${tagId}`;
+    tagEl.textContent = tagId;
+
+    item.appendChild(tagEl);
+    item.addEventListener('click', () => {
+      onSelect(tagId);
+      hideTagPicker();
+    });
+
+    list.appendChild(item);
+  });
+
+  // Show modal
+  modal.style.display = 'flex';
+
+  // Close button handler
+  const closeHandler = () => {
+    hideTagPicker();
+  };
+
+  closeBtn.addEventListener('click', closeHandler);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      hideTagPicker();
+    }
+  });
+
+  // Store close handler for cleanup
+  modal._closeHandler = closeHandler;
+}
+
+function hideTagPicker() {
+  const modal = document.getElementById('tag-picker-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 // Handlers instance
