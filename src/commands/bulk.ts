@@ -11,7 +11,7 @@ import { CommandContext } from './index';
 /**
  * Helper to convert Tag to string
  */
-function tagToString(tag: any): string {
+function tagToString(tag: string | { id: string }): string {
     return typeof tag === 'string' ? tag : tag.id;
 }
 

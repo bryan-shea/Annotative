@@ -12,7 +12,7 @@ import { CopilotExporter } from '../copilotExporter';
 /**
  * Helper to convert Tag to string
  */
-function tagToString(tag: any): string {
+function tagToString(tag: string | { id: string }): string {
     return typeof tag === 'string' ? tag : tag.id;
 }
 
@@ -253,7 +253,7 @@ export function registerAnnotationCommands(
                 canPickMany: true
             });
 
-            const tagsToUse = selectedTags || (annotation.tags?.map((t: any) => tagToString(t)) || []);
+            const tagsToUse = selectedTags || (annotation.tags?.map((t) => tagToString(t)) || []);
             await annotationManager.editAnnotation(
                 annotation.id,
                 annotation.filePath,

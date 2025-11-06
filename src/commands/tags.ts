@@ -10,7 +10,7 @@ import { CommandContext } from './index';
 /**
  * Helper to convert Tag to string
  */
-function tagToString(tag: any): string {
+function tagToString(tag: string | { id: string }): string {
     return typeof tag === 'string' ? tag : tag.id;
 }
 
@@ -33,7 +33,7 @@ export function registerTagCommands(
             ];
 
             // Filter out tags already on the annotation
-            const currentTags = annotation.tags?.map((t: any) => tagToString(t)) || [];
+            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
             const filteredTags = availableTags.filter(tag => !currentTags.includes(tag));
 
             if (filteredTags.length === 0) {
@@ -72,7 +72,7 @@ export function registerTagCommands(
             const annotation = item.annotation;
 
             // Get current tags
-            const currentTags = annotation.tags?.map((t: any) => tagToString(t)) || [];
+            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
 
             if (currentTags.length === 0) {
                 vscode.window.showInformationMessage('This annotation has no tags!');
@@ -119,7 +119,7 @@ export function registerTagCommands(
             ];
 
             // Get current tags
-            const currentTags = annotation.tags?.map((t: any) => tagToString(t)) || [];
+            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
 
             // Let user select tags (multi-select)
             const selectedTags = await vscode.window.showQuickPick(availableTags, {

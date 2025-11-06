@@ -96,7 +96,7 @@ class AnnotationHandlers {
     const filteredTags = availableTags.filter((tag) => !currentTags.includes(tag));
 
     if (filteredTags.length === 0) {
-      console.log('All tags already added');
+      // All tags already added - no action needed
       return;
     }
 

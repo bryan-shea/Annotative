@@ -280,7 +280,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t: any) =>
+                const currentTags = annotation.tags?.map((t) =>
                     typeof t === 'string' ? t : t.id
                 ) || [];
 
@@ -309,7 +309,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t: any) =>
+                const currentTags = annotation.tags?.map((t) =>
                     typeof t === 'string' ? t : t.id
                 ) || [];
 
