@@ -1,3 +1,9 @@
+## [1.3.2] - 2025-11-06
+
+### Changes
+- 0c0a008 Revise README description for Annotative extension
+
+
 ## [1.3.1] - 2025-11-06
 
 ### Changes
