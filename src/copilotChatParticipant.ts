@@ -1,7 +1,14 @@
 import * as vscode from 'vscode';
-import { AnnotationManager } from './annotationManager';
+import { AnnotationManager } from './managers';
 import { CopilotExporter } from './copilotExporter';
-import { Annotation } from './types';
+import { Annotation, Tag } from './types';
+
+/**
+ * Convert Tag (string | AnnotationTag) to string ID
+ */
+function tagToString(tag: Tag): string {
+    return typeof tag === 'string' ? tag : tag.id;
+}
 
 /**
  * Register the @annotative chat participant for GitHub Copilot Chat
@@ -191,7 +198,7 @@ async function handleFixCommand(
     if (tagMatch) {
         const tag = tagMatch[1].toLowerCase();
         annotations = manager.getAllAnnotations().filter(a =>
-            !a.resolved && a.tags?.some(t => t.toLowerCase() === tag)
+            !a.resolved && a.tags?.some(t => tagToString(t).toLowerCase() === tag)
         );
         stream.markdown(`# Fix Suggestions for '${tag}' Annotations\n\n`);
     } else {
@@ -218,8 +225,9 @@ async function handleFixCommand(
         stream.markdown(`**Issue:** ${annotation.comment}\n\n`);
 
         if (annotation.tags && annotation.tags.length > 0) {
-            const emoji = getTagEmoji(annotation.tags[0]);
-            stream.markdown(`**Type:** ${emoji} ${annotation.tags.join(', ')}\n\n`);
+            const emoji = getTagEmoji(tagToString(annotation.tags[0]));
+            const tagStrings = annotation.tags.map(t => tagToString(t)).join(', ');
+            stream.markdown(`**Type:** ${emoji} ${tagStrings}\n\n`);
         }
 
         stream.markdown(`**Suggested Fix:**\n`);
@@ -325,7 +333,7 @@ function generateAnalysisPrompt(annotation: Annotation): string {
         return 'This appears to be a general code review note. Let me analyze the code for potential improvements.';
     }
 
-    const tag = annotation.tags[0].toLowerCase();
+    const tag = tagToString(annotation.tags[0]).toLowerCase();
 
     switch (tag) {
         case 'security':
@@ -350,7 +358,7 @@ function generateFixSuggestion(annotation: Annotation): string {
         return '*Review the code and apply best practices for your language and framework.*';
     }
 
-    const tag = annotation.tags[0].toLowerCase();
+    const tag = tagToString(annotation.tags[0]).toLowerCase();
 
     switch (tag) {
         case 'security':
@@ -374,8 +382,8 @@ function prioritizeAnnotations(annotations: Annotation[]): Annotation[] {
     const priority = { security: 0, bug: 1, performance: 2 };
 
     return annotations.sort((a, b) => {
-        const aTag = a.tags?.[0]?.toLowerCase() || 'zzz';
-        const bTag = b.tags?.[0]?.toLowerCase() || 'zzz';
+        const aTag = a.tags?.[0] ? tagToString(a.tags[0]).toLowerCase() : 'zzz';
+        const bTag = b.tags?.[0] ? tagToString(b.tags[0]).toLowerCase() : 'zzz';
         const aPriority = priority[aTag as keyof typeof priority] ?? 99;
         const bPriority = priority[bTag as keyof typeof priority] ?? 99;
         return aPriority - bPriority;

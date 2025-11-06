@@ -1,0 +1,657 @@
+/* ==================== Annotative Webview - Sidebar CSS ==================== */
+/* Uses VS Code theme variables for automatic light/dark mode support */
+
+:root {
+  /* Spacing System */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+
+  --border-radius: 6px;
+  --border-radius-sm: 4px;
+  --transition: all 0.2s ease-in-out;
+
+  /* VS Code Theme Variables - Automatically adapt to light/dark mode */
+  --vscode-foreground: var(--vscode-foreground, #e0e0e0);
+  --vscode-background: var(--vscode-sideBar-background, #252526);
+  --vscode-button-foreground: var(--vscode-button-foreground, #ffffff);
+  --vscode-button-background: var(--vscode-button-background, #0e639c);
+  --vscode-button-hoverBackground: var(
+    --vscode-button-hoverBackground,
+    #1177bb
+  );
+  --vscode-inputBox-background: var(--vscode-inputBox-background, #3c3c3c);
+  --vscode-inputBox-foreground: var(--vscode-inputBox-foreground, #cccccc);
+  --vscode-inputBox-border: var(--vscode-inputBox-border, transparent);
+
+  /* Tag Colors - Themed for both light and dark modes */
+  --tag-bg-default: var(--vscode-badge-background, rgba(100, 150, 200, 0.2));
+  --tag-text-default: var(--vscode-badge-foreground, #6496c8);
+
+  --tag-bg-bug: rgba(255, 100, 100, 0.15);
+  --tag-text-bug: #ff6464;
+
+  --tag-bg-performance: rgba(255, 200, 0, 0.15);
+  --tag-text-performance: #ffc800;
+
+  --tag-bg-security: rgba(200, 0, 100, 0.15);
+  --tag-text-security: #c80064;
+
+  --tag-bg-docs: rgba(100, 200, 200, 0.15);
+  --tag-text-docs: #64c8c8;
+
+  --tag-bg-improvement: rgba(150, 100, 200, 0.15);
+  --tag-text-improvement: #9664c8;
+
+  --tag-bg-style: rgba(100, 200, 100, 0.15);
+  --tag-text-style: #64c864;
+
+  --tag-bg-question: rgba(200, 150, 100, 0.15);
+  --tag-text-question: #c89664;
+}
+
+/* ==================== Reset & Base ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(
+    --vscode-fontFamily,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif
+  );
+  font-size: var(--vscode-fontSize, 13px);
+  line-height: var(--vscode-lineHeight, 1.6);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+}
+
+button,
+select,
+input {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ==================== Layout ==================== */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== Header Controls ==================== */
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition);
+}
+
+.icon-button:hover {
+  background-color: var(
+    --vscode-button-hoverBackground,
+    rgba(255, 255, 255, 0.1)
+  );
+}
+
+.icon-button:active {
+  background-color: var(
+    --vscode-button-hoverBackground,
+    rgba(255, 255, 255, 0.15)
+  );
+}
+
+.icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+}
+
+/* ==================== Controls Section ==================== */
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  padding-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.filter-row,
+.search-row,
+.groupby-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.filter-select,
+.search-input {
+  flex: 1;
+  padding: var(--spacing-sm);
+  background-color: var(--vscode-inputBox-background);
+  border: 1px solid var(--vscode-inputBox-border);
+  color: var(--vscode-inputBox-foreground);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  transition: var(--transition);
+}
+
+.filter-select:focus,
+.search-input:focus {
+  border-color: var(--vscode-focusBorder, #007acc);
+  outline: 1px solid var(--vscode-focusBorder, #007acc);
+  outline-offset: -1px;
+}
+
+.filter-select:hover,
+.search-input:hover {
+  border-color: var(--vscode-inputBox-border, #3c3c3c);
+}
+
+.filter-select:hover,
+.search-input:hover {
+  border-color: var(--color-primary);
+}
+
+.filter-select:focus,
+.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(14, 99, 156, 0.2);
+}
+
+.groupby-label {
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.search-clear {
+  flex-shrink: 0;
+}
+
+/* ==================== Annotations Section ==================== */
+.annotations-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: var(--spacing-md);
+  overflow: hidden;
+}
+
+.annotations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* Scrollbar Styling */
+.annotations-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.annotations-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.annotations-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.annotations-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==================== Empty State ==================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  color: var(--vscode-descriptionForeground);
+  text-align: center;
+  min-height: 200px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty-text {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.empty-text code {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-sm);
+  padding: 2px 4px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* ==================== Annotation Cards ==================== */
+.annotation-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+}
+
+.annotation-card:hover {
+  background-color: var(--card-bg-hover);
+  border-color: var(--color-primary);
+}
+
+.annotation-card.resolved {
+  opacity: 0.6;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.card-file {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vscode-descriptionForeground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-status {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+}
+
+.card-status.unresolved {
+  background-color: rgba(255, 100, 100, 0.2);
+  color: #ff6464;
+}
+
+.card-status.resolved {
+  background-color: rgba(137, 209, 133, 0.2);
+  color: #89d185;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.card-comment {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vscode-foreground);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  background-color: var(--tag-bg-default);
+  color: var(--tag-text-default);
+}
+
+.tag-bug {
+  background-color: var(--tag-bg-bug);
+  color: var(--tag-text-bug);
+}
+
+.tag-performance {
+  background-color: var(--tag-bg-performance);
+  color: var(--tag-text-performance);
+}
+
+.tag-security {
+  background-color: var(--tag-bg-security);
+  color: var(--tag-text-security);
+}
+
+.tag-docs {
+  background-color: var(--tag-bg-docs);
+  color: var(--tag-text-docs);
+}
+
+.tag-improvement {
+  background-color: var(--tag-bg-improvement);
+  color: var(--tag-text-improvement);
+}
+
+.tag-style {
+  background-color: var(--tag-bg-style);
+  color: var(--tag-text-style);
+}
+
+.tag-question {
+  background-color: var(--tag-bg-question);
+  color: var(--tag-text-question);
+}
+
+.card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.card-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--vscode-foreground);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.card-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-primary);
+}
+
+/* ==================== Group Headers ==================== */
+.group-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.group-header:first-child {
+  margin-top: 0;
+}
+
+/* ==================== Statistics ==================== */
+.stats-row {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.stat-value.unresolved {
+  color: #ff6464;
+}
+
+.stat-value.resolved {
+  color: #89d185;
+}
+
+/* ==================== Bulk Actions ==================== */
+.bulk-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.action-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.action-button:active {
+  background-color: var(--vscode-button-hoverBackground);
+  opacity: 0.8;
+}
+
+.action-resolve {
+  background-color: rgba(137, 209, 133, 0.2);
+  color: #89d185;
+  border: 1px solid rgba(137, 209, 133, 0.3);
+}
+
+.action-resolve:hover {
+  background-color: rgba(137, 209, 133, 0.3);
+  border-color: rgba(137, 209, 133, 0.5);
+}
+
+.action-delete {
+  background-color: rgba(255, 100, 100, 0.2);
+  color: #ff6464;
+  border: 1px solid rgba(255, 100, 100, 0.3);
+}
+
+.action-delete:hover {
+  background-color: rgba(255, 100, 100, 0.3);
+  border-color: rgba(255, 100, 100, 0.5);
+}
+
+.action-label {
+  display: none;
+}
+
+@media (min-width: 400px) {
+  .action-label {
+    display: inline;
+  }
+}
+
+/* ==================== Context Menu ==================== */
+.context-menu {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background-color: var(--vscode-menu-background);
+  border: 1px solid var(--vscode-menu-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background-color: transparent;
+  color: var(--vscode-foreground);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.context-menu-item:hover {
+  background-color: var(--vscode-menu-selectionBackground);
+}
+
+.context-menu-item.danger {
+  color: #ff6464;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 2px 0;
+}
+
+/* ==================== Utilities ==================== */
+.hidden {
+  display: none !important;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.no-scroll {
+  overflow: hidden;
+}
+
+/* ==================== Light Mode Overrides ==================== */
+@media (prefers-color-scheme: light) {
+  .filter-select,
+  .search-input {
+    background-color: var(--vscode-inputBox-background, #ffffff);
+    color: var(--vscode-inputBox-foreground, #333333);
+    border-color: var(--vscode-inputBox-border, #cccccc);
+  }
+
+  .action-button {
+    background-color: var(--vscode-button-background, #0e639c);
+    color: var(--vscode-button-foreground, #ffffff);
+  }
+
+  .filter-select option,
+  select option {
+    background-color: var(--vscode-inputBox-background, #ffffff);
+    color: var(--vscode-inputBox-foreground, #333333);
+  }
+}
+
+/* ==================== Dark Mode Overrides ==================== */
+@media (prefers-color-scheme: dark) {
+  .filter-select,
+  .search-input {
+    background-color: var(--vscode-inputBox-background, #3c3c3c);
+    color: var(--vscode-inputBox-foreground, #cccccc);
+    border-color: var(--vscode-inputBox-border, #555555);
+  }
+
+  .filter-select option,
+  select option {
+    background-color: var(--vscode-inputBox-background, #3c3c3c);
+    color: var(--vscode-inputBox-foreground, #cccccc);
+  }
+}

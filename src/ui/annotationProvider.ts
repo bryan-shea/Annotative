@@ -1,12 +1,23 @@
 import * as vscode from 'vscode';
 import { Annotation } from '../types';
-import { AnnotationManager } from '../annotationManager';
+import { AnnotationManager } from '../managers';
+import {
+    AnnotationItem,
+    AnnotationFileItem,
+    GroupCategoryItem,
+    AnnotationFolderItem,
+    type TreeItem
+} from './treeItems';
+import { filterAnnotations, type FilterStatus, type FilterTag } from './filtering';
+import {
+    groupByFile,
+    groupByTag,
+    groupByStatus,
+    groupByFolder,
+    groupByPriority
+} from './grouping';
 
-export type TreeItem = AnnotationItem | AnnotationFileItem | GroupCategoryItem;
-
-export type FilterStatus = 'all' | 'unresolved' | 'resolved';
-export type FilterTag = 'all' | string;
-export type GroupBy = 'file' | 'tag' | 'status';
+export type GroupBy = 'file' | 'tag' | 'status' | 'folder' | 'priority';
 
 export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
@@ -77,8 +88,8 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
 
     selectAllAnnotations(): void {
         const allAnnotations = this.annotationManager.getAllAnnotations();
-        const filtered = this.filterAnnotations(allAnnotations);
-        filtered.forEach(ann => this.selectedAnnotationIds.add(ann.id));
+        const filtered = this.filterAnnotationsInternal(allAnnotations);
+        filtered.forEach((ann: Annotation) => this.selectedAnnotationIds.add(ann.id));
     }
 
     deselectAllAnnotations(): void {
@@ -98,38 +109,8 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
         return this.selectedAnnotationIds.has(annotationId);
     }
 
-    private filterAnnotations(annotations: Annotation[]): Annotation[] {
-        return annotations.filter(annotation => {
-            // Filter by status
-            if (this.filterStatus === 'resolved' && !annotation.resolved) {
-                return false;
-            }
-            if (this.filterStatus === 'unresolved' && annotation.resolved) {
-                return false;
-            }
-
-            // Filter by tag
-            if (this.filterTag !== 'all') {
-                if (!annotation.tags || !annotation.tags.includes(this.filterTag)) {
-                    return false;
-                }
-            }
-
-            // Filter by search query
-            if (this.searchQuery) {
-                const searchLower = this.searchQuery;
-                const commentMatch = annotation.comment.toLowerCase().includes(searchLower);
-                const textMatch = annotation.text.toLowerCase().includes(searchLower);
-                const authorMatch = annotation.author.toLowerCase().includes(searchLower);
-                const tagMatch = annotation.tags?.some(tag => tag.toLowerCase().includes(searchLower));
-
-                if (!commentMatch && !textMatch && !authorMatch && !tagMatch) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+    private filterAnnotationsInternal(annotations: Annotation[]): Annotation[] {
+        return filterAnnotations(annotations, this.filterStatus, this.filterTag, this.searchQuery);
     }
 
     getTreeItem(element: TreeItem): vscode.TreeItem {
@@ -140,208 +121,83 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
         if (!element) {
             // Root level - organize based on groupBy setting
             const allAnnotations = this.annotationManager.getAllAnnotations();
-            const filteredAnnotations = this.filterAnnotations(allAnnotations);
+            const filteredAnnotations = this.filterAnnotationsInternal(allAnnotations);
 
             if (this.groupBy === 'file') {
-                return this.getChildrenGroupedByFile(filteredAnnotations);
+                return Promise.resolve(groupByFile(filteredAnnotations) as TreeItem[]);
             } else if (this.groupBy === 'tag') {
-                return this.getChildrenGroupedByTag(filteredAnnotations);
+                return Promise.resolve(groupByTag(filteredAnnotations) as TreeItem[]);
+            } else if (this.groupBy === 'folder') {
+                return Promise.resolve(groupByFolder(filteredAnnotations) as TreeItem[]);
+            } else if (this.groupBy === 'priority') {
+                return Promise.resolve(groupByPriority(filteredAnnotations) as TreeItem[]);
             } else {
-                return this.getChildrenGroupedByStatus(filteredAnnotations);
+                return Promise.resolve(groupByStatus(filteredAnnotations) as TreeItem[]);
             }
         } else if (element instanceof AnnotationFileItem) {
             // Show annotations for the file
             const annotations = this.annotationManager.getAnnotationsForFile(element.filePath);
-            const filteredAnnotations = this.filterAnnotations(annotations);
-            const annotationItems = filteredAnnotations.map(annotation =>
+            const filteredAnnotations = this.filterAnnotationsInternal(annotations);
+            const annotationItems = filteredAnnotations.map((annotation: Annotation) =>
                 new AnnotationItem(
                     annotation,
                     vscode.TreeItemCollapsibleState.None,
                     this.isAnnotationSelected(annotation.id)
                 )
             );
-            return Promise.resolve(annotationItems);
-        } else if (element instanceof GroupCategoryItem) {
-            // Show annotations for this group
-            const annotationItems = element.annotations.map(annotation =>
-                new AnnotationItem(
-                    annotation,
-                    vscode.TreeItemCollapsibleState.None,
-                    this.isAnnotationSelected(annotation.id)
-                )
-            );
-            return Promise.resolve(annotationItems);
-        }
+            return Promise.resolve(annotationItems as TreeItem[]);
+        } else if (element instanceof AnnotationFolderItem) {
+            // Show files in this folder
+            const fileItems: TreeItem[] = [];
+            const folderFiles = new Set<string>();
 
-        return Promise.resolve([]);
-    }
+            element.files.forEach(filePath => {
+                folderFiles.add(filePath);
+            });
 
-    private getChildrenGroupedByFile(annotations: Annotation[]): Promise<TreeItem[]> {
-        const fileGroups = new Map<string, Annotation[]>();
+            const folderAnnotations = this.annotationManager.getAllAnnotations()
+                .filter(ann => folderFiles.has(ann.filePath));
+            const filteredAnnotations = this.filterAnnotationsInternal(folderAnnotations);
 
-        annotations.forEach(annotation => {
-            if (!fileGroups.has(annotation.filePath)) {
-                fileGroups.set(annotation.filePath, []);
-            }
-            fileGroups.get(annotation.filePath)!.push(annotation);
-        });
+            // Group by file within folder
+            const fileGroups = new Map<string, Annotation[]>();
+            filteredAnnotations.forEach((annotation: Annotation) => {
+                if (!fileGroups.has(annotation.filePath)) {
+                    fileGroups.set(annotation.filePath, []);
+                }
+                fileGroups.get(annotation.filePath)!.push(annotation);
+            });
 
-        const fileItems: TreeItem[] = [];
-        fileGroups.forEach((annotations, filePath) => {
-            const unresolvedCount = annotations.filter(a => !a.resolved).length;
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            fileGroups.forEach((annotations, filePath) => {
+                const unresolvedCount = annotations.filter(a => !a.resolved).length;
+                const fileName = filePath.split(/[\\/]/).pop() || filePath;
 
-            fileItems.push(new AnnotationFileItem(
-                relativePath,
-                filePath,
-                annotations.length,
-                unresolvedCount,
-                vscode.TreeItemCollapsibleState.Expanded
-            ));
-        });
-
-        return Promise.resolve(fileItems);
-    }
-
-    private getChildrenGroupedByTag(annotations: Annotation[]): Promise<TreeItem[]> {
-        const tagGroups = new Map<string, Annotation[]>();
-        const untaggedAnnotations: Annotation[] = [];
-
-        annotations.forEach(annotation => {
-            if (!annotation.tags || annotation.tags.length === 0) {
-                untaggedAnnotations.push(annotation);
-            } else {
-                annotation.tags.forEach(tag => {
-                    if (!tagGroups.has(tag)) {
-                        tagGroups.set(tag, []);
-                    }
-                    tagGroups.get(tag)!.push(annotation);
-                });
-            }
-        });
-
-        const tagItems: TreeItem[] = [];
-
-        // Add tagged groups
-        Array.from(tagGroups.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .forEach(([tag, anns]) => {
-                tagItems.push(new GroupCategoryItem(
-                    `${tag} (${anns.length})`,
-                    anns,
+                fileItems.push(new AnnotationFileItem(
+                    fileName,
+                    filePath,
+                    annotations.length,
+                    unresolvedCount,
                     vscode.TreeItemCollapsibleState.Expanded
                 ));
             });
 
-        // Add untagged group if there are any
-        if (untaggedAnnotations.length > 0) {
-            tagItems.push(new GroupCategoryItem(
-                `Untagged (${untaggedAnnotations.length})`,
-                untaggedAnnotations,
-                vscode.TreeItemCollapsibleState.Expanded
-            ));
+            return Promise.resolve(fileItems);
+        } else if (element instanceof GroupCategoryItem) {
+            // Show annotations for this group
+            const annotationItems = element.annotations.map((annotation: Annotation) =>
+                new AnnotationItem(
+                    annotation,
+                    vscode.TreeItemCollapsibleState.None,
+                    this.isAnnotationSelected(annotation.id)
+                )
+            );
+            return Promise.resolve(annotationItems as TreeItem[]);
         }
 
-        return Promise.resolve(tagItems);
-    }
-
-    private getChildrenGroupedByStatus(annotations: Annotation[]): Promise<TreeItem[]> {
-        const openAnnotations = annotations.filter(a => !a.resolved);
-        const resolvedAnnotations = annotations.filter(a => a.resolved);
-
-        const statusItems: TreeItem[] = [];
-
-        if (openAnnotations.length > 0) {
-            statusItems.push(new GroupCategoryItem(
-                `Open (${openAnnotations.length})`,
-                openAnnotations,
-                vscode.TreeItemCollapsibleState.Expanded
-            ));
-        }
-
-        if (resolvedAnnotations.length > 0) {
-            statusItems.push(new GroupCategoryItem(
-                `Resolved (${resolvedAnnotations.length})`,
-                resolvedAnnotations,
-                vscode.TreeItemCollapsibleState.Expanded
-            ));
-        }
-
-        if (statusItems.length === 0) {
-            statusItems.push(new GroupCategoryItem(
-                'No annotations',
-                [],
-                vscode.TreeItemCollapsibleState.None
-            ));
-        }
-
-        return Promise.resolve(statusItems);
+        return Promise.resolve([]);
     }
 }
 
-export class AnnotationItem extends vscode.TreeItem {
-    constructor(
-        public readonly annotation: Annotation,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly isSelected: boolean = false
-    ) {
-        const statusIcon = annotation.resolved ? '✓' : '○';
-        const selectedIcon = isSelected ? '☑ ' : '☐ ';
-        const preview = annotation.comment.length > 45
-            ? annotation.comment.substring(0, 42) + '...'
-            : annotation.comment;
-        const tagsLabel = annotation.tags && annotation.tags.length > 0 ? ` [${annotation.tags.join(', ')}]` : '';
-
-        super(`${selectedIcon}${statusIcon} Line ${annotation.range.start.line + 1}: ${preview}${tagsLabel}`, collapsibleState);
-
-        const statusText = annotation.resolved ? 'Resolved' : 'Open';
-        this.tooltip = `${annotation.comment}\n\nStatus: ${statusText}\nAuthor: ${annotation.author}\nDate: ${annotation.timestamp.toLocaleString()}`;
-        this.description = annotation.author;
-        this.contextValue = annotation.resolved ? 'resolvedAnnotation' : 'unresolvedAnnotation';
-        this.iconPath = this.getIconPath();
-
-        // Command to navigate to the annotation
-        this.command = {
-            command: 'annotative.goToAnnotation',
-            title: 'Go to Annotation',
-            arguments: [annotation]
-        };
-    }
-
-    private getIconPath(): vscode.ThemeIcon {
-        if (this.annotation.resolved) {
-            return new vscode.ThemeIcon('check-all', new vscode.ThemeColor('testing.iconPassed'));
-        }
-        return new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('testing.iconQueued'));
-    }
-}
-
-export class GroupCategoryItem extends vscode.TreeItem {
-    constructor(
-        public readonly label: string,
-        public readonly annotations: Annotation[],
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
-    ) {
-        super(label, collapsibleState);
-
-        this.contextValue = 'annotationGroup';
-        this.iconPath = new vscode.ThemeIcon('folder-outline');
-    }
-}
-
-export class AnnotationFileItem extends vscode.TreeItem {
-    constructor(
-        public readonly label: string,
-        public readonly filePath: string,
-        public readonly totalCount: number,
-        public readonly unresolvedCount: number,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
-    ) {
-        super(label, collapsibleState);
-
-        this.tooltip = `${totalCount} total annotations, ${unresolvedCount} unresolved`;
-        this.description = `${unresolvedCount}/${totalCount}`;
-        this.contextValue = 'annotationFile';
-        this.iconPath = new vscode.ThemeIcon('file-code');
-    }
-}
+// Export types for use in extension.ts
+export type { TreeItem };
+export { AnnotationItem };

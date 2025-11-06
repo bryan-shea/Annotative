@@ -14,6 +14,28 @@ export interface AIConversation {
     resolved: boolean;
 }
 
+// Enhanced tag system
+export type TagCategory = 'issue' | 'action' | 'reference' | 'meta' | 'custom';
+export type TagPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface TagMetadata {
+    priority?: TagPriority;
+    color?: string;
+    icon?: string;
+    description?: string;
+}
+
+export interface AnnotationTag {
+    id: string;
+    name: string;
+    category: TagCategory;
+    metadata?: TagMetadata;
+    isPreset: boolean; // whether this is a built-in preset
+}
+
+// Backward compatibility: accept both string and AnnotationTag
+export type Tag = string | AnnotationTag;
+
 export interface Annotation {
     id: string;
     filePath: string;
@@ -23,7 +45,8 @@ export interface Annotation {
     author: string;
     timestamp: Date;
     resolved: boolean;
-    tags?: string[];
+    tags?: Tag[];
+    priority?: TagPriority;
     color?: string; // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
 }
@@ -35,6 +58,18 @@ export interface AnnotationDecoration {
 
 export interface AnnotationStorage {
     workspaceAnnotations: { [filePath: string]: Annotation[] };
+}
+
+// Tag management
+export interface TagRegistry {
+    presetTags: Map<string, AnnotationTag>;
+    customTags: Map<string, AnnotationTag>;
+}
+
+export interface TagSuggestion {
+    tag: AnnotationTag;
+    confidence: number; // 0-1
+    reason: 'keyword' | 'pattern' | 'context' | 'history';
 }
 
 export interface ExportData {
@@ -56,4 +91,11 @@ export interface CopilotExportOptions {
     includeImports?: boolean;
     includeFunction?: boolean;
     smartContext?: boolean;
+}
+
+export interface AnnotationStatistics {
+    total: number;
+    resolved: number;
+    unresolved: number;
+    byFile: Map<string, { total: number; resolved: number; unresolved: number }>;
 }

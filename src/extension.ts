@@ -1,12 +1,20 @@
 import * as vscode from 'vscode';
-import { AnnotationManager } from './annotationManager';
-import { AnnotationProvider, TreeItem, AnnotationItem } from './ui/annotationProvider';
+import { AnnotationManager } from './managers';
+import { AnnotationProvider, TreeItem, AnnotationItem, SidebarWebview } from './ui';
 import { CopilotExporter } from './copilotExporter';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
-import { Annotation } from './types';
+import { Annotation, Tag } from './types';
+
+/**
+ * Convert Tag (string | AnnotationTag) to string ID
+ */
+function tagToString(tag: Tag): string {
+    return typeof tag === 'string' ? tag : tag.id;
+}
 
 let annotationManager: AnnotationManager;
 let annotationProvider: AnnotationProvider;
+let sidebarWebview: SidebarWebview;
 
 // Predefined color palette for annotations - user's visual preference only
 const ANNOTATION_COLORS = [
@@ -71,12 +79,22 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize annotation manager
     annotationManager = new AnnotationManager(context);
 
-    // Initialize annotation provider for the sidebar
+    // Initialize sidebar webview provider for the sidebar view
+    sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            SidebarWebview.viewType,
+            sidebarWebview,
+            {
+                webviewOptions: {
+                    retainContextWhenHidden: true,
+                },
+            }
+        )
+    );
+
+    // Keep annotation provider for backward compatibility (not used in UI)
     annotationProvider = new AnnotationProvider(annotationManager);
-    const treeView = vscode.window.createTreeView('annotativeView', {
-        treeDataProvider: annotationProvider,
-        showCollapseAll: true
-    });
 
     // Register Copilot Chat Participant (@annotative)
     const chatParticipant = registerChatParticipant(context, annotationManager);
@@ -452,11 +470,12 @@ export function activate(context: vscode.ExtensionContext) {
                 // Pre-select existing tags
             });
 
+            const tagsToUse = selectedTags || (annotation.tags?.map(t => tagToString(t)) || []);
             await annotationManager.editAnnotation(
                 annotation.id,
                 annotation.filePath,
                 comment,
-                selectedTags !== undefined ? selectedTags : annotation.tags,
+                tagsToUse,
                 color
             );
             refreshAllViews();
@@ -487,8 +506,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Command: Undo last annotation
     const undoLastAnnotationCommand = vscode.commands.registerCommand(
         'annotative.undoLastAnnotation',
-        () => {
-            const undoneAnnotation = annotationManager.undoLastAnnotation();
+        async () => {
+            const undoneAnnotation = await annotationManager.undoLastAnnotation();
             if (undoneAnnotation) {
                 refreshAllViews();
                 vscode.window.showInformationMessage('Last annotation removed');
@@ -894,7 +913,8 @@ export function activate(context: vscode.ExtensionContext) {
                 const tagCounts = new Map<string, number>();
                 toReview.forEach(a => {
                     a.tags?.forEach(tag => {
-                        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+                        const tagStr = tagToString(tag);
+                        tagCounts.set(tagStr, (tagCounts.get(tagStr) || 0) + 1);
                     });
                 });
 
@@ -981,7 +1001,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (newTags && newTags.length > 0) {
                 for (const annotation of selected) {
-                    const updated = new Set(annotation.tags || []);
+                    const updated = new Set((annotation.tags || []).map(t => tagToString(t)));
                     newTags.forEach(tag => updated.add(tag));
                     await annotationManager.editAnnotation(
                         annotation.id,
@@ -1066,11 +1086,12 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (selectedColor) {
                 for (const annotation of selected) {
+                    const tagsStr = annotation.tags?.map(t => tagToString(t));
                     await annotationManager.editAnnotation(
                         annotation.id,
                         annotation.filePath,
                         annotation.comment,
-                        annotation.tags,
+                        tagsStr,
                         selectedColor.value
                     );
                 }
@@ -1099,6 +1120,22 @@ export function activate(context: vscode.ExtensionContext) {
             annotationProvider.deselectAllAnnotations();
             refreshAllViews();
             vscode.window.showInformationMessage('Deselected all annotations');
+        }
+    );
+
+    // Command: Show sidebar (opens/focuses webview panel)
+    const showSidebarCommand = vscode.commands.registerCommand(
+        'annotative.showSidebar',
+        () => {
+            sidebarWebview.show();
+        }
+    );
+
+    // Command: Toggle sidebar visibility
+    const toggleSidebarCommand = vscode.commands.registerCommand(
+        'annotative.toggleSidebar',
+        () => {
+            sidebarWebview.toggle();
         }
     );
 
@@ -1150,14 +1187,19 @@ export function activate(context: vscode.ExtensionContext) {
         bulkColorCommand,
         selectAllCommand,
         deselectAllCommand,
+        showSidebarCommand,
+        toggleSidebarCommand,
         onDidChangeActiveTextEditor,
-        treeView,
         annotationManager
     );
 }
 
+
 export function deactivate() {
     if (annotationManager) {
         annotationManager.dispose();
+    }
+    if (sidebarWebview) {
+        sidebarWebview.dispose();
     }
 }

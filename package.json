@@ -5,7 +5,7 @@
   "version": "1.2.6",
   "publisher": "bryan-shea",
   "license": "MIT",
-  "icon": "media/icon.png",
+  "icon": "media/annotative-logo/128px/annotative-logo.png",
   "homepage": "https://github.com/bryan-shea/Annotative",
   "repository": {
     "type": "git",
@@ -177,6 +177,7 @@
         {
           "id": "annotativeView",
           "name": "Annotations",
+          "type": "webview",
           "when": "true"
         }
       ]
@@ -451,6 +452,7 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.2",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^9.36.0",
     "husky": "^9.1.7",
     "ts-loader": "^9.5.4",
