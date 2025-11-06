@@ -1,3 +1,13 @@
+## [1.3.0] - 2025-11-06
+
+### Changes
+- 0ae7212 Merge pull request #8 from bryan-shea/feature-enrichment
+- a00f52d refactor: update tagToString function to accept more specific types and clean up tag mapping
+- c99ecdf feat: enhance overall ux via webview, add tag crud ops
+- 6a7bded feat: Enhance annotation management with tag functionality
+- 1e6cf48 feat: Implement tag suggestion engine and validation utilities
+
+
 # Changelog
 
 All notable changes to the Annotative extension.
