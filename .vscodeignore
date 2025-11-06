@@ -36,4 +36,5 @@ README-DEV.md
 
 # Media (except icon)
 media/**
+!media/annotative-logo/**
 !media/icon.png
