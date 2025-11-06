@@ -1,3 +1,9 @@
+## [1.3.1] - 2025-11-06
+
+### Changes
+- 6562cd4 fix: include annotative-logo directory in extension package
+
+
 ## [1.3.0] - 2025-11-06
 
 ### Changes
