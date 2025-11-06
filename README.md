@@ -1,5 +1,7 @@
 # Annotative
 
+![Annotative Logo](media/annotative-logo/128px/annotative-logo.png)
+
 Simple, powerful code annotation for VS Code. Perfect for reviewing AI-generated code, collaborating on pull requests, and documenting your work.
 
 Highlight code, add notes with tags, choose colors, and export as Markdown. Stay organized without leaving your editor.
@@ -161,15 +163,25 @@ See [LICENSE](LICENSE) for details.
 
 ## Recent Updates
 
-### Version 1.3.0 - Bulk Operations & Flexible Organization
+### Version 1.2.6 (Current) - Latest Stable Release
 
-- Decoupled colors from annotation types - colors are now purely visual preference
-- Multiple organization modes: group by file, tag, or status
-- Bulk annotation operations: tag, resolve, delete, and change color in batches
-- Multi-select annotations with visual checkboxes
-- Improved sidebar with status indicators and inline tags
-- Enhanced flexibility for managing large annotation sets
-- Simplified color picker without forced associations
+- Icon and UI refinements
+- Bug fixes and stability improvements
+
+### Version 1.2.0 - Simplified UI & Color Customization
+
+- 8-color picker for visual annotation preference
+- Replaced complex webview with lightweight input boxes
+- Native VS Code UI components for better performance
+- Full MIT open source license
+
+### Version 1.1.0 - Enhanced User Experience
+
+- Filtering system (status, tags, search)
+- Editing capabilities for annotations
+- Bulk operations (resolve all, delete resolved)
+- Keyboard navigation (Alt+Up/Down)
+- Improved sidebar organization
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 

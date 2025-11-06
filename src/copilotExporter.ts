@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Annotation, CopilotExportOptions, ExportOptions } from './types';
+import { Annotation, CopilotExportOptions, ExportOptions, Tag, AnnotationTag } from './types';
 
 export enum CopilotExportFormat {
     Chat = 'chat',           // Optimized for pasting into Copilot Chat
@@ -13,6 +13,23 @@ export enum CopilotExportFormat {
 }
 
 export class CopilotExporter {
+
+    /**
+     * Convert a Tag to its string representation
+     */
+    private static tagToString(tag: Tag): string {
+        if (typeof tag === 'string') {
+            return tag;
+        }
+        return tag.name;
+    }
+
+    /**
+     * Convert an array of Tags to strings
+     */
+    private static tagsToStrings(tags: Tag[]): string[] {
+        return tags.map(t => this.tagToString(t));
+    }
 
     /**
      * Format a single annotation for Copilot Chat with context
@@ -36,8 +53,9 @@ export class CopilotExporter {
         output += `**Status:** ${status}\n`;
 
         if (annotation.tags && annotation.tags.length > 0) {
-            const tagEmojis = this.getTagEmojis(annotation.tags);
-            output += `**Tags:** ${tagEmojis} ${annotation.tags.join(', ')}\n`;
+            const tagStrings = this.tagsToStrings(annotation.tags);
+            const tagEmojis = this.getTagEmojis(tagStrings);
+            output += `**Tags:** ${tagEmojis} ${tagStrings.join(', ')}\n`;
         }
 
         output += `\n`;
@@ -97,19 +115,19 @@ export class CopilotExporter {
                 break;
             case 'bugs':
                 filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['bug', 'security'].includes(t.toLowerCase()))
+                    a.tags?.some(t => ['bug', 'security'].includes(this.tagToString(t).toLowerCase()))
                 );
                 title = 'Bug Fixes and Security Issues';
                 break;
             case 'optimization':
                 filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['performance', 'optimization'].includes(t.toLowerCase()))
+                    a.tags?.some(t => ['performance', 'optimization'].includes(this.tagToString(t).toLowerCase()))
                 );
                 title = 'Performance Optimization';
                 break;
             case 'documentation':
                 filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['docs', 'documentation', 'question'].includes(t.toLowerCase()))
+                    a.tags?.some(t => ['docs', 'documentation', 'question'].includes(this.tagToString(t).toLowerCase()))
                 );
                 title = 'Documentation Needs';
                 break;
@@ -197,7 +215,8 @@ export class CopilotExporter {
                 output += `    <issue>${this.escapeXml(annotation.comment)}</issue>\n`;
 
                 if (annotation.tags && annotation.tags.length > 0) {
-                    output += `    <tags>${annotation.tags.map(t => this.escapeXml(t)).join(', ')}</tags>\n`;
+                    const tagStrings = this.tagsToStrings(annotation.tags);
+                    output += `    <tags>${tagStrings.map(t => this.escapeXml(t)).join(', ')}</tags>\n`;
                 }
 
                 output += `    <code>\n${this.escapeXml(annotation.text)}\n    </code>\n`;
@@ -233,7 +252,7 @@ export class CopilotExporter {
             return null;
         }
 
-        const tagLower = annotation.tags.map(t => t.toLowerCase());
+        const tagLower = this.tagsToStrings(annotation.tags).map(t => t.toLowerCase());
 
         if (tagLower.includes('performance')) {
             return 'Can you suggest optimizations focusing on time/space complexity and caching strategies?';
@@ -394,7 +413,8 @@ export class CopilotExporter {
 
             if (annotation.tags && annotation.tags.length > 0) {
                 output += `      <tags>\n`;
-                annotation.tags.forEach(tag => {
+                const tagStrings = this.tagsToStrings(annotation.tags);
+                tagStrings.forEach(tag => {
                     output += `        <tag>${this.escapeXml(tag)}</tag>\n`;
                 });
                 output += `      </tags>\n`;
@@ -562,7 +582,7 @@ export class CopilotExporter {
 
         // Get all unique tags
         const allTags = new Set<string>();
-        annotations.forEach(a => a.tags?.forEach(tag => allTags.add(tag)));
+        annotations.forEach(a => a.tags?.forEach(tag => allTags.add(this.tagToString(tag))));
         if (allTags.size > 0) {
             content += `- Tags: ${Array.from(allTags).join(', ')}\n`;
         }
