@@ -1,5 +1,3 @@
-# Annotative
-
 ![Annotative Logo](media/annotative-logo/128px/annotative-logo.png)
 
 Annotative is a lightweight VS Code extension that lets you annotate code directly in your editor—perfect for reviewing AI-generated suggestions, collaborating on code reviews, and capturing insights on the fly. Highlight code, add tagged notes with custom colors, and export to Markdown for sharing with your team or discussing with AI tools like Copilot, ChatGPT, and Claude.
