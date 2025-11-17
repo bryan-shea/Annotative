@@ -25,7 +25,7 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${cspSource}; font-src ${cspSource} data:; script-src 'nonce-${nonce}'; img-src ${cspSource} data:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource}; font-src ${cspSource} data:; script-src 'nonce-${nonce}'; img-src ${cspSource} data:">
     <link rel="stylesheet" href="${codiconUri}">
     <link rel="stylesheet" href="${cssUri}">
     <title>Annotations</title>
