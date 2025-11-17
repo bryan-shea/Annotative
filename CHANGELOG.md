@@ -1,3 +1,23 @@
+## [1.3.51] - 2025-11-17
+
+### Fixed
+
+- Fix webview rendering and empty state icon to use proper codicon class
+- Resolve "Add Tag" modal blocking UI on startup
+- Add explicit modal hide on initialization
+- Enhance CSS specificity for modal display:none state
+- Improve error handling and debugging in webview initialization
+- Add DOM element validation during setup
+- Enhance modal handler cleanup to prevent duplicate event listeners
+- Add comprehensive error logging for webview debugging
+
+## [1.3.5] - 2025-11-17
+
+### Changes
+
+- 5628e4b fix: update Content Security Policy in webview HTML to enhance security
+- 1749979 fix: resolve webview rendering issues in VS Code 1.105+
+
 ## [1.3.4] - 2025-11-17
 
 ### Fixed
