@@ -1,3 +1,10 @@
+## [1.3.54] - 2025-11-17
+
+### Changes
+- 95a8248 fix: remove unsafe-inline from CSP for security compliance
+- 48a3de3 fix: resolve webview resource path for packaged extension v1.3.53
+
+
 ## [1.3.53] - 2025-11-17
 
 ### Fixed
