@@ -433,31 +433,78 @@ function renderAnnotationsList(container, annotations, groupBy) {
 
 // ==================== Initialization ====================
 function init() {
-  setupEventListeners();
-  setupMessageHandlers();
-  requestAnnotations();
+  try {
+    if (!elements.annotationsList) {
+      console.error('[Annotative] Critical: annotations-list container not found');
+      console.error('[Annotative] Available elements:', {
+        statusFilter: !!elements.statusFilter,
+        tagFilter: !!elements.tagFilter,
+        groupBySelect: !!elements.groupBySelect,
+        annotationsList: !!elements.annotationsList,
+        resolveAllBtn: !!elements.resolveAllBtn,
+        deleteResolvedBtn: !!elements.deleteResolvedBtn
+      });
+      return;
+    }
+
+    // Ensure tag picker modal is hidden on startup
+    const tagPickerModal = document.getElementById('tag-picker-modal');
+    if (tagPickerModal) {
+      tagPickerModal.style.display = 'none';
+      console.log('[Annotative] Tag picker modal initialized as hidden');
+    }
+
+    setupEventListeners();
+    setupMessageHandlers();
+    requestAnnotations();
+    console.log('[Annotative] Webview initialized successfully');
+  } catch (error) {
+    console.error('[Annotative] Initialization error:', error);
+  }
 }
 
+// Verify webview script loaded successfully
+window.addEventListener('load', () => {
+  if (document.readyState === 'complete') {
+    console.log('[Annotative] Webview script loaded successfully');
+  }
+});
+
 function setupEventListeners() {
+  if (!elements.statusFilter) {
+    console.warn('[Annotative] filter-status element not found');
+  }
   elements.statusFilter?.addEventListener('change', (e) => {
     state.filters.status = e.target.value;
     applyFiltersAndRender();
   });
 
+  if (!elements.tagFilter) {
+    console.warn('[Annotative] filter-tag element not found');
+  }
   elements.tagFilter?.addEventListener('change', (e) => {
     state.filters.tag = e.target.value;
     applyFiltersAndRender();
   });
 
+  if (!elements.groupBySelect) {
+    console.warn('[Annotative] groupby-select element not found');
+  }
   elements.groupBySelect?.addEventListener('change', (e) => {
     state.filters.groupBy = e.target.value;
     applyFiltersAndRender();
   });
 
+  if (!elements.resolveAllBtn) {
+    console.warn('[Annotative] btn-resolve-all element not found');
+  }
   elements.resolveAllBtn?.addEventListener('click', () => {
     handlers.handleResolveAll();
   });
 
+  if (!elements.deleteResolvedBtn) {
+    console.warn('[Annotative] btn-delete-resolved element not found');
+  }
   elements.deleteResolvedBtn?.addEventListener('click', () => {
     handlers.handleDeleteResolved();
   });
@@ -465,28 +512,42 @@ function setupEventListeners() {
 
 function setupMessageHandlers() {
   window.addEventListener('message', (event) => {
-    const message = event.data;
-    handleExtensionMessage(message);
+    try {
+      const message = event.data;
+      if (!message || !message.command) {
+        console.warn('[Annotative] Invalid message received:', message);
+        return;
+      }
+      handleExtensionMessage(message);
+    } catch (error) {
+      console.error('[Annotative] Error handling message:', error);
+    }
   });
 }
 
 function handleExtensionMessage(message) {
-  switch (message.command) {
-    case 'updateAnnotations':
-      handleUpdateAnnotations(message.annotations || []);
-      break;
-    case 'tagsUpdated':
-      handleTagsUpdated(message.tags || []);
-      break;
-    case 'annotationAdded':
-      handleAnnotationAdded(message.annotation);
-      break;
-    case 'annotationRemoved':
-      handleAnnotationRemoved(message.id);
-      break;
-    case 'annotationUpdated':
-      handleAnnotationUpdated(message.annotation);
-      break;
+  try {
+    switch (message.command) {
+      case 'updateAnnotations':
+        handleUpdateAnnotations(message.annotations || []);
+        break;
+      case 'tagsUpdated':
+        handleTagsUpdated(message.tags || []);
+        break;
+      case 'annotationAdded':
+        handleAnnotationAdded(message.annotation);
+        break;
+      case 'annotationRemoved':
+        handleAnnotationRemoved(message.id);
+        break;
+      case 'annotationUpdated':
+        handleAnnotationUpdated(message.annotation);
+        break;
+      default:
+        console.warn('[Annotative] Unknown command:', message.command);
+    }
+  } catch (error) {
+    console.error('[Annotative] Error handling extension message:', error);
   }
 }
 
@@ -497,16 +558,22 @@ function requestAnnotations() {
 }
 
 function handleUpdateAnnotations(annotations) {
-  state.annotations = annotations || [];
-
-  const tags = extractTags(state.annotations);
-  updateTagFilter(elements.tagFilter, tags, state.filters.tag);
-
-  applyFiltersAndRender();
+  try {
+    state.annotations = annotations || [];
+    const tags = extractTags(state.annotations);
+    updateTagFilter(elements.tagFilter, tags, state.filters.tag);
+    applyFiltersAndRender();
+  } catch (error) {
+    console.error('[Annotative] Error updating annotations:', error);
+  }
 }
 
 function handleTagsUpdated(tags) {
-  updateTagFilter(elements.tagFilter, tags, state.filters.tag);
+  try {
+    updateTagFilter(elements.tagFilter, tags, state.filters.tag);
+  } catch (error) {
+    console.error('[Annotative] Error updating tags:', error);
+  }
 }
 
 function handleAnnotationAdded(annotation) {
@@ -530,25 +597,30 @@ function handleAnnotationUpdated(annotation) {
 }
 
 function applyFiltersAndRender() {
-  const filtered = filterAnnotations(state.annotations, state.filters);
-  renderAnnotationsList(elements.annotationsList, filtered, state.filters.groupBy);
-
-  handlers.attachAllCardHandlers(filtered);
-
-  updateStatistics(state.annotations);
+  try {
+    const filtered = filterAnnotations(state.annotations, state.filters);
+    renderAnnotationsList(elements.annotationsList, filtered, state.filters.groupBy);
+    handlers.attachAllCardHandlers(filtered);
+    updateStatistics(state.annotations);
+  } catch (error) {
+    console.error('[Annotative] Error applying filters and rendering:', error);
+  }
 }
 
 function updateStatistics(annotations) {
-  const stats = calculateStats(annotations);
-
-  if (elements.statTotal) {
-    elements.statTotal.textContent = stats.total;
-  }
-  if (elements.statResolved) {
-    elements.statResolved.textContent = stats.resolved;
-  }
-  if (elements.statUnresolved) {
-    elements.statUnresolved.textContent = stats.unresolved;
+  try {
+    const stats = calculateStats(annotations);
+    if (elements.statTotal) {
+      elements.statTotal.textContent = stats.total;
+    }
+    if (elements.statResolved) {
+      elements.statResolved.textContent = stats.resolved;
+    }
+    if (elements.statUnresolved) {
+      elements.statUnresolved.textContent = stats.unresolved;
+    }
+  } catch (error) {
+    console.error('[Annotative] Error updating statistics:', error);
   }
 }
 
@@ -567,6 +639,11 @@ function showTagPicker(annotation, availableTags, onSelect) {
   const closeBtn = document.getElementById('tag-picker-close');
 
   if (!modal || !list || !closeBtn) {
+    console.error('[Annotative] Tag picker modal elements not found', {
+      modal: !!modal,
+      list: !!list,
+      closeBtn: !!closeBtn
+    });
     return;
   }
 
@@ -593,27 +670,42 @@ function showTagPicker(annotation, availableTags, onSelect) {
 
   // Show modal
   modal.style.display = 'flex';
+  console.log('[Annotative] Tag picker modal shown');
 
-  // Close button handler
+  // Close button handler - remove previous handlers first
+  if (modal._closeHandler) {
+    closeBtn.removeEventListener('click', modal._closeHandler);
+  }
+
   const closeHandler = () => {
     hideTagPicker();
   };
 
   closeBtn.addEventListener('click', closeHandler);
-  modal.addEventListener('click', (e) => {
+
+  // Overlay click handler - remove previous handlers first
+  if (modal._overlayHandler) {
+    modal.removeEventListener('click', modal._overlayHandler);
+  }
+
+  const overlayHandler = (e) => {
     if (e.target === modal) {
       hideTagPicker();
     }
-  });
+  };
 
-  // Store close handler for cleanup
+  modal.addEventListener('click', overlayHandler);
+
+  // Store handlers for cleanup
   modal._closeHandler = closeHandler;
+  modal._overlayHandler = overlayHandler;
 }
 
 function hideTagPicker() {
   const modal = document.getElementById('tag-picker-modal');
   if (modal) {
     modal.style.display = 'none';
+    console.log('[Annotative] Tag picker modal hidden');
   }
 }
 
@@ -621,4 +713,9 @@ function hideTagPicker() {
 const handlers = new AnnotationHandlers(vscode, state);
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOM is already loaded (for cached/preloaded content)
+  init();
+}

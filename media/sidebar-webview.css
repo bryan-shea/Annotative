@@ -725,6 +725,12 @@ input {
   padding: var(--spacing-lg);
 }
 
+/* Ensure modal respects display:none */
+.modal[style*="display: none"],
+.modal[style*="display:none"] {
+  display: none !important;
+}
+
 .modal-content {
   background-color: var(--vscode-editorWidget-background);
   border: 1px solid var(--vscode-editorWidget-border);

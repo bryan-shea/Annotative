@@ -65,7 +65,7 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
             <section class="annotations-section">
                 <div id="annotations-list" class="annotations-list">
                     <div class="empty-state">
-                        <div class="empty-icon">list_alt</div>
+                        <i class="codicon codicon-note empty-icon"></i>
                         <h3 class="empty-title">No Annotations</h3>
                         <p class="empty-text">
                             Select code and press <code>Ctrl+Shift+A</code> to add an annotation
