@@ -1,3 +1,10 @@
+## [1.3.5] - 2025-11-17
+
+### Changes
+- 5628e4b fix: update Content Security Policy in webview HTML to enhance security
+- 1749979 fix: resolve webview rendering issues in VS Code 1.105+
+
+
 ## [1.3.4] - 2025-11-17
 
 ### Fixed
