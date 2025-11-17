@@ -1,30 +1,38 @@
+## [1.3.4] - 2025-11-17
+
+### Fixed
+
+- Fix webview rendering in VS Code 1.105+ by correcting CSS viewport units from 100vh/100vw to 100%
+- Update Content Security Policy to allow inline styles and proper resource loading
+- Add visibility event listener to refresh annotations when sidebar view becomes visible
+
 ## [1.3.3] - 2025-11-06
 
 ### Changes
-- 937e611 Update README.md
 
+- 937e611 Update README.md
 
 ## [1.3.2] - 2025-11-06
 
 ### Changes
-- 0c0a008 Revise README description for Annotative extension
 
+- 0c0a008 Revise README description for Annotative extension
 
 ## [1.3.1] - 2025-11-06
 
 ### Changes
-- 6562cd4 fix: include annotative-logo directory in extension package
 
+- 6562cd4 fix: include annotative-logo directory in extension package
 
 ## [1.3.0] - 2025-11-06
 
 ### Changes
+
 - 0ae7212 Merge pull request #8 from bryan-shea/feature-enrichment
 - a00f52d refactor: update tagToString function to accept more specific types and clean up tag mapping
 - c99ecdf feat: enhance overall ux via webview, add tag crud ops
 - 6a7bded feat: Enhance annotation management with tag functionality
 - 1e6cf48 feat: Implement tag suggestion engine and validation utilities
-
 
 # Changelog
 

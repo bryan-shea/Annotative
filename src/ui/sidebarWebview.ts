@@ -32,6 +32,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
         this.view = webviewView;
 
         // Configure webview options
+        // VS Code 1.105+ requires explicit configuration for proper rendering
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')],
@@ -45,6 +46,15 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
 
         // Load initial data
         this.loadInitialData(webviewView.webview);
+
+        // Listen for visibility changes to refresh when view becomes visible
+        this.disposables.push(
+            webviewView.onDidChangeVisibility(() => {
+                if (webviewView.visible) {
+                    this.loadInitialData(webviewView.webview);
+                }
+            })
+        );
     }
 
     /**
