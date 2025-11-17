@@ -33,9 +33,13 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
 
         // Configure webview options
         // VS Code 1.105+ requires explicit configuration for proper rendering
+        // Note: resources are in dist/media/ after packaging, but getWebviewUri handles the path correctly
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')],
+            localResourceRoots: [
+                vscode.Uri.joinPath(this.extensionUri, 'dist', 'media'),
+                vscode.Uri.joinPath(this.extensionUri, 'media'),
+            ],
         };
 
         // Set initial HTML
@@ -91,7 +95,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
      */
     private getWebviewUri(webview: vscode.Webview, ...pathSegments: string[]): vscode.Uri {
         return webview.asWebviewUri(
-            vscode.Uri.joinPath(this.extensionUri, 'media', ...pathSegments)
+            vscode.Uri.joinPath(this.extensionUri, 'dist', 'media', ...pathSegments)
         );
     }
 
@@ -101,11 +105,13 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
     private setWebviewContent(webview: vscode.Webview) {
         const cssUri = this.getWebviewUri(webview, 'sidebar-webview.css');
         const jsUri = this.getWebviewUri(webview, 'sidebar-webview.js');
+        const codiconUri = this.getWebviewUri(webview, 'codicon.css');
         const nonce = this.getNonce();
 
         const html = generateWebviewHtml({
             cssUri: cssUri.toString(),
             jsUri: jsUri.toString(),
+            codiconUri: codiconUri.toString(),
             nonce,
             cspSource: webview.cspSource,
         });

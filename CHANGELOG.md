@@ -1,10 +1,19 @@
+## [1.3.53] - 2025-11-17
+
+### Fixed
+
+- Fix webview resource loading in packaged extension by correcting path from `media/` to `dist/media/`
+- Add local codicon font files to eliminate external CDN dependency
+- Update CSP headers to support local font loading
+- Resolve rendering differences between development and production builds
+
 ## [1.3.52] - 2025-11-17
 
 ### Changes
+
 - 86424a6 docs: update CHANGELOG for v1.3.51 release
 - 87455b8 chore: bump version to 1.3.51
 - c112b6d fix: resolve webview rendering and modal display issues v1.3.41
-
 
 ## [1.3.51] - 2025-11-17
 
