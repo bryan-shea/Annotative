@@ -25,7 +25,7 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} https://cdn.jsdelivr.net 'unsafe-inline'; font-src ${cspSource} https://cdn.jsdelivr.net; script-src 'nonce-${nonce}'; img-src ${cspSource} data:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} https://cdn.jsdelivr.net; font-src ${cspSource} https://cdn.jsdelivr.net; script-src 'nonce-${nonce}'; img-src ${cspSource} data:">
     <link rel="stylesheet" href="${cssUri}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
     <title>Annotations</title>
