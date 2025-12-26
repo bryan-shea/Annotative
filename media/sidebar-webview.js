@@ -11,6 +11,7 @@ const vscode = acquireVsCodeApi();
 // State management
 const state = {
   annotations: [],
+  availableTags: [],
   filters: {
     status: 'all',
     tag: 'all',
@@ -85,8 +86,8 @@ class AnnotationHandlers {
   }
 
   handleAddTagPrompt(annotation) {
-    // Available tags
-    const availableTags = [
+    // Use dynamically loaded tags from state, fallback to defaults
+    const availableTags = this.state.availableTags || [
       'bug', 'performance', 'security', 'style',
       'improvement', 'docs', 'question', 'ai-review'
     ];
@@ -147,6 +148,15 @@ class AnnotationHandlers {
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.handleDelete(annotation.id);
+      });
+    }
+
+    // Edit button
+    const editBtn = card.querySelector('[data-action="edit"]');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleEdit(annotation);
       });
     }
 
@@ -331,6 +341,13 @@ function createAnnotationCard(annotation) {
   gotoBtn.dataset.action = 'navigate';
   gotoBtn.dataset.annotationId = annotation.id;
 
+  const editBtn = document.createElement('button');
+  editBtn.className = 'card-action-btn';
+  editBtn.innerHTML = '<i class="codicon codicon-edit"></i>';
+  editBtn.title = 'Edit annotation';
+  editBtn.dataset.action = 'edit';
+  editBtn.dataset.annotationId = annotation.id;
+
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'card-action-btn';
   toggleBtn.innerHTML = annotation.resolved
@@ -348,6 +365,7 @@ function createAnnotationCard(annotation) {
   deleteBtn.dataset.annotationId = annotation.id;
 
   actions.appendChild(gotoBtn);
+  actions.appendChild(editBtn);
   actions.appendChild(toggleBtn);
   actions.appendChild(deleteBtn);
 
@@ -570,6 +588,8 @@ function handleUpdateAnnotations(annotations) {
 
 function handleTagsUpdated(tags) {
   try {
+    // Store available tags in state for use by tag picker
+    state.availableTags = tags || [];
     updateTagFilter(elements.tagFilter, tags, state.filters.tag);
   } catch (error) {
     console.error('[Annotative] Error updating tags:', error);

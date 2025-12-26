@@ -2,7 +2,7 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
-  "version": "1.3.54",
+  "version": "1.4.0",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/annotative-logo/128px/annotative-logo.png",
@@ -161,6 +161,36 @@
         "command": "annotative.batchAIReview",
         "title": "Batch AI Review (Review All Annotations)",
         "icon": "$(checklist)"
+      },
+      {
+        "command": "annotative.initProjectStorage",
+        "title": "Annotative: Initialize Project Storage",
+        "icon": "$(folder-active)"
+      },
+      {
+        "command": "annotative.showStorageInfo",
+        "title": "Annotative: Show Storage Info",
+        "icon": "$(info)"
+      },
+      {
+        "command": "annotative.createCustomTag",
+        "title": "Annotative: Create Custom Tag",
+        "icon": "$(add)"
+      },
+      {
+        "command": "annotative.deleteCustomTag",
+        "title": "Annotative: Delete Custom Tag",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "annotative.editCustomTag",
+        "title": "Annotative: Edit Custom Tag",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "annotative.listTags",
+        "title": "Annotative: List All Tags",
+        "icon": "$(list-unordered)"
       }
     ],
     "viewsContainers": {

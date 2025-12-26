@@ -169,6 +169,14 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
                         }
                         break;
 
+                    case 'edit':
+                        if (message.annotation) {
+                            await this.handleEdit(message.annotation);
+                            // Refresh webview after changes
+                            setTimeout(() => this.loadInitialData(webview), 100);
+                        }
+                        break;
+
                     case 'resolveAll':
                         await this.handleResolveAll();
                         // Refresh webview after changes
@@ -262,6 +270,41 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to delete annotation: ${error}`);
+        }
+    }
+
+    /**
+     * Edit annotation comment
+     */
+    private async handleEdit(annotation: Annotation) {
+        try {
+            const newComment = await vscode.window.showInputBox({
+                prompt: 'Edit annotation comment',
+                value: annotation.comment,
+                placeHolder: 'Enter new comment',
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Comment cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (newComment !== undefined && newComment.trim().length > 0) {
+                const currentTags = annotation.tags?.map((t) =>
+                    typeof t === 'string' ? t : t.id
+                ) || [];
+
+                await this.annotationManager.editAnnotation(
+                    annotation.id,
+                    annotation.filePath,
+                    newComment,
+                    currentTags,
+                    annotation.color
+                );
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to edit annotation: ${error}`);
         }
     }
 

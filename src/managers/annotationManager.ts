@@ -149,7 +149,26 @@ export class AnnotationManager {
 
     // ============== Query Operations ==============
 
+    /**
+     * Get all tags used in annotations
+     */
     getAllTags(): string[] {
+        // Get tags used in annotations
+        const usedTags = this.exporter.getAllTags();
+
+        // Get all preset and custom tag IDs
+        const presetTagIds = this.tagManager.getPresetTags().map(t => t.id);
+        const customTagIds = this.tagManager.getCustomTags().map(t => t.id);
+
+        // Combine and deduplicate
+        const allTags = new Set([...usedTags, ...presetTagIds, ...customTagIds]);
+        return Array.from(allTags).sort();
+    }
+
+    /**
+     * Get only tags that are used in current annotations
+     */
+    getUsedTags(): string[] {
         return this.exporter.getAllTags();
     }
 
@@ -180,6 +199,43 @@ export class AnnotationManager {
 
     async exportToMarkdown(): Promise<string> {
         return this.exporter.exportToMarkdown();
+    }
+
+    // ============== Project Storage ==============
+
+    /**
+     * Check if project-based storage is active
+     */
+    isProjectStorageActive(): boolean {
+        return this.storage.isProjectStorageActive();
+    }
+
+    /**
+     * Get the current storage directory
+     */
+    getStorageDirectory(): string {
+        return this.storage.getStorageDirectory();
+    }
+
+    /**
+     * Initialize project-based storage (.annotative folder)
+     */
+    async initializeProjectStorage(migrateExisting: boolean = false): Promise<boolean> {
+        const result = await this.storage.initializeProjectStorage(migrateExisting);
+
+        // Reload annotations and tags from the new location
+        await this.storage.loadAnnotations();
+        await this.loadCustomTags();
+
+        this.notifyAnnotationsChanged();
+        return result;
+    }
+
+    /**
+     * Refresh storage detection
+     */
+    refreshStorageDetection(): void {
+        this.storage.refreshStorageDetection();
     }
 
     // ============== Persistence ==============
