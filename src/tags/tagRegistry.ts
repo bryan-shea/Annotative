@@ -1,255 +1,57 @@
 import { AnnotationTag, TagRegistry as ITagRegistry } from '../types';
 
 /**
- * Manages preset and custom tag storage
- * Separated from tag operations for single responsibility
+ * Manages user-defined tag storage
+ * No preset tags - users create their own tags per project
  */
 export class TagRegistryStore {
     private registry: ITagRegistry;
-    private readonly DEFAULT_TAG_COLORS: { [key: string]: string } = {
-        bug: '#FF5252',
-        security: '#D32F2F',
-        performance: '#FFA726',
-        accessibility: '#29B6F5',
-        todo: '#66BB6A',
-        refactor: '#AB47BC',
-        test: '#EC407A',
-        doc: '#42A5F5',
-        'ai-review': '#00ACC1',
-        'best-practice': '#26A69A',
-        warning: '#FF7043',
-        optimization: '#7E57C2',
-        'breaking-change': '#EF5350',
-        deprecated: '#90A4AE',
-        note: '#78909C',
-    };
+
+    // Default color palette for new tags
+    private readonly TAG_COLOR_PALETTE: string[] = [
+        '#FF5252', // Red
+        '#FFA726', // Orange
+        '#FFEE58', // Yellow
+        '#66BB6A', // Green
+        '#42A5F5', // Blue
+        '#AB47BC', // Purple
+        '#26C6DA', // Cyan
+        '#78909C', // Gray
+    ];
 
     constructor() {
         this.registry = {
-            presetTags: new Map(),
             customTags: new Map(),
         };
-        this.initializePresetTags();
     }
 
     /**
-     * Initialize built-in preset tags
-     */
-    private initializePresetTags(): void {
-        const presets: { [key: string]: AnnotationTag } = {
-            // Issue tags
-            bug: {
-                id: 'bug',
-                name: 'Bug',
-                category: 'issue',
-                isPreset: true,
-                metadata: {
-                    priority: 'high',
-                    color: this.DEFAULT_TAG_COLORS.bug,
-                    icon: '$(bug)',
-                    description: 'Critical issues or failures',
-                },
-            },
-            security: {
-                id: 'security',
-                name: 'Security',
-                category: 'issue',
-                isPreset: true,
-                metadata: {
-                    priority: 'critical',
-                    color: this.DEFAULT_TAG_COLORS.security,
-                    icon: '$(shield)',
-                    description: 'Security vulnerabilities',
-                },
-            },
-            performance: {
-                id: 'performance',
-                name: 'Performance',
-                category: 'issue',
-                isPreset: true,
-                metadata: {
-                    priority: 'medium',
-                    color: this.DEFAULT_TAG_COLORS.performance,
-                    icon: '$(zap)',
-                    description: 'Performance concerns',
-                },
-            },
-            accessibility: {
-                id: 'accessibility',
-                name: 'Accessibility',
-                category: 'issue',
-                isPreset: true,
-                metadata: {
-                    priority: 'high',
-                    color: this.DEFAULT_TAG_COLORS.accessibility,
-                    icon: '$(eye)',
-                    description: 'Accessibility issues',
-                },
-            },
-
-            // Action tags
-            todo: {
-                id: 'todo',
-                name: 'Todo',
-                category: 'action',
-                isPreset: true,
-                metadata: {
-                    priority: 'medium',
-                    color: this.DEFAULT_TAG_COLORS.todo,
-                    icon: '$(checklist)',
-                    description: 'Action items',
-                },
-            },
-            refactor: {
-                id: 'refactor',
-                name: 'Refactor',
-                category: 'action',
-                isPreset: true,
-                metadata: {
-                    priority: 'low',
-                    color: this.DEFAULT_TAG_COLORS.refactor,
-                    icon: '$(tools)',
-                    description: 'Refactoring needed',
-                },
-            },
-            test: {
-                id: 'test',
-                name: 'Test',
-                category: 'action',
-                isPreset: true,
-                metadata: {
-                    priority: 'medium',
-                    color: this.DEFAULT_TAG_COLORS.test,
-                    icon: '$(beaker)',
-                    description: 'Testing needed',
-                },
-            },
-            doc: {
-                id: 'doc',
-                name: 'Documentation',
-                category: 'action',
-                isPreset: true,
-                metadata: {
-                    priority: 'low',
-                    color: this.DEFAULT_TAG_COLORS.doc,
-                    icon: '$(file-text)',
-                    description: 'Documentation needed',
-                },
-            },
-
-            // Reference tags
-            'ai-review': {
-                id: 'ai-review',
-                name: 'AI Review',
-                category: 'reference',
-                isPreset: true,
-                metadata: {
-                    priority: 'high',
-                    color: this.DEFAULT_TAG_COLORS['ai-review'],
-                    icon: '$(sparkle)',
-                    description: 'AI-generated code requiring review',
-                },
-            },
-            'best-practice': {
-                id: 'best-practice',
-                name: 'Best Practice',
-                category: 'reference',
-                isPreset: true,
-                metadata: {
-                    priority: 'low',
-                    color: this.DEFAULT_TAG_COLORS['best-practice'],
-                    icon: '$(star)',
-                    description: 'Best practice reference',
-                },
-            },
-            warning: {
-                id: 'warning',
-                name: 'Warning',
-                category: 'reference',
-                isPreset: true,
-                metadata: {
-                    priority: 'high',
-                    color: this.DEFAULT_TAG_COLORS.warning,
-                    icon: '$(warning)',
-                    description: 'Warnings or cautions',
-                },
-            },
-            optimization: {
-                id: 'optimization',
-                name: 'Optimization',
-                category: 'reference',
-                isPreset: true,
-                metadata: {
-                    priority: 'low',
-                    color: this.DEFAULT_TAG_COLORS.optimization,
-                    icon: '$(rocket)',
-                    description: 'Optimization opportunities',
-                },
-            },
-
-            // Meta tags
-            'breaking-change': {
-                id: 'breaking-change',
-                name: 'Breaking Change',
-                category: 'meta',
-                isPreset: true,
-                metadata: {
-                    priority: 'critical',
-                    color: this.DEFAULT_TAG_COLORS['breaking-change'],
-                    icon: '$(alert)',
-                    description: 'API or contract changes',
-                },
-            },
-            deprecated: {
-                id: 'deprecated',
-                name: 'Deprecated',
-                category: 'meta',
-                isPreset: true,
-                metadata: {
-                    priority: 'medium',
-                    color: this.DEFAULT_TAG_COLORS.deprecated,
-                    icon: '$(trash)',
-                    description: 'Deprecated patterns',
-                },
-            },
-            note: {
-                id: 'note',
-                name: 'Note',
-                category: 'meta',
-                isPreset: true,
-                metadata: {
-                    priority: 'low',
-                    color: this.DEFAULT_TAG_COLORS.note,
-                    icon: '$(note)',
-                    description: 'General notes',
-                },
-            },
-        };
-
-        Object.entries(presets).forEach(([key, tag]) => {
-            this.registry.presetTags.set(key, tag);
-        });
-    }
-
-    /**
-     * Get a tag by ID (checks both preset and custom)
+     * Get a tag by ID
      */
     getTag(id: string): AnnotationTag | undefined {
-        return this.registry.presetTags.get(id) || this.registry.customTags.get(id);
+        return this.registry.customTags.get(id);
     }
 
     /**
-     * Get all preset tags
+     * Get all preset tags (always empty - no presets)
+     * @deprecated Presets removed - use getCustomTags()
      */
     getPresetTags(): AnnotationTag[] {
-        return Array.from(this.registry.presetTags.values());
+        return [];
     }
 
     /**
-     * Get all custom tags
+     * Get all custom (user-defined) tags
      */
     getCustomTags(): AnnotationTag[] {
         return Array.from(this.registry.customTags.values());
+    }
+
+    /**
+     * Get all tags (same as getCustomTags since no presets exist)
+     */
+    getAllTags(): AnnotationTag[] {
+        return this.getCustomTags();
     }
 
     /**
@@ -277,6 +79,25 @@ export class TagRegistryStore {
     }
 
     /**
+     * Get a suggested color for a new tag (cycles through palette)
+     */
+    getSuggestedColor(): string {
+        const existingColors = Array.from(this.registry.customTags.values())
+            .map(t => t.metadata?.color)
+            .filter(Boolean);
+
+        // Find first unused color from palette
+        for (const color of this.TAG_COLOR_PALETTE) {
+            if (!existingColors.includes(color)) {
+                return color;
+            }
+        }
+
+        // All colors used, return a random one
+        return this.TAG_COLOR_PALETTE[Math.floor(Math.random() * this.TAG_COLOR_PALETTE.length)];
+    }
+
+    /**
      * Get default color for a tag
      */
     getDefaultColor(tagId: string): string {
@@ -284,7 +105,7 @@ export class TagRegistryStore {
         if (tag?.metadata?.color) {
             return tag.metadata.color;
         }
-        return this.DEFAULT_TAG_COLORS[tagId] || '#9E9E9E';
+        return '#9E9E9E'; // Default gray
     }
 
     /**
@@ -299,5 +120,26 @@ export class TagRegistryStore {
      */
     importCustomTags(tags: AnnotationTag[]): void {
         tags.forEach(tag => this.registry.customTags.set(tag.id, tag));
+    }
+
+    /**
+     * Check if any tags exist
+     */
+    hasTags(): boolean {
+        return this.registry.customTags.size > 0;
+    }
+
+    /**
+     * Get tag count
+     */
+    getTagCount(): number {
+        return this.registry.customTags.size;
+    }
+
+    /**
+     * Clear all tags
+     */
+    clearAllTags(): void {
+        this.registry.customTags.clear();
     }
 }

@@ -14,7 +14,7 @@ export interface AIConversation {
     resolved: boolean;
 }
 
-// Enhanced tag system
+// Tag system - fully user-defined
 export type TagCategory = 'issue' | 'action' | 'reference' | 'meta' | 'custom';
 export type TagPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -30,7 +30,7 @@ export interface AnnotationTag {
     name: string;
     category: TagCategory;
     metadata?: TagMetadata;
-    isPreset: boolean; // whether this is a built-in preset
+    isPreset: boolean; // Always false for user-created tags
 }
 
 // Backward compatibility: accept both string and AnnotationTag
@@ -44,10 +44,10 @@ export interface Annotation {
     comment: string;
     author: string;
     timestamp: Date;
-    resolved: boolean;
+    resolved: boolean;        // Resolution status - open (false) or resolved (true)
     tags?: Tag[];
     priority?: TagPriority;
-    color?: string; // Hex color code - user's visual preference only
+    color?: string;           // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
 }
 
@@ -62,7 +62,6 @@ export interface AnnotationStorage {
 
 // Tag management
 export interface TagRegistry {
-    presetTags: Map<string, AnnotationTag>;
     customTags: Map<string, AnnotationTag>;
 }
 

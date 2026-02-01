@@ -2,14 +2,14 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Pre-commit hook: lint and format validation
-echo "🔍 Running pre-commit checks..."
+echo "Running pre-commit checks..."
 
 # Run ESLint
-echo "📝 Linting code..."
+echo "Linting code..."
 npm run lint --if-present
 if [ $? -ne 0 ]; then
-  echo "❌ Linting failed. Fix errors and try again."
+  echo "Linting failed. Fix errors and try again."
   exit 1
 fi
 
-echo "✅ Pre-commit checks passed\n"
+echo "Pre-commit checks passed\n"

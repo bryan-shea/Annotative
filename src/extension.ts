@@ -15,14 +15,14 @@ import {
 
 // Predefined color palette for annotations - user's visual preference only
 const ANNOTATION_COLORS = [
-    { label: '🟡 Yellow', value: '#ffc107' },
-    { label: '🔴 Red', value: '#f44336' },
-    { label: '🟠 Orange', value: '#ff9800' },
-    { label: '🔵 Blue', value: '#2196f3' },
-    { label: '🟢 Green', value: '#4caf50' },
-    { label: '🟣 Purple', value: '#9c27b0' },
-    { label: '🟤 Brown', value: '#795548' },
-    { label: '⚪ Gray', value: '#9e9e9e' }
+    { label: 'Yellow', value: '#ffc107' },
+    { label: 'Red', value: '#f44336' },
+    { label: 'Orange', value: '#ff9800' },
+    { label: 'Blue', value: '#2196f3' },
+    { label: 'Green', value: '#4caf50' },
+    { label: 'Purple', value: '#9c27b0' },
+    { label: 'Brown', value: '#795548' },
+    { label: 'Gray', value: '#9e9e9e' }
 ];
 
 let annotationManager: AnnotationManager;

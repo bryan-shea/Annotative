@@ -29,9 +29,9 @@ export function registerExportCommands(
             try {
                 const markdown = await annotationManager.exportToMarkdown();
                 await vscode.env.clipboard.writeText(markdown);
-                vscode.window.showInformationMessage('Annotations exported to clipboard as Markdown!');
+                vscode.window.showInformationMessage('Copied to clipboard');
             } catch (error) {
-                vscode.window.showErrorMessage('Failed to export annotations.');
+                vscode.window.showErrorMessage('Export failed');
             }
         }
     );
@@ -48,7 +48,7 @@ export function registerExportCommands(
                 });
                 await vscode.window.showTextDocument(doc);
             } catch (error) {
-                vscode.window.showErrorMessage('Failed to show export.');
+                vscode.window.showErrorMessage('Export failed');
             }
         }
     );
@@ -69,7 +69,7 @@ export function registerExportCommands(
             await vscode.env.clipboard.writeText(markdown);
 
             const action = await vscode.window.showInformationMessage(
-                `Exported ${annotations.length} annotation(s) to clipboard! Paste into GitHub Copilot Chat.`,
+                `Exported ${annotations.length} annotation(s). Paste into Copilot Chat.`,
                 'Save to Workspace',
                 'View Output'
             );
@@ -78,9 +78,9 @@ export function registerExportCommands(
                 const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                 if (workspaceRoot) {
                     await CopilotExporter.exportToWorkspace(annotations, workspaceRoot);
-                    vscode.window.showInformationMessage('Saved to .copilot/annotations folder');
+                    vscode.window.showInformationMessage('Saved to .copilot/annotations');
                 } else {
-                    vscode.window.showWarningMessage('No workspace folder found');
+                    vscode.window.showWarningMessage('No workspace folder');
                 }
             } else if (action === 'View Output') {
                 const doc = await vscode.workspace.openTextDocument({
@@ -115,7 +115,7 @@ export function registerExportCommands(
             await vscode.env.clipboard.writeText(markdown);
 
             const action = await vscode.window.showInformationMessage(
-                `Exported ${selectedAnnotations.length} selected annotation(s) to clipboard! Paste into GitHub Copilot Chat.`,
+                `Exported ${selectedAnnotations.length} annotation(s). Paste into Copilot Chat.`,
                 'Save to Workspace',
                 'View Output'
             );
@@ -124,9 +124,9 @@ export function registerExportCommands(
                 const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                 if (workspaceRoot) {
                     await CopilotExporter.exportToWorkspace(selectedAnnotations, workspaceRoot);
-                    vscode.window.showInformationMessage('Saved to .copilot/annotations folder');
+                    vscode.window.showInformationMessage('Saved to .copilot/annotations');
                 } else {
-                    vscode.window.showWarningMessage('No workspace folder found');
+                    vscode.window.showWarningMessage('No workspace folder');
                 }
             } else if (action === 'View Output') {
                 const doc = await vscode.workspace.openTextDocument({
@@ -158,12 +158,12 @@ export function registerExportCommands(
                 try {
                     await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
                     vscode.window.showInformationMessage(
-                        'Annotation context copied! Paste into Copilot Chat (Ctrl+V)',
+                        'Context copied. Paste into Copilot Chat (Ctrl+V)',
                         'Got it'
                     );
                 } catch (err) {
                     vscode.window.showInformationMessage(
-                        'Annotation context copied to clipboard. Open Copilot Chat and paste.',
+                        'Context copied. Open Copilot Chat and paste.',
                         'Open Chat'
                     ).then(action => {
                         if (action === 'Open Chat') {
@@ -172,7 +172,7 @@ export function registerExportCommands(
                     });
                 }
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to format annotation: ${error}`);
+                vscode.window.showErrorMessage(`Error: ${error}`);
             }
         }
     );
@@ -187,12 +187,9 @@ export function registerExportCommands(
                 const quickContext = await CopilotExporter.formatAsQuickContext(annotation);
                 await vscode.env.clipboard.writeText(quickContext);
 
-                vscode.window.showInformationMessage(
-                    'Copied to clipboard! Paste into any AI chat.',
-                    'Got it'
-                );
+                vscode.window.showInformationMessage('Copied to clipboard');
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to copy context: ${error}`);
+                vscode.window.showErrorMessage(`Error: ${error}`);
             }
         }
     );
@@ -202,10 +199,10 @@ export function registerExportCommands(
         'annotative.exportByIntent',
         async () => {
             const intent = await vscode.window.showQuickPick([
-                { label: 'Code Review', value: 'review', description: 'All unresolved annotations' },
-                { label: 'Bug Fixes', value: 'bugs', description: 'Bug and security issues only' },
-                { label: 'Optimization', value: 'optimization', description: 'Performance improvements' },
-                { label: 'Documentation', value: 'documentation', description: 'Documentation needs' }
+                { label: 'Code Review', value: 'review', description: 'Unresolved annotations' },
+                { label: 'Bug Fixes', value: 'bugs', description: 'Bugs and security issues' },
+                { label: 'Optimization', value: 'optimization', description: 'Performance items' },
+                { label: 'Documentation', value: 'documentation', description: 'Docs needed' }
             ], {
                 placeHolder: 'Select export intent'
             });
@@ -223,7 +220,7 @@ export function registerExportCommands(
             await vscode.env.clipboard.writeText(exported);
 
             const action = await vscode.window.showInformationMessage(
-                `Exported ${intent.label} annotations to clipboard!`,
+                `Exported ${intent.label} annotations`,
                 'View Output',
                 'Save to File'
             );
@@ -242,7 +239,7 @@ export function registerExportCommands(
                         workspaceRoot,
                         intent.value
                     );
-                    vscode.window.showInformationMessage('Saved to .copilot/annotations folder');
+                    vscode.window.showInformationMessage('Saved to .copilot/annotations');
                 }
             }
         }
@@ -253,10 +250,10 @@ export function registerExportCommands(
         'annotative.exportForAI',
         async () => {
             const format = await vscode.window.showQuickPick([
-                { label: 'GitHub Copilot', value: 'copilot', description: 'Conversational format' },
-                { label: 'ChatGPT', value: 'chatgpt', description: 'Markdown with system prompt' },
-                { label: 'Claude', value: 'claude', description: 'XML-structured format' },
-                { label: 'Generic', value: 'generic', description: 'Universal format' }
+                { label: 'GitHub Copilot', value: 'copilot', description: 'Conversational' },
+                { label: 'ChatGPT', value: 'chatgpt', description: 'Markdown + system prompt' },
+                { label: 'Claude', value: 'claude', description: 'XML structured' },
+                { label: 'Generic', value: 'generic', description: 'Universal' }
             ], {
                 placeHolder: 'Select AI tool format'
             });
@@ -269,7 +266,7 @@ export function registerExportCommands(
                 { label: 'Unresolved only', value: false },
                 { label: 'Include resolved', value: true }
             ], {
-                placeHolder: 'Include resolved annotations?'
+                placeHolder: 'Include resolved?'
             });
 
             if (includeResolved === undefined) {
@@ -297,7 +294,7 @@ export function registerExportCommands(
             await vscode.env.clipboard.writeText(exported);
 
             vscode.window.showInformationMessage(
-                `Exported ${annotations.length} annotations for ${format.label}!`,
+                `Exported ${annotations.length} for ${format.label}`,
                 'View Output'
             ).then(action => {
                 if (action === 'View Output') {
@@ -318,7 +315,7 @@ export function registerExportCommands(
             const unresolved = allAnnotations.filter(a => !a.resolved);
 
             if (unresolved.length === 0) {
-                vscode.window.showInformationMessage('No unresolved annotations to review!');
+                vscode.window.showInformationMessage('No unresolved annotations');
                 return;
             }
 
@@ -326,7 +323,7 @@ export function registerExportCommands(
             const toReview = unresolved.slice(0, maxToReview);
 
             const proceed = await vscode.window.showInformationMessage(
-                `Review ${toReview.length} annotation(s) with AI? This will generate prompts for each one.`,
+                `Review ${toReview.length} annotation(s) with AI?`,
                 `Review ${toReview.length}`,
                 'Cancel'
             );
@@ -390,7 +387,7 @@ export function registerExportCommands(
                 await vscode.env.clipboard.writeText(fullReport);
 
                 const action = await vscode.window.showInformationMessage(
-                    `Batch review ready! Report copied to clipboard.`,
+                    `Batch review ready. Copied to clipboard.`,
                     'View Report',
                     'Open Copilot Chat',
                     'Save to File'
@@ -406,13 +403,13 @@ export function registerExportCommands(
                     try {
                         await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
                     } catch {
-                        vscode.window.showInformationMessage('Please open Copilot Chat and paste the report.');
+                        vscode.window.showInformationMessage('Open Copilot Chat and paste report');
                     }
                 } else if (action === 'Save to File') {
                     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                     if (workspaceRoot) {
                         await CopilotExporter.exportToWorkspace(toReview, workspaceRoot, 'batch-review');
-                        vscode.window.showInformationMessage('Saved to .copilot/annotations/batch-review');
+                        vscode.window.showInformationMessage('Saved to .copilot/annotations');
                     }
                 }
             });

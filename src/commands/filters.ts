@@ -89,7 +89,7 @@ export function registerFilterCommands(
             if (query !== undefined) {
                 annotationProvider.setSearchQuery(query);
                 if (query) {
-                    vscode.window.showInformationMessage(`Searching for: "${query}"`);
+                    vscode.window.showInformationMessage(`Search: "${query}"`);
                 } else {
                     vscode.window.showInformationMessage('Search cleared');
                 }
@@ -102,7 +102,7 @@ export function registerFilterCommands(
         'annotative.clearFilters',
         () => {
             annotationProvider.clearFilters();
-            vscode.window.showInformationMessage('All filters cleared');
+            vscode.window.showInformationMessage('Filters cleared');
         }
     );
 
@@ -118,7 +118,7 @@ export function registerFilterCommands(
                 editor.revealRange(annotation.range, vscode.TextEditorRevealType.InCenter);
                 editor.selection = new vscode.Selection(annotation.range.start, annotation.range.end);
             } catch (error) {
-                vscode.window.showErrorMessage(`Could not open file: ${annotation.filePath}`);
+                vscode.window.showErrorMessage(`Cannot open: ${annotation.filePath}`);
             }
         }
     );
@@ -128,18 +128,18 @@ export function registerFilterCommands(
         'annotative.toggleGroupBy',
         async () => {
             const options = [
-                { label: 'Group by File', value: 'file' as const },
-                { label: 'Group by Tag', value: 'tag' as const },
-                { label: 'Group by Status', value: 'status' as const }
+                { label: 'By File', value: 'file' as const },
+                { label: 'By Tag', value: 'tag' as const },
+                { label: 'By Status', value: 'status' as const }
             ];
 
             const selected = await vscode.window.showQuickPick(options, {
-                placeHolder: 'Choose view organization'
+                placeHolder: 'Group by'
             });
 
             if (selected) {
                 annotationProvider.setGroupBy(selected.value);
-                vscode.window.showInformationMessage(`Now grouping by ${selected.label.split(' ')[2]}`);
+                vscode.window.showInformationMessage(`Grouped ${selected.label.toLowerCase()}`);
             }
         }
     );
