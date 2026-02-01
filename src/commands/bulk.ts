@@ -27,17 +27,26 @@ export function registerBulkCommands(
         async () => {
             const selected = annotationProvider.getSelectedAnnotations();
             if (selected.length === 0) {
-                vscode.window.showWarningMessage('Please select annotations first');
+                vscode.window.showWarningMessage('Select annotations first');
                 return;
             }
 
-            const availableTags = [
-                'bug', 'performance', 'security', 'style',
-                'improvement', 'docs', 'question', 'ai-review'
-            ];
+            const customTags = annotationManager.getCustomTags();
 
-            const newTags = await vscode.window.showQuickPick(availableTags, {
-                placeHolder: `Add tags to ${selected.length} selected annotation(s)`,
+            if (customTags.length === 0) {
+                const create = await vscode.window.showInformationMessage(
+                    'No tags defined. Create one?',
+                    'Create Tag', 'Cancel'
+                );
+                if (create === 'Create Tag') {
+                    await vscode.commands.executeCommand('annotative.createCustomTag');
+                }
+                return;
+            }
+
+            const tagOptions = customTags.map(t => t.name);
+            const newTags = await vscode.window.showQuickPick(tagOptions, {
+                placeHolder: `Add tags to ${selected.length} annotation(s)`,
                 canPickMany: true
             });
 
@@ -66,12 +75,12 @@ export function registerBulkCommands(
         async () => {
             const selected = annotationProvider.getSelectedAnnotations();
             if (selected.length === 0) {
-                vscode.window.showWarningMessage('Please select annotations first');
+                vscode.window.showWarningMessage('Select annotations first');
                 return;
             }
 
             const confirmed = await vscode.window.showWarningMessage(
-                `Mark ${selected.length} selected annotation(s) as resolved?`,
+                `Resolve ${selected.length} annotation(s)?`,
                 'Yes', 'No'
             );
 
@@ -92,12 +101,12 @@ export function registerBulkCommands(
         async () => {
             const selected = annotationProvider.getSelectedAnnotations();
             if (selected.length === 0) {
-                vscode.window.showWarningMessage('Please select annotations first');
+                vscode.window.showWarningMessage('Select annotations first');
                 return;
             }
 
             const confirmed = await vscode.window.showWarningMessage(
-                `Delete ${selected.length} selected annotation(s)? This cannot be undone.`,
+                `Delete ${selected.length} annotation(s)? Cannot be undone.`,
                 'Yes', 'No'
             );
 

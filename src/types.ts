@@ -14,7 +14,7 @@ export interface AIConversation {
     resolved: boolean;
 }
 
-// Enhanced tag system
+// Tag system - fully user-defined
 export type TagCategory = 'issue' | 'action' | 'reference' | 'meta' | 'custom';
 export type TagPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -30,7 +30,17 @@ export interface AnnotationTag {
     name: string;
     category: TagCategory;
     metadata?: TagMetadata;
-    isPreset: boolean; // whether this is a built-in preset
+    isPreset: boolean; // Always false for user-created tags
+}
+
+// Status system - user-defined statuses
+export interface AnnotationStatus {
+    id: string;
+    name: string;
+    color?: string;
+    icon?: string;
+    isDefault?: boolean; // Whether this is the default status for new annotations
+    isFinal?: boolean;   // Whether this status represents a "done" state
 }
 
 // Backward compatibility: accept both string and AnnotationTag
@@ -44,10 +54,11 @@ export interface Annotation {
     comment: string;
     author: string;
     timestamp: Date;
-    resolved: boolean;
+    resolved: boolean;        // Legacy - kept for backward compatibility
+    status?: string;          // Status ID - references user-defined status
     tags?: Tag[];
     priority?: TagPriority;
-    color?: string; // Hex color code - user's visual preference only
+    color?: string;           // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
 }
 

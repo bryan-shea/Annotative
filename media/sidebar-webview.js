@@ -86,18 +86,20 @@ class AnnotationHandlers {
   }
 
   handleAddTagPrompt(annotation) {
-    // Use dynamically loaded tags from state, fallback to defaults
-    const availableTags = this.state.availableTags || [
-      'bug', 'performance', 'security', 'style',
-      'improvement', 'docs', 'question', 'ai-review'
-    ];
+    // Use dynamically loaded tags from state only - no defaults
+    const availableTags = this.state.availableTags || [];
+
+    if (availableTags.length === 0) {
+      // No tags defined - prompt user to create one
+      return;
+    }
 
     // Get current tags
     const currentTags = annotation.tags?.map((t) => (typeof t === 'string' ? t : t.id)) || [];
     const filteredTags = availableTags.filter((tag) => !currentTags.includes(tag));
 
     if (filteredTags.length === 0) {
-      // All tags already added - no action needed
+      // All tags already added
       return;
     }
 

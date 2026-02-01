@@ -26,24 +26,37 @@ export function registerTagCommands(
         async (item: AnnotationItem) => {
             const annotation = item.annotation;
 
-            // Get available tags
-            const availableTags = [
-                'bug', 'performance', 'security', 'style',
-                'improvement', 'docs', 'question', 'ai-review'
-            ];
+            // Get available custom tags
+            const customTags = annotationManager.getCustomTags();
+
+            if (customTags.length === 0) {
+                const create = await vscode.window.showInformationMessage(
+                    'No tags defined. Create one?',
+                    'Create Tag', 'Cancel'
+                );
+                if (create === 'Create Tag') {
+                    await vscode.commands.executeCommand('annotative.createCustomTag');
+                }
+                return;
+            }
 
             // Filter out tags already on the annotation
             const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
-            const filteredTags = availableTags.filter(tag => !currentTags.includes(tag));
+            const availableTags = customTags.filter(tag => !currentTags.includes(tag.id));
 
-            if (filteredTags.length === 0) {
-                vscode.window.showInformationMessage('All available tags are already added!');
+            if (availableTags.length === 0) {
+                vscode.window.showInformationMessage('All tags already applied.');
                 return;
             }
 
             // Let user select tag to add
-            const selectedTag = await vscode.window.showQuickPick(filteredTags, {
-                placeHolder: 'Select a tag to add'
+            const tagOptions = availableTags.map(t => ({
+                label: t.name,
+                value: t.id
+            }));
+
+            const selectedTag = await vscode.window.showQuickPick(tagOptions, {
+                placeHolder: 'Select a tag'
             });
 
             if (!selectedTag) {
@@ -51,7 +64,7 @@ export function registerTagCommands(
             }
 
             // Add the tag
-            const updatedTags = [...currentTags, selectedTag];
+            const updatedTags = [...currentTags, selectedTag.value];
             await annotationManager.editAnnotation(
                 annotation.id,
                 annotation.filePath,
@@ -61,7 +74,7 @@ export function registerTagCommands(
             );
 
             sidebarWebview.refreshAnnotations();
-            vscode.window.showInformationMessage(`Tag '${selectedTag}' added!`);
+            vscode.window.showInformationMessage(`Tag added: ${selectedTag.label}`);
         }
     );
 
@@ -75,7 +88,7 @@ export function registerTagCommands(
             const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
 
             if (currentTags.length === 0) {
-                vscode.window.showInformationMessage('This annotation has no tags!');
+                vscode.window.showInformationMessage('No tags to remove.');
                 return;
             }
 
@@ -83,7 +96,7 @@ export function registerTagCommands(
             let selectedTag = tagToRemove;
             if (!selectedTag) {
                 selectedTag = await vscode.window.showQuickPick(currentTags, {
-                    placeHolder: 'Select a tag to remove'
+                    placeHolder: 'Select tag to remove'
                 });
             }
 
@@ -102,7 +115,7 @@ export function registerTagCommands(
             );
 
             sidebarWebview.refreshAnnotations();
-            vscode.window.showInformationMessage(`Tag '${selectedTag}' removed!`);
+            vscode.window.showInformationMessage(`Tag removed: ${selectedTag}`);
         }
     );
 
@@ -112,20 +125,26 @@ export function registerTagCommands(
         async (item: AnnotationItem) => {
             const annotation = item.annotation;
 
-            // Get available tags
-            const availableTags = [
-                'bug', 'performance', 'security', 'style',
-                'improvement', 'docs', 'question', 'ai-review'
-            ];
+            // Get available custom tags
+            const customTags = annotationManager.getCustomTags();
 
-            // Get current tags
-            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
+            if (customTags.length === 0) {
+                const create = await vscode.window.showInformationMessage(
+                    'No tags defined. Create one?',
+                    'Create Tag', 'Cancel'
+                );
+                if (create === 'Create Tag') {
+                    await vscode.commands.executeCommand('annotative.createCustomTag');
+                }
+                return;
+            }
+
+            const tagOptions = customTags.map(t => t.name);
 
             // Let user select tags (multi-select)
-            const selectedTags = await vscode.window.showQuickPick(availableTags, {
-                placeHolder: 'Select tags for this annotation',
-                canPickMany: true,
-                // Pre-select current tags
+            const selectedTags = await vscode.window.showQuickPick(tagOptions, {
+                placeHolder: 'Select tags',
+                canPickMany: true
             });
 
             if (!selectedTags) {
@@ -142,7 +161,7 @@ export function registerTagCommands(
             );
 
             sidebarWebview.refreshAnnotations();
-            vscode.window.showInformationMessage('Tags updated!');
+            vscode.window.showInformationMessage('Tags updated.');
         }
     );
 
@@ -153,18 +172,18 @@ export function registerTagCommands(
             const annotation = item.annotation;
 
             if (!annotation.tags || annotation.tags.length === 0) {
-                vscode.window.showInformationMessage('This annotation has no tags!');
+                vscode.window.showInformationMessage('No tags to clear.');
                 return;
             }
 
             // Confirm action
             const confirm = await vscode.window.showWarningMessage(
-                'Clear all tags from this annotation?',
+                'Clear all tags?',
                 { modal: true },
-                'Clear Tags'
+                'Clear'
             );
 
-            if (confirm !== 'Clear Tags') {
+            if (confirm !== 'Clear') {
                 return;
             }
 
@@ -178,7 +197,7 @@ export function registerTagCommands(
             );
 
             sidebarWebview.refreshAnnotations();
-            vscode.window.showInformationMessage('All tags cleared!');
+            vscode.window.showInformationMessage('Tags cleared.');
         }
     );
 
@@ -188,17 +207,17 @@ export function registerTagCommands(
         async () => {
             // Get tag name
             const tagName = await vscode.window.showInputBox({
-                prompt: 'Enter new tag name',
+                prompt: 'Tag name',
                 placeHolder: 'e.g., needs-review',
                 validateInput: (value) => {
                     if (!value || value.trim().length === 0) {
-                        return 'Tag name cannot be empty';
+                        return 'Name required';
                     }
                     if (value.length > 30) {
-                        return 'Tag name cannot exceed 30 characters';
+                        return 'Max 30 characters';
                     }
                     if (!/^[a-zA-Z0-9-_]+$/.test(value)) {
-                        return 'Tag name can only contain letters, numbers, hyphens and underscores';
+                        return 'Letters, numbers, hyphens, underscores only';
                     }
                     return null;
                 }
@@ -210,15 +229,15 @@ export function registerTagCommands(
 
             // Get category
             const categoryOptions = [
-                { label: 'Issue', value: 'issue' as const, description: 'Bugs, errors, problems' },
-                { label: 'Action', value: 'action' as const, description: 'Todo, refactor, test' },
-                { label: 'Reference', value: 'reference' as const, description: 'Documentation, notes' },
-                { label: 'Meta', value: 'meta' as const, description: 'Warnings, info' },
-                { label: 'Custom', value: 'custom' as const, description: 'User-defined category' }
+                { label: 'Issue', value: 'issue' as const, description: 'Bugs, errors' },
+                { label: 'Action', value: 'action' as const, description: 'Todo, refactor' },
+                { label: 'Reference', value: 'reference' as const, description: 'Docs, notes' },
+                { label: 'Meta', value: 'meta' as const, description: 'Info, warnings' },
+                { label: 'Custom', value: 'custom' as const, description: 'Other' }
             ];
 
             const selectedCategory = await vscode.window.showQuickPick(categoryOptions, {
-                placeHolder: 'Select a category for this tag'
+                placeHolder: 'Category'
             });
 
             if (!selectedCategory) {
@@ -234,7 +253,7 @@ export function registerTagCommands(
             ];
 
             const selectedPriority = await vscode.window.showQuickPick(priorityOptions, {
-                placeHolder: 'Select priority for this tag'
+                placeHolder: 'Priority'
             });
 
             if (!selectedPriority) {
@@ -254,7 +273,7 @@ export function registerTagCommands(
             ];
 
             const selectedColor = await vscode.window.showQuickPick(colorOptions, {
-                placeHolder: 'Select a color for this tag'
+                placeHolder: 'Color'
             });
 
             if (!selectedColor) {
@@ -268,12 +287,12 @@ export function registerTagCommands(
                     {
                         priority: selectedPriority.value,
                         color: selectedColor.value,
-                        description: `Custom tag: ${tagName}`
+                        description: tagName
                     }
                 );
 
                 sidebarWebview.refreshAnnotations();
-                vscode.window.showInformationMessage(`Custom tag '${tagName}' created!`);
+                vscode.window.showInformationMessage(`Tag created: ${tagName}`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to create tag: ${error}`);
             }
@@ -287,18 +306,18 @@ export function registerTagCommands(
             const customTags = annotationManager.getCustomTags();
 
             if (customTags.length === 0) {
-                vscode.window.showInformationMessage('No custom tags to delete!');
+                vscode.window.showInformationMessage('No tags to delete.');
                 return;
             }
 
             const tagOptions = customTags.map(tag => ({
                 label: tag.name,
-                description: tag.metadata?.description || '',
+                description: tag.category,
                 value: tag.id
             }));
 
             const selectedTag = await vscode.window.showQuickPick(tagOptions, {
-                placeHolder: 'Select a custom tag to delete'
+                placeHolder: 'Select tag to delete'
             });
 
             if (!selectedTag) {
@@ -307,7 +326,7 @@ export function registerTagCommands(
 
             // Confirm deletion
             const confirm = await vscode.window.showWarningMessage(
-                `Delete custom tag '${selectedTag.label}'?`,
+                `Delete tag "${selectedTag.label}"?`,
                 { modal: true },
                 'Delete'
             );
@@ -320,12 +339,12 @@ export function registerTagCommands(
                 const deleted = await annotationManager.deleteCustomTag(selectedTag.value);
                 if (deleted) {
                     sidebarWebview.refreshAnnotations();
-                    vscode.window.showInformationMessage(`Tag '${selectedTag.label}' deleted!`);
+                    vscode.window.showInformationMessage(`Deleted: ${selectedTag.label}`);
                 } else {
-                    vscode.window.showErrorMessage('Cannot delete preset tags');
+                    vscode.window.showErrorMessage('Failed to delete tag');
                 }
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to delete tag: ${error}`);
+                vscode.window.showErrorMessage(`Error: ${error}`);
             }
         }
     );
@@ -337,7 +356,7 @@ export function registerTagCommands(
             const customTags = annotationManager.getCustomTags();
 
             if (customTags.length === 0) {
-                vscode.window.showInformationMessage('No custom tags to edit!');
+                vscode.window.showInformationMessage('No tags to edit.');
                 return;
             }
 
@@ -348,7 +367,7 @@ export function registerTagCommands(
             }));
 
             const selectedTag = await vscode.window.showQuickPick(tagOptions, {
-                placeHolder: 'Select a custom tag to edit'
+                placeHolder: 'Select tag to edit'
             });
 
             if (!selectedTag) {
@@ -357,14 +376,14 @@ export function registerTagCommands(
 
             // Get new name
             const newName = await vscode.window.showInputBox({
-                prompt: 'Enter new tag name (leave empty to keep current)',
+                prompt: 'New name (leave empty to keep current)',
                 placeHolder: selectedTag.label,
                 validateInput: (value) => {
                     if (value && value.length > 30) {
-                        return 'Tag name cannot exceed 30 characters';
+                        return 'Max 30 characters';
                     }
                     if (value && !/^[a-zA-Z0-9-_]*$/.test(value)) {
-                        return 'Tag name can only contain letters, numbers, hyphens and underscores';
+                        return 'Letters, numbers, hyphens, underscores only';
                     }
                     return null;
                 }
@@ -388,7 +407,7 @@ export function registerTagCommands(
             ];
 
             const selectedColor = await vscode.window.showQuickPick(colorOptions, {
-                placeHolder: 'Select a new color (or keep current)'
+                placeHolder: 'Select new color'
             });
 
             if (!selectedColor) {
@@ -405,43 +424,44 @@ export function registerTagCommands(
 
                 if (updatedTag) {
                     sidebarWebview.refreshAnnotations();
-                    vscode.window.showInformationMessage(`Tag '${selectedTag.label}' updated!`);
+                    vscode.window.showInformationMessage(`Updated: ${selectedTag.label}`);
                 } else {
                     vscode.window.showErrorMessage('Failed to update tag');
                 }
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to update tag: ${error}`);
+                vscode.window.showErrorMessage(`Error: ${error}`);
             }
         }
     );
 
-    // Command: List all tags (preset + custom)
+    // Command: List all tags
     const listTagsCommand = vscode.commands.registerCommand(
         'annotative.listTags',
         async () => {
-            const presetTags = annotationManager.getPresetTags();
             const customTags = annotationManager.getCustomTags();
 
-            const allTags = [
-                ...presetTags.map(tag => ({
-                    label: `$(tag) ${tag.name}`,
-                    description: `${tag.category} (preset)`,
-                    detail: tag.metadata?.description
-                })),
-                ...customTags.map(tag => ({
-                    label: `$(tag) ${tag.name}`,
-                    description: `${tag.category} (custom)`,
-                    detail: tag.metadata?.description
-                }))
-            ];
+            if (customTags.length === 0) {
+                const createNew = await vscode.window.showInformationMessage(
+                    'No tags defined. Create one?',
+                    'Create Tag'
+                );
+                if (createNew === 'Create Tag') {
+                    vscode.commands.executeCommand('annotative.createCustomTag');
+                }
+                return;
+            }
 
-            const selected = await vscode.window.showQuickPick(allTags, {
-                placeHolder: 'All available tags',
+            const allTags = customTags.map(tag => ({
+                label: `$(tag) ${tag.name}`,
+                description: tag.category,
+                detail: tag.metadata?.description
+            }));
+
+            await vscode.window.showQuickPick(allTags, {
+                placeHolder: 'Available tags',
                 matchOnDescription: true,
                 matchOnDetail: true
             });
-
-            // Just for viewing, no action needed
         }
     );
 

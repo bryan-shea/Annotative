@@ -5,7 +5,7 @@ import { TagValidator } from './tagValidation';
 
 /**
  * TagManager orchestrates tag operations
- * Delegates to specialized modules for specific responsibilities
+ * All tags are user-defined per project - no presets
  */
 export class TagManager {
     private tagRegistry: TagRegistryStore;
@@ -19,24 +19,32 @@ export class TagManager {
     }
 
     /**
-     * Get a tag by ID (checks both preset and custom)
+     * Get a tag by ID
      */
     getTag(id: string): AnnotationTag | undefined {
         return this.tagRegistry.getTag(id);
     }
 
     /**
-     * Get all preset tags
+     * Get all preset tags (always empty - deprecated)
+     * @deprecated No presets exist - use getCustomTags()
      */
     getPresetTags(): AnnotationTag[] {
-        return this.tagRegistry.getPresetTags();
+        return [];
     }
 
     /**
-     * Get all custom tags
+     * Get all custom (user-defined) tags
      */
     getCustomTags(): AnnotationTag[] {
         return this.tagRegistry.getCustomTags();
+    }
+
+    /**
+     * Get all tags
+     */
+    getAllTags(): AnnotationTag[] {
+        return this.tagRegistry.getAllTags();
     }
 
     /**
@@ -66,7 +74,7 @@ export class TagManager {
         metadata?: TagMetadata
     ): AnnotationTag | undefined {
         const tag = this.tagRegistry.getTag(id);
-        if (!tag || tag.isPreset) {
+        if (!tag) {
             return undefined;
         }
 
@@ -85,10 +93,6 @@ export class TagManager {
      * Delete a custom tag
      */
     deleteCustomTag(id: string): boolean {
-        const tag = this.tagRegistry.getTag(id);
-        if (tag?.isPreset) {
-            return false; // Cannot delete preset tags
-        }
         return this.tagRegistry.deleteCustomTag(id);
     }
 
@@ -128,6 +132,13 @@ export class TagManager {
     }
 
     /**
+     * Get suggested color for new tag
+     */
+    getSuggestedColor(): string {
+        return this.tagRegistry.getSuggestedColor();
+    }
+
+    /**
      * Get icon for a tag
      */
     getTagIcon(tagId: string): string {
@@ -141,5 +152,12 @@ export class TagManager {
     getTagPriority(tagId: string): string {
         const tag = this.tagRegistry.getTag(tagId);
         return tag?.metadata?.priority || 'medium';
+    }
+
+    /**
+     * Check if any tags exist
+     */
+    hasTags(): boolean {
+        return this.tagRegistry.hasTags();
     }
 }

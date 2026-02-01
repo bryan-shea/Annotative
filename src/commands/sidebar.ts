@@ -34,16 +34,16 @@ export function registerSidebarCommands(
         async () => {
             // Check if already initialized
             if (annotationManager.isProjectStorageActive()) {
-                vscode.window.showInformationMessage('Project storage is already active for this workspace.');
+                vscode.window.showInformationMessage('Project storage already active.');
                 return;
             }
 
             // Ask about migration
             const migrateChoice = await vscode.window.showQuickPick([
-                { label: 'Create empty project storage', description: 'Start fresh with no annotations', value: false },
-                { label: 'Migrate existing annotations', description: 'Copy current annotations to project storage', value: true }
+                { label: 'Create new storage', description: 'Start fresh', value: false },
+                { label: 'Migrate existing', description: 'Copy current annotations', value: true }
             ], {
-                placeHolder: 'Initialize .annotative folder for this project'
+                placeHolder: 'Initialize .annotative folder'
             });
 
             if (!migrateChoice) {
@@ -56,16 +56,16 @@ export function registerSidebarCommands(
                 if (created) {
                     vscode.window.showInformationMessage(
                         migrateChoice.value
-                            ? 'Project storage initialized with existing annotations!'
-                            : 'Project storage initialized!'
+                            ? 'Project storage initialized with existing data.'
+                            : 'Project storage initialized.'
                     );
                 } else {
-                    vscode.window.showInformationMessage('Switched to existing project storage.');
+                    vscode.window.showInformationMessage('Switched to project storage.');
                 }
 
                 sidebarWebview.refreshAnnotations();
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to initialize project storage: ${error}`);
+                vscode.window.showErrorMessage(`Failed to initialize: ${error}`);
             }
         }
     );
@@ -78,16 +78,18 @@ export function registerSidebarCommands(
             const storageDir = annotationManager.getStorageDirectory();
 
             const message = isProjectStorage
-                ? `Project storage active: ${storageDir}`
-                : `Global storage active: ${storageDir}`;
+                ? `Project storage: ${storageDir}`
+                : 'No project storage (annotations saved on first use)';
 
             const action = await vscode.window.showInformationMessage(
                 message,
-                'Open Folder'
+                isProjectStorage ? 'Open Folder' : 'Initialize'
             );
 
             if (action === 'Open Folder') {
                 vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(storageDir));
+            } else if (action === 'Initialize') {
+                await vscode.commands.executeCommand('annotative.initProjectStorage');
             }
         }
     );

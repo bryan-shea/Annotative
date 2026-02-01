@@ -44,32 +44,32 @@
       },
       {
         "command": "annotative.addAnnotationFromTemplate",
-        "title": "Add Annotation from Template",
+        "title": "Add from Template",
         "icon": "$(sparkle)"
       },
       {
         "command": "annotative.removeAnnotation",
-        "title": "Remove Annotation",
+        "title": "Remove",
         "icon": "$(trash)"
       },
       {
         "command": "annotative.toggleResolved",
-        "title": "Toggle Resolved Status",
+        "title": "Toggle Status",
         "icon": "$(check)"
       },
       {
         "command": "annotative.goToAnnotation",
-        "title": "Go to Annotation",
+        "title": "Go to Location",
         "icon": "$(go-to-file)"
       },
       {
         "command": "annotative.exportAnnotations",
-        "title": "Export Annotations to Clipboard",
+        "title": "Export to Clipboard",
         "icon": "$(clippy)"
       },
       {
         "command": "annotative.showExport",
-        "title": "Show Export in New Document",
+        "title": "Export to Document",
         "icon": "$(file-text)"
       },
       {
@@ -89,107 +89,107 @@
       },
       {
         "command": "annotative.searchAnnotations",
-        "title": "Search Annotations",
+        "title": "Search",
         "icon": "$(search)"
       },
       {
         "command": "annotative.clearFilters",
-        "title": "Clear All Filters",
+        "title": "Clear Filters",
         "icon": "$(clear-all)"
       },
       {
         "command": "annotative.editAnnotation",
-        "title": "Edit Annotation",
+        "title": "Edit",
         "icon": "$(edit)"
       },
       {
         "command": "annotative.viewAnnotation",
-        "title": "View Annotation Details",
+        "title": "View Details",
         "icon": "$(eye)"
       },
       {
         "command": "annotative.undoLastAnnotation",
-        "title": "Undo Last Annotation",
+        "title": "Undo",
         "icon": "$(discard)"
       },
       {
         "command": "annotative.resolveAll",
-        "title": "Resolve All Annotations",
+        "title": "Resolve All",
         "icon": "$(check-all)"
       },
       {
         "command": "annotative.deleteResolved",
-        "title": "Delete Resolved Annotations",
+        "title": "Delete Resolved",
         "icon": "$(trash)"
       },
       {
         "command": "annotative.deleteAll",
-        "title": "Delete All Annotations",
+        "title": "Delete All",
         "icon": "$(trash)"
       },
       {
         "command": "annotative.nextAnnotation",
-        "title": "Go to Next Annotation",
+        "title": "Next",
         "icon": "$(arrow-down)"
       },
       {
         "command": "annotative.previousAnnotation",
-        "title": "Go to Previous Annotation",
+        "title": "Previous",
         "icon": "$(arrow-up)"
       },
       {
         "command": "annotative.askCopilotAboutAnnotation",
-        "title": "Ask Copilot About This",
+        "title": "Ask Copilot",
         "icon": "$(copilot)"
       },
       {
         "command": "annotative.copyAsCopilotContext",
-        "title": "Copy as Copilot Context",
+        "title": "Copy for Copilot",
         "icon": "$(clippy)"
       },
       {
         "command": "annotative.exportByIntent",
-        "title": "Export by Intent (Review/Bugs/Optimization/Docs)",
+        "title": "Export by Intent",
         "icon": "$(filter)"
       },
       {
         "command": "annotative.exportForAI",
-        "title": "Export for AI Tool (Copilot/ChatGPT/Claude)",
+        "title": "Export for AI",
         "icon": "$(export)"
       },
       {
         "command": "annotative.batchAIReview",
-        "title": "Batch AI Review (Review All Annotations)",
+        "title": "Batch AI Review",
         "icon": "$(checklist)"
       },
       {
         "command": "annotative.initProjectStorage",
-        "title": "Annotative: Initialize Project Storage",
+        "title": "Initialize Storage",
         "icon": "$(folder-active)"
       },
       {
         "command": "annotative.showStorageInfo",
-        "title": "Annotative: Show Storage Info",
+        "title": "Storage Info",
         "icon": "$(info)"
       },
       {
         "command": "annotative.createCustomTag",
-        "title": "Annotative: Create Custom Tag",
+        "title": "Create Tag",
         "icon": "$(add)"
       },
       {
         "command": "annotative.deleteCustomTag",
-        "title": "Annotative: Delete Custom Tag",
+        "title": "Delete Tag",
         "icon": "$(trash)"
       },
       {
         "command": "annotative.editCustomTag",
-        "title": "Annotative: Edit Custom Tag",
+        "title": "Edit Tag",
         "icon": "$(edit)"
       },
       {
         "command": "annotative.listTags",
-        "title": "Annotative: List All Tags",
+        "title": "List Tags",
         "icon": "$(list-unordered)"
       }
     ],
@@ -197,7 +197,7 @@
       "activitybar": [
         {
           "id": "annotative",
-          "title": "Annotative",
+          "title": "Annotations",
           "icon": "$(selection)"
         }
       ]
@@ -329,24 +329,24 @@
       {
         "id": "annotative.participant",
         "name": "annotative",
-        "description": "Code annotation assistant for reviewing and managing annotations",
+        "description": "Manage and review code annotations",
         "isSticky": false,
         "commands": [
           {
             "name": "issues",
-            "description": "Show all unresolved annotations in current file or workspace"
+            "description": "Show open annotations"
           },
           {
             "name": "explain",
-            "description": "Explain a specific annotation with detailed analysis"
+            "description": "Explain annotation details"
           },
           {
             "name": "fix",
-            "description": "Get AI suggestions to fix annotated issues"
+            "description": "Suggest fixes"
           },
           {
             "name": "review",
-            "description": "Review current file with annotation context"
+            "description": "Review with context"
           }
         ]
       }
@@ -396,37 +396,37 @@
       }
     ],
     "configuration": {
-      "title": "Annotative",
+      "title": "Annotations",
       "properties": {
         "annotative.export.contextLines": {
           "type": "number",
           "default": 5,
-          "description": "Number of context lines to include before and after annotations in exports"
+          "description": "Lines of context in exports"
         },
         "annotative.export.includeImports": {
           "type": "boolean",
           "default": true,
-          "description": "Include related imports in code context"
+          "description": "Include imports in context"
         },
         "annotative.export.includeFunction": {
           "type": "boolean",
           "default": true,
-          "description": "Include full function/class definition when possible"
+          "description": "Include full function definition"
         },
         "annotative.export.copilotOptimized": {
           "type": "boolean",
           "default": true,
-          "description": "Use Copilot-optimized format for exports"
+          "description": "Optimize format for Copilot"
         },
         "annotative.copilot.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Copilot integration features"
+          "description": "Enable Copilot integration"
         },
         "annotative.copilot.autoAttachContext": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically attach annotation context when invoking Copilot"
+          "description": "Auto-attach context to Copilot"
         },
         "annotative.copilot.preferredFormat": {
           "type": "string",
@@ -436,17 +436,17 @@
             "compact"
           ],
           "default": "conversational",
-          "description": "Preferred export format for Copilot Chat"
+          "description": "Export format for Copilot"
         },
         "annotative.copilot.showInlineButtons": {
           "type": "boolean",
           "default": true,
-          "description": "Show inline 'Ask Copilot' buttons in annotation tree"
+          "description": "Show Copilot buttons inline"
         },
         "annotative.copilot.autoOpenChat": {
           "type": "boolean",
           "default": false,
-          "description": "Automatically open Copilot Chat when using 'Ask Copilot' commands"
+          "description": "Auto-open Copilot Chat"
         }
       }
     }

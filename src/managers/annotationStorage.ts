@@ -1,34 +1,49 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { Annotation, AnnotationStorage as IAnnotationStorage, AnnotationTag } from '../types';
+import { Annotation, AnnotationStorage as IAnnotationStorage, AnnotationTag, AnnotationStatus } from '../types';
 
 /**
- * Handles persistence of annotations and custom tags
- * Manages file I/O for storage
- * Supports project-based storage via .annotative folder
+ * Handles persistence of annotations, custom tags, and statuses
+ * Uses project-scoped storage (.annotative folder) exclusively
+ * Each workspace has isolated annotation data
  */
 export class AnnotationStorageManager {
     private storageFilePath: string;
     private customTagsPath: string;
-    private globalStorageDir: string;
+    private customStatusesPath: string;
     private projectStorageDir: string | undefined;
-    private useProjectStorage: boolean = false;
+    private workspaceId: string;
 
     constructor(
         private annotations: Map<string, Annotation[]>,
         context: vscode.ExtensionContext
     ) {
-        this.globalStorageDir = context.globalStorageUri?.fsPath || context.extensionUri.fsPath;
-        this.storageFilePath = path.join(this.globalStorageDir, 'annotations.json');
-        this.customTagsPath = path.join(this.globalStorageDir, 'customTags.json');
+        // Generate workspace identifier for isolation
+        this.workspaceId = this.generateWorkspaceId();
 
-        // Check for project-based storage
+        // Initialize paths - will be set properly when project storage is created
+        this.storageFilePath = '';
+        this.customTagsPath = '';
+        this.customStatusesPath = '';
+
+        // Check for existing project storage
         this.detectProjectStorage();
     }
 
     /**
-     * Detect if project-based storage is available (.annotative folder in workspace root)
+     * Generate a unique identifier for the current workspace
+     */
+    private generateWorkspaceId(): string {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            return workspaceFolders[0].uri.fsPath;
+        }
+        return 'default';
+    }
+
+    /**
+     * Detect if project-based storage exists (.annotative folder in workspace root)
      */
     private detectProjectStorage(): void {
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -38,9 +53,9 @@ export class AnnotationStorageManager {
 
             if (fs.existsSync(annotativeDir)) {
                 this.projectStorageDir = annotativeDir;
-                this.useProjectStorage = true;
                 this.storageFilePath = path.join(annotativeDir, 'annotations.json');
                 this.customTagsPath = path.join(annotativeDir, 'customTags.json');
+                this.customStatusesPath = path.join(annotativeDir, 'statuses.json');
             }
         }
     }
@@ -49,113 +64,92 @@ export class AnnotationStorageManager {
      * Check if project storage is active
      */
     isProjectStorageActive(): boolean {
-        return this.useProjectStorage;
+        return !!this.projectStorageDir;
     }
 
     /**
      * Get the current storage directory path
      */
     getStorageDirectory(): string {
-        return this.useProjectStorage && this.projectStorageDir
-            ? this.projectStorageDir
-            : this.globalStorageDir;
+        return this.projectStorageDir || '';
     }
 
     /**
-     * Initialize project-based storage (.annotative folder)
-     * Returns true if successfully created, false if already exists
+     * Ensure project storage exists - creates .annotative folder if needed
+     * Called automatically when first annotation is added
      */
-    async initializeProjectStorage(migrateExisting: boolean = false): Promise<boolean> {
+    async ensureProjectStorage(): Promise<void> {
+        if (this.projectStorageDir) {
+            return; // Already initialized
+        }
+
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
-            throw new Error('No workspace folder open');
+            throw new Error('No workspace folder open. Please open a folder to use annotations.');
         }
 
         const workspaceRoot = workspaceFolders[0].uri.fsPath;
         const annotativeDir = path.join(workspaceRoot, '.annotative');
 
-        if (fs.existsSync(annotativeDir)) {
-            // Already exists, just switch to it
-            this.projectStorageDir = annotativeDir;
-            this.useProjectStorage = true;
-            this.storageFilePath = path.join(annotativeDir, 'annotations.json');
-            this.customTagsPath = path.join(annotativeDir, 'customTags.json');
-            return false;
+        // Create the directory
+        if (!fs.existsSync(annotativeDir)) {
+            fs.mkdirSync(annotativeDir, { recursive: true });
+
+            // Create a .gitignore to optionally exclude from version control
+            const gitignorePath = path.join(annotativeDir, '.gitignore');
+            const gitignoreContent = `# Uncomment to exclude annotations from version control\n# *\n# !.gitignore\n`;
+            fs.writeFileSync(gitignorePath, gitignoreContent, 'utf-8');
         }
 
-        // Create the directory
-        fs.mkdirSync(annotativeDir, { recursive: true });
-
-        // Create a README file for documentation
-        const readmePath = path.join(annotativeDir, 'README.md');
-        const readmeContent = `# Annotative Project Storage
-
-This folder contains project-specific annotations for this codebase.
-
-## Files
-
-- \`annotations.json\` - All annotations for this project
-- \`customTags.json\` - Custom tags defined for this project
-
-## Usage
-
-This folder is managed by the [Annotative](https://marketplace.visualstudio.com/items?itemName=bryan-shea.annotative) VS Code extension.
-
-You can commit this folder to version control to share annotations with your team.
-`;
-        fs.writeFileSync(readmePath, readmeContent, 'utf-8');
-
-        // Switch to project storage
-        const oldStoragePath = this.storageFilePath;
-        const oldTagsPath = this.customTagsPath;
-
+        // Set paths
         this.projectStorageDir = annotativeDir;
-        this.useProjectStorage = true;
         this.storageFilePath = path.join(annotativeDir, 'annotations.json');
         this.customTagsPath = path.join(annotativeDir, 'customTags.json');
+        this.customStatusesPath = path.join(annotativeDir, 'statuses.json');
+    }
 
-        // Migrate existing annotations if requested
-        if (migrateExisting) {
-            if (fs.existsSync(oldStoragePath)) {
-                fs.copyFileSync(oldStoragePath, this.storageFilePath);
-            }
-            if (fs.existsSync(oldTagsPath)) {
-                fs.copyFileSync(oldTagsPath, this.customTagsPath);
-            }
-        }
-
-        return true;
+    /**
+     * Initialize project-based storage (.annotative folder)
+     * Returns true if successfully created, false if already exists
+     * @deprecated Use ensureProjectStorage() instead - storage is now auto-created
+     */
+    async initializeProjectStorage(migrateExisting: boolean = false): Promise<boolean> {
+        await this.ensureProjectStorage();
+        return !fs.existsSync(this.storageFilePath);
     }
 
     /**
      * Refresh storage detection (useful after folder changes)
      */
     refreshStorageDetection(): void {
-        this.useProjectStorage = false;
         this.projectStorageDir = undefined;
-        this.storageFilePath = path.join(this.globalStorageDir, 'annotations.json');
-        this.customTagsPath = path.join(this.globalStorageDir, 'customTags.json');
+        this.storageFilePath = '';
+        this.customTagsPath = '';
+        this.customStatusesPath = '';
         this.detectProjectStorage();
     }
 
     /**
      * Load annotations from storage
+     * Only loads if project storage exists
      */
     async loadAnnotations(): Promise<void> {
         try {
-            if (fs.existsSync(this.storageFilePath)) {
-                const data = fs.readFileSync(this.storageFilePath, 'utf-8');
-                const storage: { workspaceAnnotations: { [key: string]: Annotation[] } } = JSON.parse(data);
-
-                this.annotations.clear();
-                Object.entries(storage.workspaceAnnotations).forEach(([filePath, annotations]) => {
-                    const normalizedAnnotations = annotations.map(ann => ({
-                        ...ann,
-                        timestamp: new Date(ann.timestamp as any)
-                    }));
-                    this.annotations.set(filePath, normalizedAnnotations);
-                });
+            if (!this.storageFilePath || !fs.existsSync(this.storageFilePath)) {
+                return;
             }
+
+            const data = fs.readFileSync(this.storageFilePath, 'utf-8');
+            const storage: { workspaceAnnotations: { [key: string]: Annotation[] } } = JSON.parse(data);
+
+            this.annotations.clear();
+            Object.entries(storage.workspaceAnnotations).forEach(([filePath, annotations]) => {
+                const normalizedAnnotations = annotations.map(ann => ({
+                    ...ann,
+                    timestamp: new Date(ann.timestamp as any)
+                }));
+                this.annotations.set(filePath, normalizedAnnotations);
+            });
         } catch (error) {
             console.error('Failed to load annotations:', error);
         }
@@ -163,14 +157,12 @@ You can commit this folder to version control to share annotations with your tea
 
     /**
      * Save annotations to storage
+     * Auto-creates project storage if it doesn't exist
      */
     async saveAnnotations(): Promise<void> {
         try {
-            // Ensure storage directory exists
-            const storageDir = path.dirname(this.storageFilePath);
-            if (!fs.existsSync(storageDir)) {
-                fs.mkdirSync(storageDir, { recursive: true });
-            }
+            // Ensure project storage exists
+            await this.ensureProjectStorage();
 
             const storage: IAnnotationStorage = {
                 workspaceAnnotations: Object.fromEntries(this.annotations)
@@ -188,7 +180,7 @@ You can commit this folder to version control to share annotations with your tea
      */
     async loadCustomTags(): Promise<AnnotationTag[]> {
         try {
-            if (fs.existsSync(this.customTagsPath)) {
+            if (this.customTagsPath && fs.existsSync(this.customTagsPath)) {
                 const data = fs.readFileSync(this.customTagsPath, 'utf-8');
                 return JSON.parse(data);
             }
@@ -200,19 +192,48 @@ You can commit this folder to version control to share annotations with your tea
 
     /**
      * Save custom tags to storage
+     * Auto-creates project storage if it doesn't exist
      */
     async saveCustomTags(tags: AnnotationTag[]): Promise<void> {
         try {
-            // Ensure storage directory exists
-            const storageDir = path.dirname(this.customTagsPath);
-            if (!fs.existsSync(storageDir)) {
-                fs.mkdirSync(storageDir, { recursive: true });
-            }
+            // Ensure project storage exists
+            await this.ensureProjectStorage();
 
             fs.writeFileSync(this.customTagsPath, JSON.stringify(tags, null, 2));
         } catch (error) {
             console.error('Failed to save custom tags:', error);
             vscode.window.showErrorMessage('Failed to save custom tags');
+        }
+    }
+
+    /**
+     * Load custom statuses from storage
+     */
+    async loadCustomStatuses(): Promise<AnnotationStatus[]> {
+        try {
+            if (this.customStatusesPath && fs.existsSync(this.customStatusesPath)) {
+                const data = fs.readFileSync(this.customStatusesPath, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            console.error('Failed to load custom statuses:', error);
+        }
+        return [];
+    }
+
+    /**
+     * Save custom statuses to storage
+     * Auto-creates project storage if it doesn't exist
+     */
+    async saveCustomStatuses(statuses: AnnotationStatus[]): Promise<void> {
+        try {
+            // Ensure project storage exists
+            await this.ensureProjectStorage();
+
+            fs.writeFileSync(this.customStatusesPath, JSON.stringify(statuses, null, 2));
+        } catch (error) {
+            console.error('Failed to save custom statuses:', error);
+            vscode.window.showErrorMessage('Failed to save custom statuses');
         }
     }
 }
