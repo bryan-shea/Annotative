@@ -1,224 +1,395 @@
 ![Annotative Logo](media/annotative-logo/128px/annotative-logo.png)
 
-Annotative is a lightweight VS Code extension for code annotation and team collaboration. Highlight code, add tagged notes with custom colors, and export to Markdown for sharing with your team or AI tools like Copilot, ChatGPT, and Claude. Perfect for code reviews, documenting issues, and collaborative feedback.
+# Annotative
 
-## Why Use Annotative?
+A VS Code extension for code annotation and review workflows. Add inline comments to code selections, organize them with custom tags, and export for documentation or AI-assisted development.
 
-- **Review code systematically** - Flag issues, improvements, and observations as you code
-- **Team collaboration** - Share annotations with teammates for synchronized feedback
-- **AI-assisted development** - Export annotations to discuss with Copilot, ChatGPT, or Claude
-- **Documentation** - Capture insights and create self-documenting code reviews
-- **Issue tracking** - Mark, prioritize, and track code issues within the editor
-- **Knowledge sharing** - Create project-specific annotation libraries for team learning
+## Overview
 
-## How It Works
+Annotative provides a lightweight annotation system within VS Code. Highlight code, add comments, organize with tags, and export as Markdown. Annotations are stored per workspace and can be shared with your team via version control.
 
-1. Select code you want to annotate
-2. Press Ctrl+Shift+A or right-click and select "Add Annotation"
-3. Enter your note
-4. Add tags to categorize (bug, performance, security, etc.)
-5. Choose a color for visual preference
-6. View in sidebar with flexible organization options
-7. Export as Markdown or share with your team
+Primary use cases:
 
-## Core Features
+- Reviewing AI-generated code changes
+- Documenting code issues during development
+- Creating feedback for code reviews
+- Taking structured notes within codebases
+- Tracking technical debt or improvements
 
-- **Fast annotation** - Keyboard shortcuts and context menus for quick feedback
-- **Visual highlighting** - See annotated code directly in your editor with color coding
-- **Smart organization** - Group annotations by file, tag, project, or status
-- **Flexible tagging** - Built-in tags (bug, performance, security, docs, etc.) plus custom tag support
-- **Resolution tracking** - Mark annotations resolved when issues are addressed
-- **Easy export** - Generate Markdown for sharing, documentation, or AI discussions
-- **Persistent storage** - Auto-save annotations between sessions
-- **Zero configuration** - Works out of the box with no setup needed
+## Quick Start
 
-## Advanced Features
+1. Select code in the editor
+2. Press Ctrl+Shift+A (Cmd+Shift+A on macOS)
+3. Enter your comment
+4. Optionally select tags and choose a highlight color
+5. View all annotations in the sidebar
+6. Export to Markdown when ready to share
 
-- **Project-based storage** - Save annotations in `.annotative/` folder within your project for team sharing
-- **Custom tags** - Create, edit, and delete tags tailored to your team's workflow
-- **Sidebar editing** - Update annotation comments directly from the sidebar
-- **Multiple organization modes** - Group by file, tag, project, or resolution status
-- **Bulk operations** - Tag, resolve, or delete multiple annotations at once
-- **Smart filtering** - Filter by status, tag, or search across all annotations
-- **Keyboard navigation** - Jump between annotations with Alt+Up/Down
-- **Undo support** - Quickly undo the last annotation
-- **Copilot integration** - Use @annotative participant in Copilot Chat for AI discussion
-- **Multi-format export** - Optimized exports for Copilot, ChatGPT, Claude, or generic sharing
+## Features
 
-## Keyboard Shortcuts
+### Core Functionality
 
-| Shortcut                            | Action                          |
-| ----------------------------------- | ------------------------------- |
-| `Ctrl+Shift+A` (Mac: `Cmd+Shift+A`) | Add annotation to selected text |
-| `Ctrl+Shift+Z` (Mac: `Cmd+Shift+Z`) | Undo last annotation            |
-| `Alt+Down`                          | Jump to next annotation         |
-| `Alt+Up`                            | Jump to previous annotation     |
-| `Ctrl+Shift+F` (Mac: `Cmd+Shift+F`) | Search annotations              |
-| `Ctrl+Alt+E` (Mac: `Cmd+Alt+E`)     | Export annotations              |
+**Annotation Management**
 
-## AI Integration
+- Add annotations to selected code with keyboard shortcuts or context menu
+- Edit annotation comments directly in the sidebar
+- Mark annotations as resolved when issues are addressed
+- Delete individual or bulk annotations
+- Undo the most recent annotation
 
-Export your annotations and paste directly into ChatGPT, Copilot Chat, or Claude to:
+**Organization**
 
-- Discuss issues and get suggestions
-- Request code improvements
-- Generate documentation
-- Iterate on AI-generated code
+- Group annotations by file, tag, or resolution status
+- Filter by status (all, open, resolved)
+- Filter by custom tags
+- Search across all annotations in the workspace
+- Navigate between annotations with keyboard shortcuts
+
+**Custom Tags**
+
+- Create project-specific tags with custom names and colors
+- Edit existing tags to update properties
+- Delete unused tags
+- No preset tags - all tags are user-defined
+
+**Visual Highlighting**
+
+- Inline code highlighting in the editor
+- Eight color options for visual preference
+- Decorations update automatically when switching files
+
+**Export and Sharing**
+
+- Export annotations as Markdown to clipboard
+- Export to a new document for editing
+- Optimized export formats for AI tools
+- Batch export by intent or context
 
 ### GitHub Copilot Integration
 
-Use the `@annotative` participant in Copilot Chat to:
+Use the `@annotative` chat participant to interact with your annotations:
 
-- Get AI suggestions on all annotations in a file
-- Ask Copilot about specific annotations
-- Generate fixes for flagged issues
+- Review all annotations in the active file
+- Ask questions about specific annotations
+- Request suggestions for flagged issues
+- Copy annotations as context for Copilot
 
-## Commands
+Chat participant commands:
 
-Use the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) to access:
+- `/issues` - Show open annotations
+- `/explain` - Get detailed explanations
+- `/fix` - Request fix suggestions
+- `/review` - Review with full context
 
-| Command                    | Description                                   |
-| -------------------------- | --------------------------------------------- |
-| Add Annotation             | Annotate selected code                        |
-| Edit Annotation            | Update comment in sidebar                     |
-| Toggle Resolved            | Mark annotation resolved/unresolved           |
-| Remove Annotation          | Delete an annotation                          |
-| Filter by Status           | Show all, open, or resolved only              |
-| Filter by Tag              | Focus on specific tag categories              |
-| Create Custom Tag          | Define custom tags for your team              |
-| Edit Custom Tag            | Modify custom tag properties                  |
-| Delete Custom Tag          | Remove a custom tag                           |
-| List All Tags              | View all available tags                       |
-| Initialize Project Storage | Create `.annotative/` folder for team sharing |
-| Show Storage Info          | View where annotations are stored             |
-| Export Annotations         | Copy as Markdown to clipboard                 |
-| Search Annotations         | Find annotations across workspace             |
+### Storage Options
+
+**Project Storage**
+
+- Initialize `.annotative/` folder in your workspace
+- Annotations stored as `annotations.json` in the project
+- Share annotations with your team via version control
+- Portable across different machines
+
+**Global Storage**
+
+- Fallback storage in VS Code's global state
+- Per-workspace isolation
+- Automatic persistence
 
 ## Installation
 
+Install from the VS Code Marketplace:
+
 1. Open VS Code
-2. Go to Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
 3. Search for "Annotative"
 4. Click Install
 
-## Getting Started
-
-After installation:
-
-1. Select any code in your editor
-2. Press `Ctrl+Shift+A` or right-click and select "Add Annotation"
-3. Enter your note and choose a color
-4. (Optional) Add tags to categorize the annotation
-5. View all annotations in the Annotative sidebar
-6. Export annotations to share
+No additional configuration required - the extension works immediately after installation.
 
 ## Requirements
 
 - VS Code 1.105.0 or higher
-- No additional dependencies - works out of the box!
+- No external dependencies
 
-## Development & Contributing
+## Usage
 
-Want to contribute or test locally?
+### Adding Annotations
 
-**Quick Start:**
+**Via Keyboard Shortcut:**
+
+1. Select text in the editor
+2. Press Ctrl+Shift+A (Cmd+Shift+A on macOS)
+3. Enter a comment in the input box
+4. Optionally select tags (if any custom tags exist)
+5. Choose a highlight color
+
+**Via Context Menu:**
+
+1. Select text in the editor
+2. Right-click and choose "Add Annotation"
+3. Follow the same prompts as above
+
+**Via Template:**
+
+- Select text and use "Add from Template" for common annotation scenarios
+- Templates include predefined comments for review, explanation, optimization, and security
+
+### Managing Annotations
+
+**Sidebar View:**
+
+- All annotations appear in the "Annotations" sidebar
+- Click any annotation to navigate to its location
+- Use inline buttons to edit, toggle status, or delete
+- Group annotations by file, tag, or status using the dropdown
+
+**Editing:**
+
+- Click the edit button in the sidebar
+- Update the comment text in the input box
+- Changes save automatically
+
+**Resolution Tracking:**
+
+- Click the toggle status button to mark as resolved
+- Resolved annotations remain visible but are flagged
+- Use "Delete Resolved" to clean up completed items
+
+**Bulk Operations:**
+
+- "Resolve All" marks all annotations as resolved
+- "Delete Resolved" removes all resolved annotations
+- "Delete All" clears all annotations in the workspace
+
+### Filtering and Search
+
+**Filter by Status:**
+
+- Show all, only open, or only resolved annotations
+- Access via the filter icon in the sidebar toolbar
+
+**Filter by Tag:**
+
+- Focus on annotations with specific tags
+- Only available if custom tags have been created
+
+**Search:**
+
+- Press Ctrl+Shift+F (Cmd+Shift+F on macOS) in the sidebar
+- Search across comments, file paths, and line numbers
+- Results update in real-time
+
+### Keyboard Shortcuts
+
+| Shortcut                   | Action                             |
+| -------------------------- | ---------------------------------- |
+| Ctrl+Shift+A (Cmd+Shift+A) | Add annotation to selection        |
+| Ctrl+Shift+Z (Cmd+Shift+Z) | Undo last annotation               |
+| Alt+Down                   | Navigate to next annotation        |
+| Alt+Up                     | Navigate to previous annotation    |
+| Ctrl+Shift+F (Cmd+Shift+F) | Search annotations in sidebar      |
+| Ctrl+Shift+C (Cmd+Shift+C) | Copy annotation as Copilot context |
+| Ctrl+Alt+E (Cmd+Alt+E)     | Export annotations by intent       |
+
+### Custom Tags
+
+**Creating Tags:**
+
+1. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+2. Run "Annotative: Create Tag"
+3. Enter tag name
+4. Select color and priority
+
+**Editing Tags:**
+
+1. Open Command Palette
+2. Run "Annotative: Edit Tag"
+3. Select tag to edit
+4. Update properties
+
+**Deleting Tags:**
+
+1. Open Command Palette
+2. Run "Annotative: Delete Tag"
+3. Select tag to remove
+4. Confirm deletion
+
+**Viewing Tags:**
+
+- Run "Annotative: List Tags" to see all available tags
+
+### Project Storage
+
+**Initialize Project Storage:**
+
+1. Open Command Palette
+2. Run "Annotative: Initialize Storage"
+3. A `.annotative/` folder is created in the workspace root
+4. Annotations are saved to `.annotative/annotations.json`
+
+**Share with Team:**
+
+- Commit `.annotative/` to version control
+- Team members with the extension see the same annotations
+- Changes sync through git like any other file
+
+**Check Storage Location:**
+
+- Run "Annotative: Storage Info" to see current storage path
+- Shows whether using project or global storage
+
+### Exporting Annotations
+
+**To Clipboard:**
+
+- Click "Export to Clipboard" in the sidebar toolbar
+- Markdown content copied to clipboard
+- Paste into documents, chats, or issues
+
+**To Document:**
+
+- Click "Export to Document" in the sidebar toolbar
+- Opens a new untitled document with Markdown content
+- Edit and save as needed
+
+**For AI Tools:**
+
+- Click "Export for AI" for optimized formatting
+- Includes context lines and code snippets
+- Paste directly into Copilot, ChatGPT, or Claude
+
+**By Intent:**
+
+- Press Ctrl+Alt+E (Cmd+Alt+E on macOS)
+- Choose export intent (review, documentation, issue tracking)
+- Format optimized for the selected intent
+
+## Commands
+
+Access all commands via the Command Palette (Ctrl+Shift+P / Cmd+Shift+P):
+
+**Annotation Commands:**
+
+- `Annotative: Add Annotation` - Add annotation to selected code
+- `Annotative: Add from Template` - Use predefined templates
+- `Annotative: Edit` - Edit annotation comment
+- `Annotative: Toggle Status` - Mark resolved or unresolved
+- `Annotative: Remove` - Delete annotation
+- `Annotative: Undo` - Undo last annotation
+- `Annotative: View Details` - Show annotation details
+
+**Navigation Commands:**
+
+- `Annotative: Next` - Go to next annotation
+- `Annotative: Previous` - Go to previous annotation
+- `Annotative: Go to Location` - Navigate to annotation source
+
+**Filter Commands:**
+
+- `Annotative: Filter by Status` - Filter all, open, or resolved
+- `Annotative: Filter by Tag` - Filter by custom tag
+- `Annotative: Search` - Search annotations
+- `Annotative: Clear Filters` - Reset all filters
+- `Annotative: Refresh` - Reload annotations
+
+**Bulk Commands:**
+
+- `Annotative: Resolve All` - Mark all as resolved
+- `Annotative: Delete Resolved` - Remove resolved annotations
+- `Annotative: Delete All` - Clear all annotations
+
+**Tag Commands:**
+
+- `Annotative: Create Tag` - Create custom tag
+- `Annotative: Edit Tag` - Modify tag properties
+- `Annotative: Delete Tag` - Remove custom tag
+- `Annotative: List Tags` - View all tags
+
+**Export Commands:**
+
+- `Annotative: Export to Clipboard` - Copy as Markdown
+- `Annotative: Export to Document` - Open in new file
+- `Annotative: Export by Intent` - Optimized export formats
+- `Annotative: Export for AI` - AI-optimized format
+- `Annotative: Batch AI Review` - Prepare for AI review
+
+**Storage Commands:**
+
+- `Annotative: Initialize Storage` - Create project storage
+- `Annotative: Storage Info` - Show storage location
+
+**Copilot Commands:**
+
+- `Annotative: Ask Copilot` - Query Copilot about annotation
+- `Annotative: Copy for Copilot` - Copy as Copilot context
+
+## Configuration
+
+Configure via VS Code settings (File > Preferences > Settings):
+
+**Export Settings:**
+
+- `annotative.export.contextLines` - Number of context lines in exports (default: 5)
+- `annotative.export.includeImports` - Include imports in context (default: true)
+- `annotative.export.includeFunction` - Include full function definitions (default: true)
+- `annotative.export.copilotOptimized` - Optimize format for Copilot (default: true)
+
+**Copilot Integration:**
+
+- `annotative.copilot.enabled` - Enable Copilot integration (default: true)
+- `annotative.copilot.autoAttachContext` - Auto-attach context to Copilot (default: true)
+- `annotative.copilot.preferredFormat` - Export format for Copilot: conversational, structured, or compact (default: conversational)
+- `annotative.copilot.showInlineButtons` - Show Copilot buttons inline (default: true)
+- `annotative.copilot.autoOpenChat` - Auto-open Copilot Chat (default: false)
+
+## Workflows
+
+### Code Review
+
+1. Open a pull request or diff locally
+2. Annotate areas needing attention
+3. Use tags to categorize feedback
+4. Export annotations and share with the team
+5. Mark annotations as resolved when addressed
+
+### AI-Assisted Development
+
+1. Review AI-generated code changes
+2. Annotate unclear or problematic sections
+3. Use `@annotative` in Copilot Chat to discuss
+4. Or export annotations to ChatGPT or Claude
+5. Implement suggestions and resolve annotations
+
+### Documentation
+
+1. Annotate complex code sections
+2. Use tags like "docs" or "clarification"
+3. Export as Markdown
+4. Integrate into project documentation
+
+### Issue Tracking
+
+1. Create annotations for technical debt
+2. Tag by priority or category
+3. Filter to focus on high-priority items
+4. Export and create GitHub issues
+5. Resolve annotations as issues are fixed
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+**Development Setup:**
 
 1. Clone the repository
 2. Run `npm install`
-3. Press **F5** in VS Code to launch the extension
-4. Test in the Extension Development Host window
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions.
-
-## Workspace Storage
-
-Annotations are stored per workspace in `.annotative/` folder:
-
-- **Project-specific**: Each project can have its own annotation set in `.annotative/annotations.json`
-- **Shared with team**: Commit `.annotative/` to version control to share annotations with teammates
-- **Portable**: Take your workspace and annotations with you
-- **Auto-save**: Changes save automatically during development
-- **Global fallback**: If no project storage exists, annotations save globally in VS Code's storage
-
-## Tips & Best Practices
-
-### Team Collaboration
-
-1. **Initialize project storage** - Run `Annotative: Initialize Project Storage` to create `.annotative/` folder
-2. **Establish consistent tags** - Create custom tags your team agrees on (e.g., "security-review", "needs-clarification")
-3. **Version control** - Commit `.annotative/` to share annotations with teammates
-4. **Code review workflow** - Use annotations as a lightweight alternative to traditional PR comments
-
-### Using Custom Tags
-
-1. **Create tags** - Use `Annotative: Create Custom Tag` to define project-specific categories
-2. **Assign priorities** - Tags support low, medium, high, and critical priority levels
-3. **Use colors strategically** - Align tag colors with severity or category (red = critical, blue = documentation)
-4. **Bulk operations** - Apply the same tag to multiple annotations for organization
-
-### With AI Tools
-
-1. Export annotations and paste directly into Copilot Chat, ChatGPT, or Claude
-2. Use `@annotative` participant in Copilot Chat for direct integration
-3. Ask AI to prioritize issues or suggest fixes based on tagged annotations
-4. Iterate on AI suggestions and track progress with resolved status
-
-### Organizing Annotations
-
-1. Use "Group by Tag" to see all similar issues together
-2. Use "Group by Status" to focus on unresolved items first
-3. Use "Filter by Tag" to focus on specific categories
-4. Use bulk operations to efficiently manage large annotation sets
+3. Press F5 in VS Code to launch Extension Development Host
+4. Make changes and test
+5. Submit a pull request
 
 ## License
 
-Annotative is fully open source and available under the MIT License.
+MIT License. See [LICENSE](LICENSE) for details.
 
-- Free for personal, educational, commercial, and enterprise use
-- Modify and distribute freely
-- No restrictions on commercial use
-
-See [LICENSE](LICENSE) for details.
-
-## Recent Updates
-
-### Version 1.4.0 - Project Management & Custom Tags
-
-**New Features:**
-
-- **Project-based storage** - Initialize `.annotative/` folder to store annotations in your project
-- **Sidebar editing** - Edit annotation comments directly from the sidebar with dedicated edit button
-- **Custom tags CRUD** - Create, edit, and delete custom tags tailored to your team's workflow
-- **Enhanced tag management** - All preset and custom tags available in tag picker
-
-**Commands:**
-
-- `Annotative: Initialize Project Storage` - Set up project-specific annotation storage
-- `Annotative: Create Custom Tag` - Define new tags with custom colors and priorities
-- `Annotative: Edit Custom Tag` - Modify existing custom tags
-- `Annotative: Delete Custom Tag` - Remove custom tags (preset tags protected)
-- `Annotative: List All Tags` - View all available tags
-- `Annotative: Show Storage Info` - Check current storage location
-
-### Version 1.3.54 - Stability & Polish
-
-- Performance improvements and bug fixes
-- Enhanced sidebar rendering
-- Improved tag handling
-
-### Version 1.2.0 - Simplified UI & Color Customization
-
-- 8-color picker for visual annotation preference
-- Lightweight input boxes instead of complex webviews
-- Native VS Code UI components
-- Full MIT open source license
-
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
-
-## Support
-
-- **GitHub Issues** - Report bugs and request features
-- **GitHub Discussions** - Share ideas and best practices
-- **Documentation** - See [docs/](docs/) folder for detailed guides
-
-Built by developers for developers who care about code quality.
+This extension is free for personal, commercial, and enterprise use with no restrictions.

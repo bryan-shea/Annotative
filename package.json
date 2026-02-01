@@ -1,7 +1,7 @@
 {
   "name": "annotative",
   "displayName": "Annotative",
-  "description": "Review AI-generated code changes, annotate issues, and share feedback directly in your editor.",
+  "description": "Code annotation and review workflows. Add comments to code selections, organize with custom tags, and export as Markdown.",
   "version": "1.5.0",
   "publisher": "bryan-shea",
   "license": "MIT",

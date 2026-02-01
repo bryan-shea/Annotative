@@ -1,92 +1,90 @@
+# Changelog
+
+All notable changes to Annotative are documented in this file.
+
 ## [1.5.0] - 2025-12-26
 
-### Changes
-- 25cb757 feat: v1.4.0 changes
+### Added
 
+- Enhanced tag management system
+- Improved annotation workflow
 
 ## [1.3.54] - 2025-11-17
 
-### Changes
-- 95a8248 fix: remove unsafe-inline from CSP for security compliance
-- 48a3de3 fix: resolve webview resource path for packaged extension v1.3.53
+### Fixed
 
+- Removed unsafe-inline from Content Security Policy for security compliance
+- Resolved webview resource path for packaged extension
 
 ## [1.3.53] - 2025-11-17
 
 ### Fixed
 
-- Fix webview resource loading in packaged extension by correcting path from `media/` to `dist/media/`
-- Add local codicon font files to eliminate external CDN dependency
-- Update CSP headers to support local font loading
-- Resolve rendering differences between development and production builds
+- Fixed webview resource loading in packaged extension by correcting path from `media/` to `dist/media/`
+- Added local codicon font files to eliminate external CDN dependency
+- Updated CSP headers to support local font loading
+- Resolved rendering differences between development and production builds
 
 ## [1.3.52] - 2025-11-17
 
-### Changes
+### Fixed
 
-- 86424a6 docs: update CHANGELOG for v1.3.51 release
-- 87455b8 chore: bump version to 1.3.51
-- c112b6d fix: resolve webview rendering and modal display issues v1.3.41
+- Resolved webview rendering and modal display issues
 
 ## [1.3.51] - 2025-11-17
 
 ### Fixed
 
-- Fix webview rendering and empty state icon to use proper codicon class
-- Resolve "Add Tag" modal blocking UI on startup
-- Add explicit modal hide on initialization
-- Enhance CSS specificity for modal display:none state
-- Improve error handling and debugging in webview initialization
-- Add DOM element validation during setup
-- Enhance modal handler cleanup to prevent duplicate event listeners
-- Add comprehensive error logging for webview debugging
+- Fixed webview rendering and empty state icon to use proper codicon class
+- Resolved "Add Tag" modal blocking UI on startup
+- Added explicit modal hide on initialization
+- Enhanced CSS specificity for modal display state
+- Improved error handling and debugging in webview initialization
+- Added DOM element validation during setup
+- Enhanced modal handler cleanup to prevent duplicate event listeners
+- Added comprehensive error logging for webview debugging
 
 ## [1.3.5] - 2025-11-17
 
-### Changes
+### Fixed
 
-- 5628e4b fix: update Content Security Policy in webview HTML to enhance security
-- 1749979 fix: resolve webview rendering issues in VS Code 1.105+
+- Updated Content Security Policy in webview HTML to enhance security
+- Resolved webview rendering issues in VS Code 1.105+
 
 ## [1.3.4] - 2025-11-17
 
 ### Fixed
 
-- Fix webview rendering in VS Code 1.105+ by correcting CSS viewport units from 100vh/100vw to 100%
-- Update Content Security Policy to allow inline styles and proper resource loading
-- Add visibility event listener to refresh annotations when sidebar view becomes visible
+- Fixed webview rendering in VS Code 1.105+ by correcting CSS viewport units from 100vh/100vw to 100%
+- Updated Content Security Policy to allow inline styles and proper resource loading
+- Added visibility event listener to refresh annotations when sidebar view becomes visible
 
 ## [1.3.3] - 2025-11-06
 
-### Changes
+### Changed
 
-- 937e611 Update README.md
+- Updated README documentation
 
 ## [1.3.2] - 2025-11-06
 
-### Changes
+### Changed
 
-- 0c0a008 Revise README description for Annotative extension
+- Revised README description for clarity
 
 ## [1.3.1] - 2025-11-06
 
-### Changes
+### Fixed
 
-- 6562cd4 fix: include annotative-logo directory in extension package
+- Included annotative-logo directory in extension package
 
 ## [1.3.0] - 2025-11-06
 
-### Changes
+### Added
 
-- 0ae7212 Merge pull request #8 from bryan-shea/feature-enrichment
-- a00f52d refactor: update tagToString function to accept more specific types and clean up tag mapping
-- c99ecdf feat: enhance overall ux via webview, add tag crud ops
-- 6a7bded feat: Enhance annotation management with tag functionality
-- 1e6cf48 feat: Implement tag suggestion engine and validation utilities
-
-# Changelog
-
-All notable changes to the Annotative extension.
+- Enhanced overall user experience via webview improvements
+- Tag CRUD operations (create, read, update, delete)
+- Tag suggestion engine and validation utilities
+- Enhanced annotation management with tag functionality
 
 ## [1.2.6] - 2025-11-05
 
@@ -102,97 +100,83 @@ All notable changes to the Annotative extension.
 
 ## [1.2.0] - 2025-10-31
 
-### Major Update: Simplified UI & Color Customization
+### Added
 
-#### Added
+- Color picker for annotations with 8 color options
+- Visual highlighting with color coding in the editor
+- Ability to edit annotation colors after creation
 
-- **Color Picker for Annotations**
-  - Choose from 8 colors to visually distinguish annotations
-  - Colors: Yellow (default), Red, Orange, Blue, Green, Purple, Brown, Gray
-  - Each color has a descriptive purpose (bugs, security, documentation, etc.)
-  - Color-coded highlighting in the editor
-  - Edit annotation colors after creation
+### Changed
 
-#### Changed
+- Simplified user interface - removed complex dashboard webview
+- Replaced with native VS Code input boxes for better performance
+- Streamlined annotation workflow
+- Changed to fully open source MIT license (previously dual license)
 
-- **Simplified User Interface**
-
-  - Removed complex dashboard webview
-  - Replaced with simple input boxes for adding/editing annotations
-  - Uses native VS Code UI components for better performance
-  - Streamlined annotation workflow
-
-- **License Change**
-  - Changed from dual license model to fully open source MIT license
-  - Free for all uses including commercial and enterprise
-  - No restrictions on distribution or resale
-
-#### Improved
+### Improved
 
 - Multi-color decoration system with proper grouping
-- Better visual distinction between different annotation types
+- Better visual distinction between annotation types
 - Faster, more responsive UI interactions
 
 ## [1.1.0] - 2025-10-25
 
-### Phase 1: Quick Wins - Enhanced User Experience
+### Added
 
-#### New Features
+**Filtering System:**
 
-- **Filtering System**
+- Filter by status (all, unresolved, resolved)
+- Filter by tags
+- Search annotations by text, code, author, or tags
+- Clear filters command
 
-  - Filter annotations by status (All/Unresolved/Resolved)
-  - Filter by tags to focus on specific annotation types
-  - Search annotations by comment text, code, author, or tags
-  - Clear all filters command for quick reset
+**Editing:**
 
-- **Editing Capabilities**
+- Edit existing annotations
+- Undo last annotation with Ctrl+Shift+Z (Cmd+Shift+Z on macOS)
 
-  - Edit existing annotations - modify comments and tags after creation
-  - Undo last annotation with `Ctrl+Shift+Z` (Mac: `Cmd+Shift+Z`)
+**Bulk Operations:**
 
-- **Bulk Operations**
+- Resolve all annotations
+- Delete all resolved annotations
+- Delete all annotations
 
-  - Resolve all annotations at once (entire workspace or specific file)
-  - Delete all resolved annotations with confirmation
-  - Delete all annotations with confirmation
+**Keyboard Navigation:**
 
-- **Keyboard Navigation**
+- Navigate to next annotation with Alt+Down
+- Navigate to previous annotation with Alt+Up
+- Wraps around at file boundaries
 
-  - Navigate to next annotation with `Alt+Down`
-  - Navigate to previous annotation with `Alt+Up`
-  - Wraps around at file boundaries for seamless navigation
+**New Commands:**
 
-- **New Commands**
-  - `annotative.filterByStatus` - Filter by resolution status
-  - `annotative.filterByTag` - Filter by specific tags
-  - `annotative.searchAnnotations` - Search across all annotations
-  - `annotative.clearFilters` - Clear all active filters
-  - `annotative.editAnnotation` - Edit existing annotation
-  - `annotative.undoLastAnnotation` - Undo the most recent annotation
-  - `annotative.resolveAll` - Mark all as resolved
-  - `annotative.deleteResolved` - Remove resolved annotations
-  - `annotative.deleteAll` - Remove all annotations
-  - `annotative.nextAnnotation` - Jump to next annotation
-  - `annotative.previousAnnotation` - Jump to previous annotation
+- Filter by Status
+- Filter by Tag
+- Search Annotations
+- Clear Filters
+- Edit Annotation
+- Undo Last Annotation
+- Resolve All
+- Delete Resolved
+- Delete All
+- Next Annotation
+- Previous Annotation
 
-#### Enhancements
+### Improved
 
-- Enhanced sidebar with filter and search controls in toolbar
+- Enhanced sidebar with filter and search controls
 - Updated context menus with edit option
-- Better organization of commands in menus
+- Better command organization
 - Improved keyboard shortcut coverage
-- Sidebar toolbar now includes filter, search, and bulk operation buttons
-- Context menu now shows edit option as primary action
 
-## [1.0.0] - 2025-01-XX
+## [1.0.0] - Initial Release
 
-### Initial Release
+### Features
 
 - Code annotation with visual highlighting
-- Flexible tagging system (bug, performance, security, style, improvement, docs, question)
+- Tagging system for categorization
 - Sidebar view with resolution tracking
-- Markdown export for AI chats and team collaboration
-- Keyboard shortcuts (`Ctrl+Shift+A`) and context menus
+- Markdown export for collaboration
+- Keyboard shortcuts (Ctrl+Shift+A / Cmd+Shift+A)
+- Context menu integration
 - Persistent workspace storage
-- Perfect for reviewing AI-generated code from Copilot, ChatGPT, Claude, and more
+- AI-assisted development support
