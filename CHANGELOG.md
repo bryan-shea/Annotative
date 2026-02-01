@@ -1,3 +1,12 @@
+## [3.0.0] - 2026-02-01
+
+### Changes
+- 90e81af Merge pull request #9 from bryan-shea/feat/updates-optimizations
+- 3655a85 feat: introduce user-defined tags and project-based storage system
+- 659a063 docs: complete documentation overhaul with professional standards
+- 15a5845 refactor!: simplify UX with user-defined tags and project storage
+
+
 # Changelog
 
 All notable changes to Annotative are documented in this file.

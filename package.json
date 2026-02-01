@@ -2,7 +2,7 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Code annotation and review workflows. Add comments to code selections, organize with custom tags, and export as Markdown.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/annotative-logo/128px/annotative-logo.png",
