@@ -2,6 +2,59 @@
 
 All notable changes to Annotative are documented in this file.
 
+## [2.0.0] - 2026-02-01
+
+### Breaking Changes
+
+**User-Defined Tags System**
+
+- Removed all preset tags (bug, todo, review, question, refactor, documentation, optimization, security)
+- All tags are now user-defined and created per project
+- Users must create custom tags matching their workflow needs
+- See MIGRATION.md for guidance on recreating your tag system
+
+**Project-Based Storage**
+
+- Annotations now automatically stored in `.annotative/` folder in workspace root
+- First annotation in a workspace automatically creates project storage
+- Global storage removed - all annotations are project-scoped
+- Share annotations with your team by committing `.annotative/` to version control
+
+### Added
+
+- Automatic project storage initialization on first annotation
+- Custom tag creation with colors and priorities
+- Tag management commands: Create, Edit, Delete, List Tags
+- Project storage detection and status information
+- Template system for common annotation scenarios
+- Enhanced GitHub Copilot Chat integration with @annotative participant
+- Comprehensive documentation overhaul with migration guide
+
+### Changed
+
+- Simplified annotation workflow - no manual storage initialization required
+- Tags prompt only shows when custom tags exist
+- Templates now prompt for tag selection if custom tags are available
+- Storage info command shows current project storage location
+- Updated UI to support custom tag colors and metadata
+
+### Fixed
+
+- Resolved webview rendering issues in packaged extensions
+- Improved Content Security Policy compliance
+- Better error handling for storage operations
+
+### Migration Notes
+
+Users upgrading from v1.5.0 should:
+
+1. Review MIGRATION.md for detailed upgrade instructions
+2. Create custom tags to replace preset tags you were using
+3. Initialize project storage to migrate existing annotations
+4. Commit `.annotative/` folder to version control for team sharing
+
+For detailed migration instructions, see [MIGRATION.md](MIGRATION.md).
+
 ## [1.5.0] - 2025-12-26
 
 ### Added

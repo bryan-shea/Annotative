@@ -16,6 +16,15 @@ Primary use cases:
 - Taking structured notes within codebases
 - Tracking technical debt or improvements
 
+## Upgrading from v1.5.0?
+
+Annotative v2.0.0 introduces breaking changes to the tag system and storage. See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions, including:
+
+- How to recreate preset tags as custom tags
+- Automatic project storage initialization
+- Updating existing annotations with new tags
+- Sharing annotations with your team via version control
+
 ## Quick Start
 
 1. Select code in the editor

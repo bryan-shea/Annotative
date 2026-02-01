@@ -90,7 +90,8 @@ class AnnotationHandlers {
     const availableTags = this.state.availableTags || [];
 
     if (availableTags.length === 0) {
-      // No tags defined - prompt user to create one
+      // No tags defined - inform the user so the button doesn't appear unresponsive
+      window.alert('No tags are defined yet. Please create a tag before adding it to annotations.');
       return;
     }
 

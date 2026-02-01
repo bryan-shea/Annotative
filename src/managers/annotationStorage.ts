@@ -1,45 +1,28 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { Annotation, AnnotationStorage as IAnnotationStorage, AnnotationTag, AnnotationStatus } from '../types';
+import { Annotation, AnnotationStorage as IAnnotationStorage, AnnotationTag } from '../types';
 
 /**
- * Handles persistence of annotations, custom tags, and statuses
+ * Handles persistence of annotations and custom tags
  * Uses project-scoped storage (.annotative folder) exclusively
  * Each workspace has isolated annotation data
  */
 export class AnnotationStorageManager {
     private storageFilePath: string;
     private customTagsPath: string;
-    private customStatusesPath: string;
     private projectStorageDir: string | undefined;
-    private workspaceId: string;
 
     constructor(
         private annotations: Map<string, Annotation[]>,
         context: vscode.ExtensionContext
     ) {
-        // Generate workspace identifier for isolation
-        this.workspaceId = this.generateWorkspaceId();
-
         // Initialize paths - will be set properly when project storage is created
         this.storageFilePath = '';
         this.customTagsPath = '';
-        this.customStatusesPath = '';
 
         // Check for existing project storage
         this.detectProjectStorage();
-    }
-
-    /**
-     * Generate a unique identifier for the current workspace
-     */
-    private generateWorkspaceId(): string {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders && workspaceFolders.length > 0) {
-            return workspaceFolders[0].uri.fsPath;
-        }
-        return 'default';
     }
 
     /**
@@ -55,7 +38,6 @@ export class AnnotationStorageManager {
                 this.projectStorageDir = annotativeDir;
                 this.storageFilePath = path.join(annotativeDir, 'annotations.json');
                 this.customTagsPath = path.join(annotativeDir, 'customTags.json');
-                this.customStatusesPath = path.join(annotativeDir, 'statuses.json');
             }
         }
     }
@@ -85,7 +67,7 @@ export class AnnotationStorageManager {
 
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
-            throw new Error('No workspace folder open. Please open a folder to use annotations.');
+            throw new Error('No workspace folder open'); // Cannot create project storage
         }
 
         const workspaceRoot = workspaceFolders[0].uri.fsPath;
@@ -95,17 +77,16 @@ export class AnnotationStorageManager {
         if (!fs.existsSync(annotativeDir)) {
             fs.mkdirSync(annotativeDir, { recursive: true });
 
-            // Create a .gitignore to optionally exclude from version control
-            const gitignorePath = path.join(annotativeDir, '.gitignore');
-            const gitignoreContent = `# Uncomment to exclude annotations from version control\n# *\n# !.gitignore\n`;
-            fs.writeFileSync(gitignorePath, gitignoreContent, 'utf-8');
+            // Create a README to explain the folder purpose
+            const readmePath = path.join(annotativeDir, 'README.md');
+            const readmeContent = `# Annotative Storage\n\nThis folder contains your project's annotations and custom tags.\n\n## Version Control\n\n**Recommended:** Include this folder in version control to share annotations with your team.\n\n\`\`\`bash\ngit add .annotative/\ngit commit -m "Add annotations"\n\`\`\`\n\n**Private annotations:** Add \`.annotative/\` to your project's \`.gitignore\` file.\n\n## Files\n\n- \`annotations.json\` - All annotations in this project\n- \`customTags.json\` - User-defined tag definitions\n`;
+            fs.writeFileSync(readmePath, readmeContent, 'utf-8');
         }
 
         // Set paths
         this.projectStorageDir = annotativeDir;
         this.storageFilePath = path.join(annotativeDir, 'annotations.json');
         this.customTagsPath = path.join(annotativeDir, 'customTags.json');
-        this.customStatusesPath = path.join(annotativeDir, 'statuses.json');
     }
 
     /**
@@ -114,8 +95,11 @@ export class AnnotationStorageManager {
      * @deprecated Use ensureProjectStorage() instead - storage is now auto-created
      */
     async initializeProjectStorage(migrateExisting: boolean = false): Promise<boolean> {
+        // Capture whether the storage file existed before initialization
+        const existedBefore = this.storageFilePath && fs.existsSync(this.storageFilePath);
         await this.ensureProjectStorage();
-        return !fs.existsSync(this.storageFilePath);
+        // Return true only if storage did not exist before but exists after ensuring
+        return !existedBefore && fs.existsSync(this.storageFilePath);
     }
 
     /**
@@ -125,7 +109,6 @@ export class AnnotationStorageManager {
         this.projectStorageDir = undefined;
         this.storageFilePath = '';
         this.customTagsPath = '';
-        this.customStatusesPath = '';
         this.detectProjectStorage();
     }
 
@@ -203,37 +186,6 @@ export class AnnotationStorageManager {
         } catch (error) {
             console.error('Failed to save custom tags:', error);
             vscode.window.showErrorMessage('Failed to save custom tags');
-        }
-    }
-
-    /**
-     * Load custom statuses from storage
-     */
-    async loadCustomStatuses(): Promise<AnnotationStatus[]> {
-        try {
-            if (this.customStatusesPath && fs.existsSync(this.customStatusesPath)) {
-                const data = fs.readFileSync(this.customStatusesPath, 'utf-8');
-                return JSON.parse(data);
-            }
-        } catch (error) {
-            console.error('Failed to load custom statuses:', error);
-        }
-        return [];
-    }
-
-    /**
-     * Save custom statuses to storage
-     * Auto-creates project storage if it doesn't exist
-     */
-    async saveCustomStatuses(statuses: AnnotationStatus[]): Promise<void> {
-        try {
-            // Ensure project storage exists
-            await this.ensureProjectStorage();
-
-            fs.writeFileSync(this.customStatusesPath, JSON.stringify(statuses, null, 2));
-        } catch (error) {
-            console.error('Failed to save custom statuses:', error);
-            vscode.window.showErrorMessage('Failed to save custom statuses');
         }
     }
 }

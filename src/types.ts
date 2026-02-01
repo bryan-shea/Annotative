@@ -33,16 +33,6 @@ export interface AnnotationTag {
     isPreset: boolean; // Always false for user-created tags
 }
 
-// Status system - user-defined statuses
-export interface AnnotationStatus {
-    id: string;
-    name: string;
-    color?: string;
-    icon?: string;
-    isDefault?: boolean; // Whether this is the default status for new annotations
-    isFinal?: boolean;   // Whether this status represents a "done" state
-}
-
 // Backward compatibility: accept both string and AnnotationTag
 export type Tag = string | AnnotationTag;
 
@@ -54,8 +44,7 @@ export interface Annotation {
     comment: string;
     author: string;
     timestamp: Date;
-    resolved: boolean;        // Legacy - kept for backward compatibility
-    status?: string;          // Status ID - references user-defined status
+    resolved: boolean;        // Resolution status - open (false) or resolved (true)
     tags?: Tag[];
     priority?: TagPriority;
     color?: string;           // Hex color code - user's visual preference only
@@ -73,7 +62,6 @@ export interface AnnotationStorage {
 
 // Tag management
 export interface TagRegistry {
-    presetTags: Map<string, AnnotationTag>;
     customTags: Map<string, AnnotationTag>;
 }
 

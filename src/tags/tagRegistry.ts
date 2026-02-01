@@ -21,7 +21,6 @@ export class TagRegistryStore {
 
     constructor() {
         this.registry = {
-            presetTags: new Map(), // Empty - no presets
             customTags: new Map(),
         };
     }

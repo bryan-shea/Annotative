@@ -145,12 +145,27 @@ export function registerAnnotationCommands(
                 return;
             }
 
-            // Add annotation with template
+            // Prompt for tags if custom tags exist
+            const customTags = annotationManager.getCustomTags();
+            let selectedTags: string[] = [];
+
+            if (customTags.length > 0) {
+                const tagOptions = customTags.map(t => t.name);
+                const tags = await vscode.window.showQuickPick(tagOptions, {
+                    placeHolder: 'Select tags (optional)',
+                    canPickMany: true
+                });
+                if (tags) {
+                    selectedTags = tags;
+                }
+            }
+
+            // Add annotation with template and selected tags
             await annotationManager.addAnnotation(
                 editor,
                 selection,
                 template.comment,
-                template.tags
+                selectedTags
             );
             sidebarWebview.refreshAnnotations();
 
@@ -232,13 +247,6 @@ export function registerAnnotationCommands(
                 return;
             }
 
-            // Get updated color via quick pick
-            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
-                placeHolder: 'Select a color'
-            });
-
-            const color = selectedColor?.value || annotation.color || '#ffc107';
-
             // Get updated tags via quick pick (multi-select) - user-defined only
             const customTags = annotationManager.getCustomTags();
             let tagsToUse = annotation.tags?.map((t) => tagToString(t)) || [];
@@ -253,6 +261,13 @@ export function registerAnnotationCommands(
                     tagsToUse = selectedTags;
                 }
             }
+
+            // Get updated color via quick pick
+            const selectedColor = await vscode.window.showQuickPick(ANNOTATION_COLORS, {
+                placeHolder: 'Select a color'
+            });
+
+            const color = selectedColor?.value || annotation.color || '#ffc107';
 
             await annotationManager.editAnnotation(
                 annotation.id,
