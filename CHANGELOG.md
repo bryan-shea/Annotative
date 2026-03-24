@@ -4,6 +4,14 @@
 
 All notable changes to Annotative are documented in this file.
 
+## [3.0.2] - 2026-03-24
+
+### Changed
+
+- Marketplace metadata is more focused on in-place code review, annotations, and AI-assisted workflows
+- README, migration guidance, and release documentation now describe the current release more clearly and professionally
+- Release preparation docs now point to `v3.0.2` as the next automated Marketplace publish target
+
 ## [3.0.1] - 2026-03-24
 
 ### Upgrade Notes

@@ -2,7 +2,7 @@
   "name": "annotative",
   "displayName": "Annotative",
   "description": "Code annotation and review workflows. Add comments to code selections, organize with custom tags, and export as Markdown.",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/annotative-logo/128px/annotative-logo.png",
@@ -22,16 +22,16 @@
     "Other"
   ],
   "keywords": [
-    "annotation",
     "code-review",
-    "note-taking",
-    "feedback",
-    "collaboration",
-    "comments",
-    "markup",
-    "productivity",
+    "annotations",
+    "github-copilot",
+    "ai-assisted-development",
+    "developer-tools",
     "documentation",
-    "review"
+    "markdown",
+    "productivity",
+    "feedback",
+    "code-quality"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
