@@ -56,7 +56,6 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
                         <option value="tag">Tag</option>
                         <option value="status">Status</option>
                         <option value="folder">Folder</option>
-                        <option value="priority">Priority</option>
                     </select>
                 </div>
             </section>

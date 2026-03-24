@@ -4,17 +4,9 @@
  */
 
 import * as vscode from 'vscode';
-import { AnnotationManager } from '../managers';
 import { AnnotationItem } from '../ui';
 import { CommandContext } from './index';
 import { CopilotExporter } from '../copilotExporter';
-
-/**
- * Helper to convert Tag to string
- */
-function tagToString(tag: string | { id: string }): string {
-    return typeof tag === 'string' ? tag : tag.id;
-}
 
 export function registerAnnotationCommands(
     context: vscode.ExtensionContext,
@@ -50,11 +42,15 @@ export function registerAnnotationCommands(
             let selectedTags: string[] = [];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
-                selectedTags = await vscode.window.showQuickPick(tagOptions, {
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                }));
+                const selected = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
-                }) || [];
+                });
+                selectedTags = selected?.map(tag => tag.value) || [];
             }
 
             // Get color via quick pick
@@ -150,13 +146,16 @@ export function registerAnnotationCommands(
             let selectedTags: string[] = [];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                }));
                 const tags = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
                 });
                 if (tags) {
-                    selectedTags = tags;
+                    selectedTags = tags.map(tag => tag.value);
                 }
             }
 
@@ -249,16 +248,21 @@ export function registerAnnotationCommands(
 
             // Get updated tags via quick pick (multi-select) - user-defined only
             const customTags = annotationManager.getCustomTags();
-            let tagsToUse = annotation.tags?.map((t) => tagToString(t)) || [];
+            const currentTags = annotation.tags || [];
+            let tagsToUse = [...currentTags];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                    picked: currentTags.includes(tag.id),
+                }));
                 const selectedTags = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
                 });
                 if (selectedTags) {
-                    tagsToUse = selectedTags;
+                    tagsToUse = selectedTags.map(tag => tag.value);
                 }
             }
 
@@ -292,7 +296,7 @@ export function registerAnnotationCommands(
 
             // Show details in information message
             const tagsStr = annotation.tags && annotation.tags.length > 0
-                ? annotation.tags.map(t => tagToString(t)).join(', ')
+                ? annotationManager.resolveTagLabels(annotation.tags).join(', ')
                 : 'none';
             const resolvedStr = annotation.resolved ? 'Resolved' : 'Open';
 

@@ -5,7 +5,10 @@ import { GroupCategoryItem } from '../treeItems';
 /**
  * Groups annotations by tag
  */
-export function groupByTag(annotations: Annotation[]): GroupCategoryItem[] {
+export function groupByTag(
+    annotations: Annotation[],
+    resolveTagLabel: (tagId: string) => string = (tagId) => tagId
+): GroupCategoryItem[] {
     const tagGroups = new Map<string, Annotation[]>();
     const untaggedAnnotations: Annotation[] = [];
 
@@ -13,8 +16,7 @@ export function groupByTag(annotations: Annotation[]): GroupCategoryItem[] {
         if (!annotation.tags || annotation.tags.length === 0) {
             untaggedAnnotations.push(annotation);
         } else {
-            annotation.tags.forEach(tag => {
-                const tagId = typeof tag === 'string' ? tag : tag.id;
+            annotation.tags.forEach(tagId => {
                 if (!tagGroups.has(tagId)) {
                     tagGroups.set(tagId, []);
                 }
@@ -28,9 +30,9 @@ export function groupByTag(annotations: Annotation[]): GroupCategoryItem[] {
     // Add tagged groups
     Array.from(tagGroups.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .forEach(([tag, anns]) => {
+        .forEach(([tagId, anns]) => {
             tagItems.push(new GroupCategoryItem(
-                `${tag} (${anns.length})`,
+                `${resolveTagLabel(tagId)} (${anns.length})`,
                 anns,
                 vscode.TreeItemCollapsibleState.Expanded
             ));
