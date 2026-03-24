@@ -371,16 +371,6 @@
           "default": true,
           "description": "Include imports in context"
         },
-        "annotative.export.includeFunction": {
-          "type": "boolean",
-          "default": true,
-          "description": "Include full function definition"
-        },
-        "annotative.export.copilotOptimized": {
-          "type": "boolean",
-          "default": true,
-          "description": "Optimize format for Copilot"
-        },
         "annotative.copilot.enabled": {
           "type": "boolean",
           "default": true,
@@ -400,11 +390,6 @@
           ],
           "default": "conversational",
           "description": "Export format for Copilot"
-        },
-        "annotative.copilot.showInlineButtons": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show Copilot buttons inline"
         },
         "annotative.copilot.autoOpenChat": {
           "type": "boolean",

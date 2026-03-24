@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { AnnotationStorageManager } from '../../managers';
 import { AnnotationStorageFile, TagStorageFile } from '../../types';
 import {
@@ -126,5 +127,18 @@ suite('AnnotationStorageManager', () => {
         const loadedAnnotation = annotations.get(filePath)?.[0];
         assert.ok(loadedAnnotation, 'Expected the legacy annotation payload to load.');
         assert.deepStrictEqual(loadedAnnotation.tags, ['legacy-tag']);
+    });
+
+    test('detects project storage from the active workspace context instead of a hardcoded root index', async () => {
+        const annotations = new Map();
+        const storage = new AnnotationStorageManager(annotations, createTestContext());
+        const filePath = await ensureWorkspaceFile('storage-detection.ts', 'const rootAware = true;\n');
+        const editor = await vscode.window.showTextDocument(vscode.Uri.file(filePath));
+
+        await storage.ensureProjectStorage();
+
+        assert.ok(storage.getStorageDirectory().endsWith('.annotative'));
+
+        await editor.hide();
     });
 });

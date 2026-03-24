@@ -6,13 +6,13 @@
 import * as vscode from 'vscode';
 import { AnnotationItem } from '../ui';
 import { CommandContext } from './index';
-import { CopilotExporter } from '../copilotExporter';
 
 export function registerAnnotationCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
 ) {
     const { annotationManager, sidebarWebview, ANNOTATION_COLORS } = cmdContext;
+    const exportService = annotationManager.getExportService();
 
     // Command: Add annotation to selected text
     const addAnnotationCommand = vscode.commands.registerTextEditorCommand(
@@ -176,22 +176,28 @@ export function registerAnnotationCommands(
             );
 
             if (action === 'Ask Copilot') {
+                if (!exportService.isCopilotEnabled()) {
+                    vscode.window.showWarningMessage('Copilot integration is disabled in Annotative settings.');
+                    return;
+                }
+
                 const annotations = annotationManager.getAnnotationsForFile(editor.document.uri.fsPath);
                 const newAnnotation = annotations[annotations.length - 1];
 
                 if (newAnnotation) {
-                    const prompt = await CopilotExporter.formatAnnotationForCopilot(newAnnotation, {
-                        contextLines: 5,
-                        smartContext: true
-                    });
+                    const prompt = await exportService.formatAnnotationForCopilot(newAnnotation);
 
                     await vscode.env.clipboard.writeText(prompt);
 
-                    try {
-                        await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+                    const opened = await exportService.openCopilotChatIfConfigured();
+                    if (opened) {
                         vscode.window.showInformationMessage('Paste into Copilot Chat (Ctrl+V)');
-                    } catch {
-                        vscode.window.showInformationMessage('Context copied. Open Copilot Chat and paste.');
+                    } else {
+                        vscode.window.showInformationMessage('Context copied. Open Copilot Chat and paste.', 'Open Chat').then(choice => {
+                            if (choice === 'Open Chat') {
+                                void exportService.openCopilotChatIfConfigured(true);
+                            }
+                        });
                     }
                 }
             }

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Annotation, CopilotExportOptions, ExportOptions, Tag, AnnotationTag } from './types';
+import { getRelativePathForFile, groupAnnotationsByFile } from './managers/exportSupport';
 
 export enum CopilotExportFormat {
     Chat = 'chat',           // Optimized for pasting into Copilot Chat
@@ -13,6 +14,40 @@ export enum CopilotExportFormat {
 }
 
 export class CopilotExporter {
+
+    public static filterByIntent(
+        annotations: Annotation[],
+        intent: 'review' | 'bugs' | 'optimization' | 'documentation'
+    ): { annotations: Annotation[]; title: string } {
+        switch (intent) {
+            case 'review':
+                return {
+                    annotations: annotations.filter(annotation => !annotation.resolved),
+                    title: 'Code Review',
+                };
+            case 'bugs':
+                return {
+                    annotations: annotations.filter(annotation =>
+                        annotation.tags?.some(tag => ['bug', 'security'].includes(this.tagToString(tag).toLowerCase()))
+                    ),
+                    title: 'Bug Fixes and Security Issues',
+                };
+            case 'optimization':
+                return {
+                    annotations: annotations.filter(annotation =>
+                        annotation.tags?.some(tag => ['performance', 'optimization'].includes(this.tagToString(tag).toLowerCase()))
+                    ),
+                    title: 'Performance Optimization',
+                };
+            case 'documentation':
+                return {
+                    annotations: annotations.filter(annotation =>
+                        annotation.tags?.some(tag => ['docs', 'documentation', 'question'].includes(this.tagToString(tag).toLowerCase()))
+                    ),
+                    title: 'Documentation Needs',
+                };
+        }
+    }
 
     /**
      * Convert a Tag to its string representation
@@ -38,10 +73,9 @@ export class CopilotExporter {
         annotation: Annotation,
         options: CopilotExportOptions = {}
     ): Promise<string> {
-        const relativePath = vscode.workspace.asRelativePath(annotation.filePath);
+        const relativePath = getRelativePathForFile(annotation.filePath);
         const lineStart = annotation.range.start.line + 1;
         const lineEnd = annotation.range.end.line + 1;
-        const contextLines = options.contextLines ?? 5;
 
         let output = `# Code Review Context from Annotative\n\n`;
         output += `## File: \`${relativePath}\` (Lines ${lineStart}-${lineEnd})\n\n`;
@@ -79,7 +113,7 @@ export class CopilotExporter {
      * Copy annotation as Copilot context (compact format)
      */
     public static async formatAsQuickContext(annotation: Annotation): Promise<string> {
-        const relativePath = vscode.workspace.asRelativePath(annotation.filePath);
+        const relativePath = getRelativePathForFile(annotation.filePath);
         const lineStart = annotation.range.start.line + 1;
         const lineEnd = annotation.range.end.line + 1;
         const languageId = await this.getLanguageId(annotation.filePath);
@@ -105,35 +139,8 @@ export class CopilotExporter {
         annotations: Annotation[],
         intent: 'review' | 'bugs' | 'optimization' | 'documentation'
     ): string {
-        let filtered: Annotation[];
-        let title: string;
-
-        switch (intent) {
-            case 'review':
-                filtered = annotations.filter(a => !a.resolved);
-                title = 'Code Review';
-                break;
-            case 'bugs':
-                filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['bug', 'security'].includes(this.tagToString(t).toLowerCase()))
-                );
-                title = 'Bug Fixes and Security Issues';
-                break;
-            case 'optimization':
-                filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['performance', 'optimization'].includes(this.tagToString(t).toLowerCase()))
-                );
-                title = 'Performance Optimization';
-                break;
-            case 'documentation':
-                filtered = annotations.filter(a =>
-                    a.tags?.some(t => ['docs', 'documentation', 'question'].includes(this.tagToString(t).toLowerCase()))
-                );
-                title = 'Documentation Needs';
-                break;
-        }
-
-        return this.exportForCopilotChat(filtered, title);
+        const filtered = this.filterByIntent(annotations, intent);
+        return this.exportForCopilotChat(filtered.annotations, filtered.title);
     }
 
     /**
@@ -163,7 +170,7 @@ export class CopilotExporter {
         const byFile = this.groupByFile(annotations);
 
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             output += `## File: \`${relativePath}\`\n\n`;
 
             fileAnnotations.forEach((annotation, idx) => {
@@ -203,7 +210,7 @@ export class CopilotExporter {
         const byFile = this.groupByFile(annotations);
 
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             output += `<file path="${this.escapeXml(relativePath)}">\n`;
 
             fileAnnotations.forEach((annotation) => {
@@ -295,7 +302,12 @@ export class CopilotExporter {
             for (let i = startLine; i <= endLine; i++) {
                 const line = document.lineAt(i).text;
                 const lineNumber = i + 1;
-                const marker = (i >= annotation.range.start.line && i <= annotation.range.end.line) ? '> ' : '  ';
+                const isSelectedLine = i >= annotation.range.start.line && i <= annotation.range.end.line;
+                if (!options.includeImports && !isSelectedLine && this.isImportLine(line)) {
+                    continue;
+                }
+
+                const marker = isSelectedLine ? '> ' : '  ';
                 context += `${marker}${lineNumber}: ${line}\n`;
             }
 
@@ -362,7 +374,7 @@ export class CopilotExporter {
         const byFile = this.groupByFile(annotations);
 
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             const unresolvedCount = fileAnnotations.filter(a => !a.resolved).length;
 
             output += `## \`${relativePath}\`\n\n`;
@@ -402,7 +414,7 @@ export class CopilotExporter {
         output += `  <annotations count="${annotations.length}" timestamp="${new Date().toISOString()}">\n`;
 
         annotations.forEach(annotation => {
-            const relativePath = vscode.workspace.asRelativePath(annotation.filePath);
+            const relativePath = getRelativePathForFile(annotation.filePath);
             const lineStart = annotation.range.start.line + 1;
             const lineEnd = annotation.range.end.line + 1;
 
@@ -460,7 +472,7 @@ export class CopilotExporter {
         const byFile = this.groupByFile(annotations);
 
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             const safeName = relativePath.replace(/[\/\\:*?"<>|]/g, '_');
             const annotationPath = path.join(sessionDir, `${safeName}.md`);
 
@@ -482,7 +494,7 @@ export class CopilotExporter {
         let output = '';
 
         annotations.forEach((annotation, index) => {
-            const relativePath = vscode.workspace.asRelativePath(annotation.filePath);
+            const relativePath = getRelativePathForFile(annotation.filePath);
             const lineStart = annotation.range.start.line + 1;
             const lineEnd = annotation.range.end.line + 1;
             const lineRange = lineStart === lineEnd ? `L${lineStart}` : `L${lineStart}-${lineEnd}`;
@@ -510,7 +522,7 @@ export class CopilotExporter {
         const byFile = this.groupByFile(annotations);
 
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
 
             output += `## File: \`${relativePath}\`\n\n`;
 
@@ -536,21 +548,12 @@ export class CopilotExporter {
     // Helper methods
 
     private static groupByFile(annotations: Annotation[]): Map<string, Annotation[]> {
-        const grouped = new Map<string, Annotation[]>();
+        return groupAnnotationsByFile(annotations);
+    }
 
-        annotations.forEach(annotation => {
-            if (!grouped.has(annotation.filePath)) {
-                grouped.set(annotation.filePath, []);
-            }
-            grouped.get(annotation.filePath)!.push(annotation);
-        });
-
-        // Sort annotations within each file by line number
-        grouped.forEach(fileAnnotations => {
-            fileAnnotations.sort((a, b) => a.range.start.line - b.range.start.line);
-        });
-
-        return grouped;
+    private static isImportLine(line: string): boolean {
+        const trimmedLine = line.trim();
+        return /^(import\s|export\s+\{.*\}\s+from\s|const\s+.+?=\s*require\(|from\s+.+\s+import\s)/.test(trimmedLine);
     }
 
     private static escapeXml(text: string): string {
@@ -571,7 +574,7 @@ export class CopilotExporter {
 
         const byFile = this.groupByFile(annotations);
         byFile.forEach((fileAnnotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             const unresolvedCount = fileAnnotations.filter(a => !a.resolved).length;
             content += `- \`${relativePath}\` (${unresolvedCount} unresolved, ${fileAnnotations.length} total)\n`;
         });

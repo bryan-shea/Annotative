@@ -1,10 +1,21 @@
 import * as assert from 'assert';
+import * as vscode from 'vscode';
 import { AnnotationExporter } from '../../managers';
+import { AnnotationExportService } from '../../managers/annotationExportService';
 import { CopilotExporter } from '../../copilotExporter';
 import { Annotation } from '../../types';
 import { createAnnotation, ensureWorkspaceFile } from './testUtils';
 
 suite('Exporters', () => {
+    const configuration = vscode.workspace.getConfiguration('annotative');
+
+    teardown(async () => {
+        await configuration.update('export.contextLines', undefined, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('export.includeImports', undefined, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('copilot.autoAttachContext', undefined, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('copilot.preferredFormat', undefined, vscode.ConfigurationTarget.Workspace);
+    });
+
     test('exports markdown grouped by file with resolved tag labels', async () => {
         const filePath = await ensureWorkspaceFile('exports/example.ts', 'export const value = 42;\n');
         const annotations = new Map<string, Annotation[]>([
@@ -98,5 +109,54 @@ suite('Exporters', () => {
 
         assert.ok(genericExport.includes('# Code Review Annotations (3 items)'));
         assert.ok(genericExport.includes('## Summary'));
+    });
+
+    test('honors contributed runtime export settings through the export service', async () => {
+        const filePath = await ensureWorkspaceFile(
+            'exports/runtime-settings.ts',
+            [
+                "import { helper } from './helper';",
+                '',
+                'export function runTask() {',
+                '    return helper();',
+                '}',
+            ].join('\n')
+        );
+        const annotations = new Map<string, Annotation[]>([
+            [
+                filePath,
+                [
+                    createAnnotation({
+                        filePath,
+                        id: 'runtime-settings-annotation',
+                        comment: 'Review the return flow.',
+                        range: new vscode.Range(new vscode.Position(3, 4), new vscode.Position(3, 19)),
+                        text: 'return helper();',
+                    }),
+                ],
+            ],
+        ]);
+        const service = new AnnotationExportService(annotations);
+
+        await configuration.update('export.contextLines', 0, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('export.includeImports', false, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('copilot.autoAttachContext', false, vscode.ConfigurationTarget.Workspace);
+        await configuration.update('copilot.preferredFormat', 'structured', vscode.ConfigurationTarget.Workspace);
+
+        const quickPrompt = await service.formatAnnotationForCopilot(annotations.get(filePath)![0]);
+        const prepared = service.prepareCopilotExport(service.getAllAnnotations());
+        const aiPrepared = service.prepareAIExport(service.getAllAnnotations(), 'chatgpt', true);
+
+        assert.ok(quickPrompt.includes("I'm reviewing this code and found an issue."));
+        assert.ok(prepared.content.includes('<context>'));
+        assert.strictEqual(prepared.language, 'xml');
+        assert.ok(aiPrepared.content.includes('### Issue 1'));
+
+        await configuration.update('copilot.autoAttachContext', true, vscode.ConfigurationTarget.Workspace);
+
+        const detailedPrompt = await service.formatAnnotationForCopilot(annotations.get(filePath)![0]);
+
+        assert.ok(!detailedPrompt.includes("import { helper } from './helper';"));
+        assert.ok(detailedPrompt.includes('4:     return helper();'));
     });
 });
