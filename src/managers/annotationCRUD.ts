@@ -205,20 +205,16 @@ export class AnnotationCRUD {
             const fileAnnotations = this.annotations.get(filePath);
             if (fileAnnotations) {
                 const before = fileAnnotations.length;
-                this.annotations.set(
-                    filePath,
-                    fileAnnotations.filter(ann => !ann.resolved)
-                );
-                deletedCount = before - (fileAnnotations.length);
+                const remainingAnnotations = fileAnnotations.filter(ann => !ann.resolved);
+                this.annotations.set(filePath, remainingAnnotations);
+                deletedCount = before - remainingAnnotations.length;
             }
         } else {
             this.annotations.forEach((fileAnnotations, path) => {
                 const before = fileAnnotations.length;
-                this.annotations.set(
-                    path,
-                    fileAnnotations.filter(ann => !ann.resolved)
-                );
-                deletedCount += before - (fileAnnotations.length);
+                const remainingAnnotations = fileAnnotations.filter(ann => !ann.resolved);
+                this.annotations.set(path, remainingAnnotations);
+                deletedCount += before - remainingAnnotations.length;
             });
         }
 
