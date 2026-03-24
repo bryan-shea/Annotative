@@ -4,11 +4,11 @@
 
 All notable changes to Annotative are documented in this file.
 
-## [3.0.0] - 2026-03-24
+## [3.0.1] - 2026-03-24
 
 ### Upgrade Notes
 
-- `v3.0.0` continues the project-based `.annotative/` storage model introduced in `v2`
+- `v3.0.1` continues the project-based `.annotative/` storage model introduced in `v2`
 - Existing `v2.x` workspaces do not require a manual storage migration
 - Legacy pre-`v2` global-state annotations are still not imported automatically
 
@@ -24,7 +24,7 @@ All notable changes to Annotative are documented in this file.
 - Storage handling now uses schema-versioned payloads and normalization on load
 - Export flows are routed through clearer service boundaries for Markdown, AI export, and Copilot-oriented output
 - Sidebar webview state handling is more consistent for filtering, grouping, and refresh
-- Release automation now publishes an already-versioned `main` commit through a manual GitHub Actions workflow
+- Release automation now auto-tags the current `main` commit, fails loudly on stale release tags, and publishes after CI validates the tagged release candidate
 - Documentation has been rewritten to match the current product, upgrade path, and release flow
 
 ### Fixed

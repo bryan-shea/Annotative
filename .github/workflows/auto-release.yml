@@ -1,29 +1,80 @@
 name: Release To Marketplace
 
 on:
-    workflow_dispatch:
+    workflow_run:
+        workflows: ["CI - Validate Code Quality"]
+        types: [completed]
+
+concurrency:
+    group: release-${{ github.event.workflow_run.head_sha }}
+    cancel-in-progress: false
 
 jobs:
+    prepare:
+        name: Resolve Release Metadata
+        if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: read
+        outputs:
+            should_release: ${{ steps.detect_tag.outputs.should_release }}
+            release_tag: ${{ steps.detect_tag.outputs.release_tag }}
+            release_version: ${{ steps.detect_tag.outputs.release_version }}
+
+        steps:
+            - name: Checkout repository at validated commit
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.event.workflow_run.head_sha }}
+
+            - name: Detect release tag for validated commit
+              id: detect_tag
+              shell: bash
+              run: |
+                  git fetch --force --tags origin
+                  RELEASE_TAG=$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$' | head -n 1 || true)
+
+                  if [ -z "$RELEASE_TAG" ]; then
+                    echo "No release tag found for validated commit ${GITHUB_SHA}. Skipping marketplace publish."
+                    echo "should_release=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
+                  echo "should_release=true" >> "$GITHUB_OUTPUT"
+                  echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+                  echo "release_version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+                  echo "Resolved release tag ${RELEASE_TAG}"
+
+            - name: Require current main HEAD
+              if: ${{ steps.detect_tag.outputs.should_release == 'true' }}
+              shell: bash
+              run: |
+                  git fetch origin main --depth=1
+                  MAIN_SHA=$(git rev-parse origin/main)
+                  if [ "$MAIN_SHA" != "${{ github.event.workflow_run.head_sha }}" ]; then
+                    echo "Release tags must point at the current main HEAD."
+                    echo "Validated commit: ${{ github.event.workflow_run.head_sha }}"
+                    echo "origin/main: $MAIN_SHA"
+                    exit 1
+                  fi
+
     release:
         name: Release Extension
+        needs: prepare
+        if: ${{ needs.prepare.outputs.should_release == 'true' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
             contents: write
 
         steps:
-            - name: Checkout repository
+            - name: Checkout repository at validated commit
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
-                  token: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Require main branch
-              run: |
-                  if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
-                    echo "Run this workflow from main only. Current ref: ${GITHUB_REF}"
-                    exit 1
-                  fi
+                  ref: ${{ github.event.workflow_run.head_sha }}
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -31,19 +82,20 @@ jobs:
                   node-version: "20"
                   cache: "npm"
 
-            - name: Read release version
-              id: release_version
+            - name: Validate package version matches release tag
+              shell: bash
               run: |
-                  VERSION=$(node -p "require('./package.json').version")
-                  echo "version=${VERSION}" >> $GITHUB_OUTPUT
-                  echo "Releasing version ${VERSION} from package.json"
+                  PACKAGE_VERSION=$(node -p "require('./package.json').version")
+                  if [ "$PACKAGE_VERSION" != "${{ needs.prepare.outputs.release_version }}" ]; then
+                    echo "package.json version $PACKAGE_VERSION does not match tag ${{ needs.prepare.outputs.release_tag }}"
+                    exit 1
+                  fi
 
-            - name: Ensure release tag does not exist
-              env:
-                  RELEASE_TAG: v${{ steps.release_version.outputs.version }}
+            - name: Validate changelog entry exists
+              shell: bash
               run: |
-                  if git rev-parse "$RELEASE_TAG" >/dev/null 2>&1; then
-                    echo "Tag $RELEASE_TAG already exists. Bump package.json and changelog in git before publishing."
+                  if ! grep -Fq "## [${{ needs.prepare.outputs.release_version }}]" CHANGELOG.md; then
+                    echo "CHANGELOG.md is missing an entry for version ${{ needs.prepare.outputs.release_version }}"
                     exit 1
                   fi
 
@@ -51,20 +103,6 @@ jobs:
               run: npm ci
               env:
                   HUSKY: 0
-
-            - name: Compile extension
-              run: npm run compile
-
-            - name: Run linting
-              run: npm run lint
-
-            - name: Run tests
-              run: xvfb-run -a npm test
-              env:
-                  DISPLAY: ":99.0"
-
-            - name: Check compliance
-              run: node scripts/check-extension-compliance.js
 
             - name: Build production bundle
               run: npm run package
@@ -77,21 +115,11 @@ jobs:
                   VSCE_PAT: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
               run: npm run publish:marketplace
 
-            - name: Create and push release tag
-              env:
-                  HUSKY: 0
-                  RELEASE_TAG: v${{ steps.release_version.outputs.version }}
-              run: |
-                  git config user.name "github-actions[bot]"
-                  git config user.email "github-actions[bot]@users.noreply.github.com"
-                  git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
-                  git push origin "$RELEASE_TAG"
-
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v1
               with:
-                  tag_name: v${{ steps.release_version.outputs.version }}
-                  name: Release v${{ steps.release_version.outputs.version }}
+                  tag_name: ${{ needs.prepare.outputs.release_tag }}
+                  name: Release ${{ needs.prepare.outputs.release_tag }}
                   draft: false
                   prerelease: false
                   files: annotative-*.vsix
@@ -102,14 +130,15 @@ jobs:
               uses: actions/upload-artifact@v4
               if: always()
               with:
-                  name: extension-package-${{ steps.release_version.outputs.version }}
+                  name: extension-package-${{ needs.prepare.outputs.release_version }}
                   path: annotative-*.vsix
                   retention-days: 30
 
             - name: Report Status
               if: always()
+              shell: bash
               run: |
-                  echo "### Release Status" >> $GITHUB_STEP_SUMMARY
-                  echo "Released v${{ steps.release_version.outputs.version }} from an already-versioned main commit." >> $GITHUB_STEP_SUMMARY
-                  echo "- Package: annotative-${{ steps.release_version.outputs.version }}.vsix" >> $GITHUB_STEP_SUMMARY
-                  echo "- Marketplace: https://marketplace.visualstudio.com/items?itemName=bryan-shea.annotative" >> $GITHUB_STEP_SUMMARY
+                  echo "### Release Status" >> "$GITHUB_STEP_SUMMARY"
+                  echo "Released ${{ needs.prepare.outputs.release_tag }} from the validated main commit." >> "$GITHUB_STEP_SUMMARY"
+                  echo "- Package: annotative-${{ needs.prepare.outputs.release_version }}.vsix" >> "$GITHUB_STEP_SUMMARY"
+                  echo "- Marketplace: https://marketplace.visualstudio.com/items?itemName=bryan-shea.annotative" >> "$GITHUB_STEP_SUMMARY"

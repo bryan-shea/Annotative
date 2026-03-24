@@ -1,0 +1,105 @@
+name: Auto Tag Release Commit
+
+on:
+    push:
+        branches: [main]
+
+concurrency:
+    group: auto-tag-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    tag_release_commit:
+        name: Create Release Tag
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Read release version
+              id: release_version
+              shell: bash
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+                    echo "package.json version '$VERSION' is not a valid release tag version"
+                    exit 1
+                  fi
+
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+                  echo "release_tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+            - name: Validate changelog entry exists
+              shell: bash
+              run: |
+                  if ! grep -Fq "## [${{ steps.release_version.outputs.version }}]" CHANGELOG.md; then
+                    echo "CHANGELOG.md is missing an entry for version ${{ steps.release_version.outputs.version }}"
+                    exit 1
+                  fi
+
+            - name: Check whether release tag already exists
+              id: tag_exists
+              shell: bash
+              run: |
+                  git fetch --force --tags origin
+                  if git rev-parse "refs/tags/${{ steps.release_version.outputs.release_tag }}" >/dev/null 2>&1; then
+                    TAG_COMMIT=$(git rev-list -n 1 "${{ steps.release_version.outputs.release_tag }}")
+                    echo "exists=true" >> "$GITHUB_OUTPUT"
+                    echo "tag_commit=$TAG_COMMIT" >> "$GITHUB_OUTPUT"
+                    echo "Release tag ${{ steps.release_version.outputs.release_tag }} already exists at commit $TAG_COMMIT."
+                  else
+                    echo "exists=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Require existing release tag to match current commit
+              if: ${{ steps.tag_exists.outputs.exists == 'true' }}
+              shell: bash
+              run: |
+                  if [ "${{ steps.tag_exists.outputs.tag_commit }}" != "${{ github.sha }}" ]; then
+                    echo "Release tag ${{ steps.release_version.outputs.release_tag }} already exists on a different commit."
+                    echo "Existing tag commit: ${{ steps.tag_exists.outputs.tag_commit }}"
+                    echo "Current main commit: ${{ github.sha }}"
+                    echo "Use a new version or retag deliberately outside automation."
+                    exit 1
+                  fi
+
+                  echo "Release tag ${{ steps.release_version.outputs.release_tag }} already matches the current commit."
+
+            - name: Create and push release tag
+              if: ${{ steps.tag_exists.outputs.exists == 'false' }}
+              shell: bash
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag -a "${{ steps.release_version.outputs.release_tag }}" -m "Release ${{ steps.release_version.outputs.release_tag }}"
+                  git push origin "${{ steps.release_version.outputs.release_tag }}"
+
+            - name: Report Status
+              if: always()
+              shell: bash
+              run: |
+                  echo "### Auto Tag Status" >> "$GITHUB_STEP_SUMMARY"
+                  echo "- Commit: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+                  echo "- Version: ${{ steps.release_version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+                  echo "- Tag: ${{ steps.release_version.outputs.release_tag }}" >> "$GITHUB_STEP_SUMMARY"
+                  if [ "${{ steps.tag_exists.outputs.exists }}" = "true" ]; then
+                    echo "- Existing tag commit: ${{ steps.tag_exists.outputs.tag_commit }}" >> "$GITHUB_STEP_SUMMARY"
+                    if [ "${{ steps.tag_exists.outputs.tag_commit }}" = "${{ github.sha }}" ]; then
+                      echo "- Result: existing tag already matches this commit; no new tag pushed" >> "$GITHUB_STEP_SUMMARY"
+                    else
+                      echo "- Result: existing tag points at a different commit; workflow failed intentionally" >> "$GITHUB_STEP_SUMMARY"
+                    fi
+                  else
+                    echo "- Result: release tag created and pushed" >> "$GITHUB_STEP_SUMMARY"
+                  fi

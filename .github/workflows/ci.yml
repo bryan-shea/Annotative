@@ -5,6 +5,12 @@ on:
         branches: [main, develop]
     push:
         branches: [main, develop]
+        tags:
+            - "v*"
+
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
     validate:

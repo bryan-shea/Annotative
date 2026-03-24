@@ -6,9 +6,9 @@ Annotative is a VS Code extension for reviewing code in place. Add annotations t
 
 ## Version
 
-This branch prepares Annotative `v3.0.0`.
+This branch prepares Annotative `v3.0.1`.
 
-`v3.0.0` keeps the project-based storage model introduced in `v2`, and focuses on stability, storage hardening, anchored annotations, export cleanup, and release hygiene.
+`v3.0.1` keeps the project-based storage model introduced in `v2`, and focuses on stability, storage hardening, anchored annotations, export cleanup, and release hygiene.
 
 Upgrade notes are in [MIGRATION.md](MIGRATION.md).
 
@@ -123,7 +123,7 @@ Annotative currently exposes these settings:
 
 ## Upgrade Notes
 
-- Upgrading from `v2.x` to `v3.0.0`: no manual storage migration is required.
+- Upgrading from `v2.x` to `v3.0.1`: no manual storage migration is required.
 - Upgrading from `v1.5.x` or earlier: legacy global-state data is not imported automatically.
 
 See [MIGRATION.md](MIGRATION.md) for the full upgrade path.
