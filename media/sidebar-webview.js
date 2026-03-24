@@ -15,6 +15,7 @@ const state = {
   filters: {
     status: 'all',
     tag: 'all',
+    search: '',
     groupBy: 'file',
   },
 };
@@ -243,7 +244,7 @@ function calculateStats(annotations) {
 }
 
 function updateTagFilter(filterElement, tags, currentValue) {
-  const currentTag = filterElement.value;
+  const selectedTag = currentValue || 'all';
   filterElement.innerHTML = '<option value="all">All Tags</option>';
 
   tags.forEach((tag) => {
@@ -253,11 +254,32 @@ function updateTagFilter(filterElement, tags, currentValue) {
     filterElement.appendChild(option);
   });
 
-  if (currentTag && tags.includes(currentTag)) {
-    filterElement.value = currentTag;
+  if (selectedTag && selectedTag !== 'all' && tags.includes(selectedTag)) {
+    filterElement.value = selectedTag;
   } else {
     filterElement.value = 'all';
   }
+}
+
+function updateFilterControls(filters) {
+  if (elements.statusFilter) {
+    elements.statusFilter.value = filters.status;
+  }
+
+  if (elements.groupBySelect) {
+    elements.groupBySelect.value = filters.groupBy;
+  }
+
+  if (elements.tagFilter) {
+    updateTagFilter(elements.tagFilter, extractTags(state.annotations), filters.tag);
+  }
+}
+
+function notifyFilterStateChanged() {
+  vscode.postMessage({
+    command: 'filterStateChanged',
+    filters: { ...state.filters },
+  });
 }
 
 // ==================== Rendering ====================
@@ -497,6 +519,7 @@ function setupEventListeners() {
   }
   elements.statusFilter?.addEventListener('change', (e) => {
     state.filters.status = e.target.value;
+    notifyFilterStateChanged();
     applyFiltersAndRender();
   });
 
@@ -505,6 +528,7 @@ function setupEventListeners() {
   }
   elements.tagFilter?.addEventListener('change', (e) => {
     state.filters.tag = e.target.value;
+    notifyFilterStateChanged();
     applyFiltersAndRender();
   });
 
@@ -513,6 +537,7 @@ function setupEventListeners() {
   }
   elements.groupBySelect?.addEventListener('change', (e) => {
     state.filters.groupBy = e.target.value;
+    notifyFilterStateChanged();
     applyFiltersAndRender();
   });
 
@@ -564,6 +589,9 @@ function handleExtensionMessage(message) {
       case 'annotationUpdated':
         handleAnnotationUpdated(message.annotation);
         break;
+      case 'filterStateUpdated':
+        handleFilterStateUpdated(message.filters || {});
+        break;
       default:
         console.warn('[Annotative] Unknown command:', message.command);
     }
@@ -581,8 +609,7 @@ function requestAnnotations() {
 function handleUpdateAnnotations(annotations) {
   try {
     state.annotations = annotations || [];
-    const tags = extractTags(state.annotations);
-    updateTagFilter(elements.tagFilter, tags, state.filters.tag);
+    updateFilterControls(state.filters);
     applyFiltersAndRender();
   } catch (error) {
     console.error('[Annotative] Error updating annotations:', error);
@@ -593,10 +620,19 @@ function handleTagsUpdated(tags) {
   try {
     // Store available tags in state for use by tag picker
     state.availableTags = tags || [];
-    updateTagFilter(elements.tagFilter, tags, state.filters.tag);
+    updateTagFilter(elements.tagFilter, extractTags(state.annotations), state.filters.tag);
   } catch (error) {
     console.error('[Annotative] Error updating tags:', error);
   }
+}
+
+function handleFilterStateUpdated(filters) {
+  state.filters = {
+    ...state.filters,
+    ...filters,
+  };
+  updateFilterControls(state.filters);
+  applyFiltersAndRender();
 }
 
 function handleAnnotationAdded(annotation) {
