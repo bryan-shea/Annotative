@@ -40,6 +40,15 @@ export interface AnnotationTagOption {
     priority?: TagPriority;
 }
 
+export interface AnnotationAnchor {
+    selectedText: string;
+    prefixContext: string;
+    suffixContext: string;
+    selectedTextHash: string;
+    normalizedTextHash: string;
+    contextHash: string;
+}
+
 export interface Annotation {
     id: string;
     filePath: string;
@@ -53,6 +62,7 @@ export interface Annotation {
     priority?: TagPriority;
     color?: string;           // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
+    anchor?: AnnotationAnchor;
 }
 
 export interface AnnotationDecoration {

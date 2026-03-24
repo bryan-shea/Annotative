@@ -261,13 +261,15 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
         try {
             const uri = vscode.Uri.file(annotation.filePath);
             const doc = await vscode.workspace.openTextDocument(uri);
+            await this.annotationManager.rebaseAnnotationsForDocument(doc);
             const editor = await vscode.window.showTextDocument(doc);
 
+            const resolvedAnnotation = this.annotationManager.getAnnotation(annotation.id, annotation.filePath) || annotation;
             const range = new vscode.Range(
-                annotation.range.start.line,
-                annotation.range.start.character,
-                annotation.range.end.line,
-                annotation.range.end.character
+                resolvedAnnotation.range.start.line,
+                resolvedAnnotation.range.start.character,
+                resolvedAnnotation.range.end.line,
+                resolvedAnnotation.range.end.character
             );
 
             editor.selection = new vscode.Selection(range.start, range.end);

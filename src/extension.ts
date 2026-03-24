@@ -82,6 +82,34 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(document => {
+            void annotationManager.rebaseAnnotationsForDocument(document).then(changed => {
+                if (changed) {
+                    const activeEditor = vscode.window.activeTextEditor;
+                    if (activeEditor && activeEditor.document.uri.toString() === document.uri.toString()) {
+                        annotationManager.updateDecorations(activeEditor);
+                    }
+                }
+            });
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeTextDocument(event => {
+            void annotationManager.rebaseAnnotationsForDocument(event.document).then(changed => {
+                if (changed) {
+                    const visibleEditor = vscode.window.visibleTextEditors.find(
+                        editor => editor.document.uri.toString() === event.document.uri.toString()
+                    );
+                    if (visibleEditor) {
+                        annotationManager.updateDecorations(visibleEditor);
+                    }
+                }
+            });
+        })
+    );
+
     if (vscode.window.activeTextEditor) {
         annotationManager.updateDecorations(vscode.window.activeTextEditor);
     }
