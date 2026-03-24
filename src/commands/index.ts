@@ -5,13 +5,12 @@
 
 import * as vscode from 'vscode';
 import { AnnotationManager } from '../managers';
-import { AnnotationProvider, AnnotationItem, SidebarWebview } from '../ui';
-import { Annotation } from '../types';
+import { AnnotationProvider, SidebarWebview } from '../ui';
 
 export type CommandContext = {
     annotationManager: AnnotationManager;
-    annotationProvider: AnnotationProvider;
     sidebarWebview: SidebarWebview;
+    annotationProvider?: AnnotationProvider;
     ANNOTATION_COLORS: Array<{ label: string; value: string }>;
 };
 
@@ -19,7 +18,6 @@ export type CommandContext = {
 export { registerAnnotationCommands } from './annotation';
 export { registerExportCommands } from './export';
 export { registerFilterCommands } from './filters';
-export { registerBulkCommands } from './bulk';
 export { registerNavigationCommands } from './navigation';
 export { registerSidebarCommands } from './sidebar';
 export { registerTagCommands } from './tags';

@@ -4,23 +4,15 @@
  */
 
 import * as vscode from 'vscode';
-import { AnnotationManager } from '../managers';
 import { AnnotationItem } from '../ui';
 import { CommandContext } from './index';
-import { CopilotExporter } from '../copilotExporter';
-
-/**
- * Helper to convert Tag to string
- */
-function tagToString(tag: string | { id: string }): string {
-    return typeof tag === 'string' ? tag : tag.id;
-}
 
 export function registerAnnotationCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
 ) {
     const { annotationManager, sidebarWebview, ANNOTATION_COLORS } = cmdContext;
+    const exportService = annotationManager.getExportService();
 
     // Command: Add annotation to selected text
     const addAnnotationCommand = vscode.commands.registerTextEditorCommand(
@@ -50,11 +42,15 @@ export function registerAnnotationCommands(
             let selectedTags: string[] = [];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
-                selectedTags = await vscode.window.showQuickPick(tagOptions, {
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                }));
+                const selected = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
-                }) || [];
+                });
+                selectedTags = selected?.map(tag => tag.value) || [];
             }
 
             // Get color via quick pick
@@ -150,13 +146,16 @@ export function registerAnnotationCommands(
             let selectedTags: string[] = [];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                }));
                 const tags = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
                 });
                 if (tags) {
-                    selectedTags = tags;
+                    selectedTags = tags.map(tag => tag.value);
                 }
             }
 
@@ -177,22 +176,28 @@ export function registerAnnotationCommands(
             );
 
             if (action === 'Ask Copilot') {
+                if (!exportService.isCopilotEnabled()) {
+                    vscode.window.showWarningMessage('Copilot integration is disabled in Annotative settings.');
+                    return;
+                }
+
                 const annotations = annotationManager.getAnnotationsForFile(editor.document.uri.fsPath);
                 const newAnnotation = annotations[annotations.length - 1];
 
                 if (newAnnotation) {
-                    const prompt = await CopilotExporter.formatAnnotationForCopilot(newAnnotation, {
-                        contextLines: 5,
-                        smartContext: true
-                    });
+                    const prompt = await exportService.formatAnnotationForCopilot(newAnnotation);
 
                     await vscode.env.clipboard.writeText(prompt);
 
-                    try {
-                        await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+                    const opened = await exportService.openCopilotChatIfConfigured();
+                    if (opened) {
                         vscode.window.showInformationMessage('Paste into Copilot Chat (Ctrl+V)');
-                    } catch {
-                        vscode.window.showInformationMessage('Context copied. Open Copilot Chat and paste.');
+                    } else {
+                        vscode.window.showInformationMessage('Context copied. Open Copilot Chat and paste.', 'Open Chat').then(choice => {
+                            if (choice === 'Open Chat') {
+                                void exportService.openCopilotChatIfConfigured(true);
+                            }
+                        });
                     }
                 }
             }
@@ -249,16 +254,21 @@ export function registerAnnotationCommands(
 
             // Get updated tags via quick pick (multi-select) - user-defined only
             const customTags = annotationManager.getCustomTags();
-            let tagsToUse = annotation.tags?.map((t) => tagToString(t)) || [];
+            const currentTags = annotation.tags || [];
+            let tagsToUse = [...currentTags];
 
             if (customTags.length > 0) {
-                const tagOptions = customTags.map(t => t.name);
+                const tagOptions = customTags.map(tag => ({
+                    label: tag.name,
+                    value: tag.id,
+                    picked: currentTags.includes(tag.id),
+                }));
                 const selectedTags = await vscode.window.showQuickPick(tagOptions, {
                     placeHolder: 'Select tags (optional)',
                     canPickMany: true
                 });
                 if (selectedTags) {
-                    tagsToUse = selectedTags;
+                    tagsToUse = selectedTags.map(tag => tag.value);
                 }
             }
 
@@ -292,7 +302,7 @@ export function registerAnnotationCommands(
 
             // Show details in information message
             const tagsStr = annotation.tags && annotation.tags.length > 0
-                ? annotation.tags.map(t => tagToString(t)).join(', ')
+                ? annotationManager.resolveTagLabels(annotation.tags).join(', ')
                 : 'none';
             const resolvedStr = annotation.resolved ? 'Resolved' : 'Open';
 

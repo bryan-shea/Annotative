@@ -2,7 +2,9 @@ import * as vscode from 'vscode';
 import { AnnotationManager } from '../managers';
 import { Annotation } from '../types';
 import { generateWebviewHtml } from './webview';
-import { WebviewMessage } from './webview/types';
+import { FilterState, WebviewMessage } from './webview/types';
+
+type SidebarFilterState = FilterState;
 
 /**
  * Sidebar Webview Provider
@@ -15,6 +17,12 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
     private view?: vscode.WebviewView;
     private annotationManager: AnnotationManager;
     private disposables: vscode.Disposable[] = [];
+    private filterState: SidebarFilterState = {
+        status: 'all',
+        tag: 'all',
+        search: '',
+        groupBy: 'file'
+    };
 
     constructor(private extensionUri: vscode.Uri, annotationManager: AnnotationManager) {
         this.annotationManager = annotationManager;
@@ -90,6 +98,33 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
         }
     }
 
+    getFilterState(): SidebarFilterState {
+        return { ...this.filterState };
+    }
+
+    setFilterState(nextState: Partial<SidebarFilterState>) {
+        this.filterState = {
+            ...this.filterState,
+            ...nextState,
+        };
+
+        if (this.view) {
+            this.postMessage({
+                command: 'filterStateUpdated',
+                filters: this.getFilterState(),
+            });
+        }
+    }
+
+    clearFilters() {
+        this.setFilterState({
+            status: 'all',
+            tag: 'all',
+            search: '',
+            groupBy: 'file',
+        });
+    }
+
     /**
      * Get the webview URI for a resource file
      */
@@ -124,15 +159,20 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
      */
     private loadInitialData(webview: vscode.Webview) {
         const annotations = this.annotationManager.getAllAnnotations();
-        webview.postMessage({
+        this.postMessage({
             command: 'updateAnnotations',
             annotations,
         });
 
-        const tags = this.annotationManager.getAllTags();
-        webview.postMessage({
+        const tags = this.annotationManager.getTagOptions();
+        this.postMessage({
             command: 'tagsUpdated',
             tags,
+        });
+
+        this.postMessage({
+            command: 'filterStateUpdated',
+            filters: this.getFilterState(),
         });
     }
 
@@ -147,6 +187,15 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
                         this.loadInitialData(webview);
                         break;
 
+                    case 'filterStateChanged':
+                        if (message.filters) {
+                            this.filterState = {
+                                ...this.filterState,
+                                ...message.filters,
+                            };
+                        }
+                        break;
+
                     case 'navigate':
                         if (message.annotation) {
                             await this.handleNavigate(message.annotation);
@@ -156,57 +205,44 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
                     case 'toggleResolved':
                         if (typeof message.id === 'string') {
                             await this.handleToggleResolved(message.id);
-                            // Refresh webview after changes
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
 
                     case 'delete':
                         if (typeof message.id === 'string') {
                             await this.handleDelete(message.id);
-                            // Refresh webview after changes
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
 
                     case 'edit':
                         if (message.annotation) {
                             await this.handleEdit(message.annotation);
-                            // Refresh webview after changes
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
 
                     case 'resolveAll':
                         await this.handleResolveAll();
-                        // Refresh webview after changes
-                        setTimeout(() => this.loadInitialData(webview), 100);
                         break;
 
                     case 'deleteResolved':
                         await this.handleDeleteResolved();
-                        // Refresh webview after changes
-                        setTimeout(() => this.loadInitialData(webview), 100);
                         break;
 
                     case 'addTag':
                         if (message.id && message.tag) {
                             await this.handleAddTag(message.id, message.tag);
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
 
                     case 'removeTag':
                         if (message.id && message.tag) {
                             await this.handleRemoveTag(message.id, message.tag);
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
 
                     case 'manageTags':
                         if (message.id && message.tags) {
                             await this.handleManageTags(message.id, message.tags);
-                            setTimeout(() => this.loadInitialData(webview), 100);
                         }
                         break;
                 }
@@ -225,13 +261,15 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
         try {
             const uri = vscode.Uri.file(annotation.filePath);
             const doc = await vscode.workspace.openTextDocument(uri);
+            await this.annotationManager.rebaseAnnotationsForDocument(doc);
             const editor = await vscode.window.showTextDocument(doc);
 
+            const resolvedAnnotation = this.annotationManager.getAnnotation(annotation.id, annotation.filePath) || annotation;
             const range = new vscode.Range(
-                annotation.range.start.line,
-                annotation.range.start.character,
-                annotation.range.end.line,
-                annotation.range.end.character
+                resolvedAnnotation.range.start.line,
+                resolvedAnnotation.range.start.character,
+                resolvedAnnotation.range.end.line,
+                resolvedAnnotation.range.end.character
             );
 
             editor.selection = new vscode.Selection(range.start, range.end);
@@ -291,9 +329,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             });
 
             if (newComment !== undefined && newComment.trim().length > 0) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 await this.annotationManager.editAnnotation(
                     annotation.id,
@@ -339,9 +375,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 if (!currentTags.includes(tag)) {
                     const updatedTags = [...currentTags, tag];
@@ -368,9 +402,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 const updatedTags = currentTags.filter(t => t !== tag);
                 await this.annotationManager.editAnnotation(
@@ -418,6 +450,12 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
         return text;
+    }
+
+    private postMessage(message: { command: string; [key: string]: unknown }) {
+        if (this.view) {
+            this.view.webview.postMessage(message);
+        }
     }
 
     /**

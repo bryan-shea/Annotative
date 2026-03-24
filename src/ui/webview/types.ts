@@ -3,7 +3,7 @@
  * Defines all message interfaces for communication between webview and extension
  */
 
-import { Annotation } from '../../types';
+import { Annotation, AnnotationTagOption } from '../../types';
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -18,7 +18,8 @@ export type WebviewToExtensionCommand =
   | 'edit'
   | 'addTag'
   | 'removeTag'
-  | 'manageTags';
+  | 'manageTags'
+  | 'filterStateChanged';
 
 export interface WebviewMessage {
   command: WebviewToExtensionCommand;
@@ -39,13 +40,15 @@ export type ExtensionToWebviewCommand =
   | 'tagsUpdated'
   | 'annotationAdded'
   | 'annotationRemoved'
-  | 'annotationUpdated';
+  | 'annotationUpdated'
+  | 'filterStateUpdated';
 
 export interface ExtensionMessage {
   command: ExtensionToWebviewCommand;
   annotations?: Annotation[];
-  tags?: string[];
+  tags?: AnnotationTagOption[];
   annotation?: Annotation;
+  filters?: FilterState;
   [key: string]: unknown;
 }
 
@@ -56,7 +59,7 @@ export interface FilterState {
   status: 'all' | 'resolved' | 'unresolved';
   tag: string;
   search: string;
-  groupBy: 'file' | 'tag' | 'status' | 'folder' | 'priority';
+  groupBy: 'file' | 'tag' | 'status' | 'folder';
 }
 
 /**

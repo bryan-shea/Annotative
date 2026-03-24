@@ -26,10 +26,7 @@ export function filterAnnotations(
             if (!annotation.tags) {
                 return false;
             }
-            const hasTag = annotation.tags.some(tag => {
-                const tagId = typeof tag === 'string' ? tag : tag.id;
-                return tagId === filterTag;
-            });
+            const hasTag = annotation.tags.some(tagId => tagId === filterTag);
             if (!hasTag) {
                 return false;
             }
@@ -41,10 +38,7 @@ export function filterAnnotations(
             const commentMatch = annotation.comment.toLowerCase().includes(searchLower);
             const textMatch = annotation.text.toLowerCase().includes(searchLower);
             const authorMatch = annotation.author.toLowerCase().includes(searchLower);
-            const tagMatch = annotation.tags?.some(tag => {
-                const tagName = typeof tag === 'string' ? tag : tag.name;
-                return tagName.toLowerCase().includes(searchLower);
-            });
+            const tagMatch = annotation.tags?.some(tagId => tagId.toLowerCase().includes(searchLower));
 
             if (!commentMatch && !textMatch && !authorMatch && !tagMatch) {
                 return false;

@@ -8,14 +8,15 @@ export class AnnotationItem extends vscode.TreeItem {
     constructor(
         public readonly annotation: Annotation,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly isSelected: boolean = false
+        public readonly isSelected: boolean = false,
+        tagLabels: string[] = annotation.tags || []
     ) {
         const statusIcon = annotation.resolved ? '✓' : '○';
         const selectedIcon = isSelected ? '☑ ' : '☐ ';
         const preview = annotation.comment.length > 45
             ? annotation.comment.substring(0, 42) + '...'
             : annotation.comment;
-        const tagsLabel = annotation.tags && annotation.tags.length > 0 ? ` [${annotation.tags.join(', ')}]` : '';
+        const tagsLabel = tagLabels.length > 0 ? ` [${tagLabels.join(', ')}]` : '';
 
         super(`${selectedIcon}${statusIcon} Line ${annotation.range.start.line + 1}: ${preview}${tagsLabel}`, collapsibleState);
 

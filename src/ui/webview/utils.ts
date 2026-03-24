@@ -38,10 +38,7 @@ export function filterAnnotations(
 
     // Filter by tag
     if (filters.tag && filters.tag !== 'all') {
-      const hasTag = ann.tags?.some((t) => {
-        const tagId = typeof t === 'string' ? t : t.id;
-        return tagId === filters.tag;
-      });
+      const hasTag = ann.tags?.some((tagId) => tagId === filters.tag);
       if (!hasTag) {
         return false;
       }
@@ -79,15 +76,12 @@ export function groupAnnotations(
       key = parts.length > 1 ? parts[parts.length - 2] : 'Root';
     } else if (groupBy === 'tag') {
       if (ann.tags && ann.tags.length > 0) {
-        const tagId = typeof ann.tags[0] === 'string' ? ann.tags[0] : ann.tags[0].id;
-        key = tagId;
+        key = ann.tags[0];
       } else {
         key = 'Untagged';
       }
     } else if (groupBy === 'status') {
       key = ann.resolved ? 'Resolved' : 'Unresolved';
-    } else if (groupBy === 'priority') {
-      key = ann.priority || 'Default';
     }
 
     if (!groups[key]) {
@@ -118,8 +112,7 @@ export function extractTags(annotations: Annotation[]): string[] {
   const tags = new Set<string>();
   annotations.forEach((ann) => {
     if (ann.tags && Array.isArray(ann.tags)) {
-      ann.tags.forEach((t) => {
-        const tagId = typeof t === 'string' ? t : t.id;
+      ann.tags.forEach((tagId) => {
         tags.add(tagId);
       });
     }

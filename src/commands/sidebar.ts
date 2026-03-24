@@ -6,6 +6,14 @@
 import * as vscode from 'vscode';
 import { CommandContext } from './index';
 
+function getStorageInitializationErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message === 'No workspace folder open') {
+        return 'Open a folder or workspace before initializing Annotative storage.';
+    }
+
+    return `Failed to initialize project storage: ${error}`;
+}
+
 export function registerSidebarCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
@@ -38,34 +46,18 @@ export function registerSidebarCommands(
                 return;
             }
 
-            // Ask about migration
-            const migrateChoice = await vscode.window.showQuickPick([
-                { label: 'Create new storage', description: 'Start fresh', value: false },
-                { label: 'Migrate existing', description: 'Copy current annotations', value: true }
-            ], {
-                placeHolder: 'Initialize .annotative folder'
-            });
-
-            if (!migrateChoice) {
-                return;
-            }
-
             try {
-                const created = await annotationManager.initializeProjectStorage(migrateChoice.value);
+                const created = await annotationManager.initializeProjectStorage();
 
                 if (created) {
-                    vscode.window.showInformationMessage(
-                        migrateChoice.value
-                            ? 'Project storage initialized with existing data.'
-                            : 'Project storage initialized.'
-                    );
+                    vscode.window.showInformationMessage('Project storage initialized.');
                 } else {
                     vscode.window.showInformationMessage('Switched to project storage.');
                 }
 
                 sidebarWebview.refreshAnnotations();
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to initialize: ${error}`);
+                vscode.window.showErrorMessage(getStorageInitializationErrorMessage(error));
             }
         }
     );

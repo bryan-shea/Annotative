@@ -286,43 +286,6 @@
           "when": "view == annotativeView",
           "group": "3_bulk@3"
         }
-      ],
-      "view/item/context": [
-        {
-          "command": "annotative.viewAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@1"
-        },
-        {
-          "command": "annotative.editAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@2"
-        },
-        {
-          "command": "annotative.toggleResolved",
-          "when": "view == annotativeView && viewItem == unresolvedAnnotation",
-          "group": "inline@3"
-        },
-        {
-          "command": "annotative.toggleResolved",
-          "when": "view == annotativeView && viewItem == resolvedAnnotation",
-          "group": "inline@3"
-        },
-        {
-          "command": "annotative.removeAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@4"
-        },
-        {
-          "command": "annotative.askCopilotAboutAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "copilot@1"
-        },
-        {
-          "command": "annotative.copyAsCopilotContext",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "copilot@2"
-        }
       ]
     },
     "chatParticipants": [
@@ -408,16 +371,6 @@
           "default": true,
           "description": "Include imports in context"
         },
-        "annotative.export.includeFunction": {
-          "type": "boolean",
-          "default": true,
-          "description": "Include full function definition"
-        },
-        "annotative.export.copilotOptimized": {
-          "type": "boolean",
-          "default": true,
-          "description": "Optimize format for Copilot"
-        },
         "annotative.copilot.enabled": {
           "type": "boolean",
           "default": true,
@@ -438,11 +391,6 @@
           "default": "conversational",
           "description": "Export format for Copilot"
         },
-        "annotative.copilot.showInlineButtons": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show Copilot buttons inline"
-        },
         "annotative.copilot.autoOpenChat": {
           "type": "boolean",
           "default": false,
@@ -462,33 +410,34 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "quality": "npm run compile && npm run lint && npm test && node scripts/check-extension-compliance.js",
+    "release:check": "npm run quality && npm run package",
     "lint": "eslint src",
-    "test": "vscode-test",
+    "test": "node ./scripts/run-vscode-tests.mjs",
     "dev": "npm run watch",
-    "ci": "git add . && npm run changeset:enhanced && git push origin main --no-verify",
     "clean": "rimraf dist out",
     "changeset": "node scripts/changeset.js",
     "changeset:enhanced": "node scripts/changeset-enhanced.js",
     "version:check": "node scripts/calculate-version.js",
     "version:validate-msg": "node scripts/validate-commit-msg.js",
-    "deploy": "vsce publish --no-git-tag-version"
+    "publish:marketplace": "vsce publish --no-git-tag-version"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
+    "@types/node": "^22.19.15",
     "@types/vscode": "^1.105.0",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "@vscode/codicons": "^0.0.42",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.6.2",
+    "@vscode/vsce": "^3.7.1",
     "copy-webpack-plugin": "^13.0.1",
-    "eslint": "^9.36.0",
+    "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
-    "webpack": "^5.102.0",
+    "webpack": "^5.105.4",
     "webpack-cli": "^6.0.1"
   }
 }

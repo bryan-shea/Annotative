@@ -4,22 +4,18 @@
  */
 
 import * as vscode from 'vscode';
-import { AnnotationManager } from '../managers';
 import { AnnotationProvider } from '../ui';
 import { CommandContext } from './index';
-
-/**
- * Helper to convert Tag to string
- */
-function tagToString(tag: string | { id: string }): string {
-    return typeof tag === 'string' ? tag : tag.id;
-}
 
 export function registerBulkCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
 ) {
     const { annotationManager, annotationProvider, sidebarWebview, ANNOTATION_COLORS } = cmdContext;
+
+    if (!annotationProvider) {
+        return {};
+    }
 
     // Command: Bulk tag annotations
     const bulkTagCommand = vscode.commands.registerCommand(
@@ -44,7 +40,10 @@ export function registerBulkCommands(
                 return;
             }
 
-            const tagOptions = customTags.map(t => t.name);
+            const tagOptions = customTags.map(tag => ({
+                label: tag.name,
+                value: tag.id,
+            }));
             const newTags = await vscode.window.showQuickPick(tagOptions, {
                 placeHolder: `Add tags to ${selected.length} annotation(s)`,
                 canPickMany: true
@@ -52,8 +51,8 @@ export function registerBulkCommands(
 
             if (newTags && newTags.length > 0) {
                 for (const annotation of selected) {
-                    const updated = new Set((annotation.tags || []).map(t => tagToString(t)));
-                    newTags.forEach(tag => updated.add(tag));
+                    const updated = new Set(annotation.tags || []);
+                    newTags.forEach(tag => updated.add(tag.value));
                     await annotationManager.editAnnotation(
                         annotation.id,
                         annotation.filePath,
@@ -137,12 +136,11 @@ export function registerBulkCommands(
 
             if (selectedColor) {
                 for (const annotation of selected) {
-                    const tagsStr = annotation.tags?.map(t => tagToString(t));
                     await annotationManager.editAnnotation(
                         annotation.id,
                         annotation.filePath,
                         annotation.comment,
-                        tagsStr,
+                        annotation.tags,
                         selectedColor.value
                     );
                 }

@@ -1,15 +1,38 @@
-## [3.0.0] - 2026-02-01
-
-### Changes
-- 90e81af Merge pull request #9 from bryan-shea/feat/updates-optimizations
-- 3655a85 feat: introduce user-defined tags and project-based storage system
-- 659a063 docs: complete documentation overhaul with professional standards
-- 15a5845 refactor!: simplify UX with user-defined tags and project storage
-
+<!-- markdownlint-disable MD024 MD036 -->
 
 # Changelog
 
 All notable changes to Annotative are documented in this file.
+
+## [3.0.0] - 2026-03-24
+
+### Upgrade Notes
+
+- `v3.0.0` continues the project-based `.annotative/` storage model introduced in `v2`
+- Existing `v2.x` workspaces do not require a manual storage migration
+- Legacy pre-`v2` global-state annotations are still not imported automatically
+
+### Added
+
+- Annotation anchoring and reattachment support to keep saved annotations aligned after nearby source edits
+- Dedicated export service and workspace selection helpers for multi-root behavior
+- Regression coverage for storage, CRUD, export, manager, anchoring, and sidebar behavior
+- A repository test runner that works reliably on Windows paths containing spaces
+
+### Changed
+
+- Storage handling now uses schema-versioned payloads and normalization on load
+- Export flows are routed through clearer service boundaries for Markdown, AI export, and Copilot-oriented output
+- Sidebar webview state handling is more consistent for filtering, grouping, and refresh
+- Release automation now publishes an already-versioned `main` commit through a manual GitHub Actions workflow
+- Documentation has been rewritten to match the current product, upgrade path, and release flow
+
+### Fixed
+
+- Non-atomic storage writes and weak recovery behavior for corrupt storage files
+- Annotation persistence edge cases caused by path and workspace resolution issues
+- Packaging and release hygiene around temporary files and manual release preparation
+- Windows test execution issues in repository paths that include spaces
 
 ## [2.0.0] - 2026-02-01
 

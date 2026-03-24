@@ -33,8 +33,21 @@ export interface AnnotationTag {
     isPreset: boolean; // Always false for user-created tags
 }
 
-// Backward compatibility: accept both string and AnnotationTag
-export type Tag = string | AnnotationTag;
+export interface AnnotationTagOption {
+    id: string;
+    label: string;
+    color?: string;
+    priority?: TagPriority;
+}
+
+export interface AnnotationAnchor {
+    selectedText: string;
+    prefixContext: string;
+    suffixContext: string;
+    selectedTextHash: string;
+    normalizedTextHash: string;
+    contextHash: string;
+}
 
 export interface Annotation {
     id: string;
@@ -45,10 +58,11 @@ export interface Annotation {
     author: string;
     timestamp: Date;
     resolved: boolean;        // Resolution status - open (false) or resolved (true)
-    tags?: Tag[];
+    tags?: string[];
     priority?: TagPriority;
     color?: string;           // Hex color code - user's visual preference only
     aiConversations?: AIConversation[];
+    anchor?: AnnotationAnchor;
 }
 
 export interface AnnotationDecoration {
@@ -57,7 +71,37 @@ export interface AnnotationDecoration {
 }
 
 export interface AnnotationStorage {
+    schemaVersion: number;
     workspaceAnnotations: { [filePath: string]: Annotation[] };
+}
+
+export interface StoredPosition {
+    line: number;
+    character: number;
+}
+
+export interface StoredRange {
+    start: StoredPosition;
+    end: StoredPosition;
+}
+
+export type LegacyStoredTag = string | AnnotationTag;
+export type Tag = string | AnnotationTag;
+
+export interface StoredAnnotation extends Omit<Annotation, 'range' | 'timestamp' | 'tags'> {
+    range: StoredRange;
+    timestamp: string;
+    tags?: LegacyStoredTag[];
+}
+
+export interface AnnotationStorageFile {
+    schemaVersion: number;
+    workspaceAnnotations: { [filePath: string]: StoredAnnotation[] };
+}
+
+export interface TagStorageFile {
+    schemaVersion: number;
+    customTags: AnnotationTag[];
 }
 
 // Tag management

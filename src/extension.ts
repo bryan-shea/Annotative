@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import { AnnotationManager } from './managers';
-import { AnnotationProvider, SidebarWebview } from './ui';
+import { SidebarWebview } from './ui';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import {
     registerAnnotationCommands,
     registerExportCommands,
     registerFilterCommands,
-    registerBulkCommands,
     registerNavigationCommands,
     registerSidebarCommands,
     registerTagCommands,
@@ -26,13 +25,11 @@ const ANNOTATION_COLORS = [
 ];
 
 let annotationManager: AnnotationManager;
-let annotationProvider: AnnotationProvider;
 let sidebarWebview: SidebarWebview;
 
 export function activate(context: vscode.ExtensionContext) {
     // Initialize core managers
     annotationManager = new AnnotationManager(context);
-    annotationProvider = new AnnotationProvider(annotationManager);
     sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
 
     // Register sidebar webview provider
@@ -51,17 +48,17 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Register Copilot Chat integration
-    context.subscriptions.push(registerChatParticipant(context, annotationManager));
-    const chatVariable = registerChatVariableIfAvailable(context, annotationManager);
-    if (chatVariable) {
-        context.subscriptions.push(chatVariable);
+    if (vscode.workspace.getConfiguration('annotative').get<boolean>('copilot.enabled', true)) {
+        context.subscriptions.push(registerChatParticipant(context, annotationManager));
+        const chatVariable = registerChatVariableIfAvailable(context, annotationManager);
+        if (chatVariable) {
+            context.subscriptions.push(chatVariable);
+        }
     }
 
     // Create command context
     const cmdContext: CommandContext = {
         annotationManager,
-        annotationProvider,
         sidebarWebview,
         ANNOTATION_COLORS
     };
@@ -71,7 +68,6 @@ export function activate(context: vscode.ExtensionContext) {
         ...Object.values(registerAnnotationCommands(context, cmdContext)),
         ...Object.values(registerExportCommands(context, cmdContext)),
         ...Object.values(registerFilterCommands(context, cmdContext)),
-        ...Object.values(registerBulkCommands(context, cmdContext)),
         ...Object.values(registerNavigationCommands(context, cmdContext)),
         ...Object.values(registerSidebarCommands(context, cmdContext)),
         ...Object.values(registerTagCommands(context, cmdContext))
@@ -83,6 +79,34 @@ export function activate(context: vscode.ExtensionContext) {
             if (editor) {
                 annotationManager.updateDecorations(editor);
             }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(document => {
+            void annotationManager.rebaseAnnotationsForDocument(document).then(changed => {
+                if (changed) {
+                    const activeEditor = vscode.window.activeTextEditor;
+                    if (activeEditor && activeEditor.document.uri.toString() === document.uri.toString()) {
+                        annotationManager.updateDecorations(activeEditor);
+                    }
+                }
+            });
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeTextDocument(event => {
+            void annotationManager.rebaseAnnotationsForDocument(event.document).then(changed => {
+                if (changed) {
+                    const visibleEditor = vscode.window.visibleTextEditors.find(
+                        editor => editor.document.uri.toString() === event.document.uri.toString()
+                    );
+                    if (visibleEditor) {
+                        annotationManager.updateDecorations(visibleEditor);
+                    }
+                }
+            });
         })
     );
 
