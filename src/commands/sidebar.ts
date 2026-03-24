@@ -6,6 +6,14 @@
 import * as vscode from 'vscode';
 import { CommandContext } from './index';
 
+function getStorageInitializationErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message === 'No workspace folder open') {
+        return 'Open a folder or workspace before initializing Annotative storage.';
+    }
+
+    return `Failed to initialize project storage: ${error}`;
+}
+
 export function registerSidebarCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
@@ -49,7 +57,7 @@ export function registerSidebarCommands(
 
                 sidebarWebview.refreshAnnotations();
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to initialize: ${error}`);
+                vscode.window.showErrorMessage(getStorageInitializationErrorMessage(error));
             }
         }
     );

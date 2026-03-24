@@ -1,235 +1,138 @@
 # Contributing to Annotative
 
-Thank you for your interest in contributing to Annotative.
+Annotative is a VS Code extension for code annotation and review workflows. This guide covers the current development, testing, and pull request expectations for the `v3` line.
 
-Annotative is a VS Code extension for code annotation and review workflows. This guide covers development setup, coding standards, and contribution guidelines.
+## Prerequisites
 
-## Development Setup
-
-### Prerequisites
-
-- Node.js 20.x or 22.x
-- VS Code 1.105.0 or higher
+- Node.js `20.x` or `22.x`
+- VS Code `1.105.0` or later
 - Git
 
-### Setup Steps
+## Local Setup
 
-1. Fork and clone the repository:
+```bash
+git clone https://github.com/your-username/Annotative.git
+cd Annotative
+npm install
+code .
+```
 
-   ```bash
-   git clone https://github.com/your-username/Annotative.git
-   cd Annotative
-   ```
+Press `F5` in VS Code to launch an Extension Development Host.
 
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Open the project in VS Code:
-
-   ```bash
-   code .
-   ```
-
-4. Press F5 to launch the Extension Development Host
-
-### Project Structure
+## Project Structure
 
 ```text
 src/
-  commands/         # Command implementations
-  managers/         # Core business logic
-  tags/            # Tag management system
-  ui/              # Sidebar and webview components
-  types.ts         # TypeScript interfaces
-  extension.ts     # Extension entry point
-media/             # Webview assets (CSS, JS, icons)
-docs/              # Documentation
-scripts/           # Build and deployment scripts
+  commands/      Command handlers
+  managers/      Storage, exports, and annotation logic
+  tags/          Tag management
+  ui/            Sidebar webview host code
+  test/          VS Code integration and manager tests
+  utils/         Workspace and support helpers
+media/           Webview assets
+scripts/         Build, validation, and test entry points
+docs/            User, maintainer, and testing documentation
 ```
 
-## Development Workflow
+## Core Commands
 
-### Building
+- `npm run compile` builds the extension bundle once
+- `npm run watch` runs the extension bundle in watch mode
+- `npm run compile-tests` builds the test output
+- `npm run watch-tests` watches and rebuilds tests
+- `npm run lint` runs ESLint
+- `npm test` runs the VS Code test harness
+- `npm run quality` runs compile, lint, tests, and compliance checks
+- `npm run release:check` runs the local pre-release verification flow
 
-- `npm run compile` - Compile TypeScript once
-- `npm run watch` - Compile in watch mode for development
-- `npm run package` - Build production bundle with webpack
-- `npm run quality` - Run compile, lint, tests, and compliance checks
-- `npm run release:check` - Run the full local release verification flow
+## Testing Expectations
 
-### Testing
-
-- `npm test` - Run test suite
-- `npm run lint` - Run ESLint
-- Manual testing: Press F5 to launch Extension Development Host
-
-**Important:** Always test locally before pushing to GitHub. See [docs/dev/LOCAL_TESTING_GUIDE.md](docs/dev/LOCAL_TESTING_GUIDE.md) for detailed testing procedures.
-
-### Quality Checks
-
-Run these before submitting pull requests:
+Before opening a pull request, run:
 
 ```bash
-npm run lint          # Check code style
-npm run compile       # Verify TypeScript compilation
-npm test              # Run tests
+npm run compile
+npm run lint
+npm test
 ```
 
-Or run all checks at once:
+If your change affects release readiness, packaging, or the published extension, also run:
 
 ```bash
-npm run quality
+npm run release:check
 ```
 
-## Code Standards
+Notes:
 
-### TypeScript
+- `npm test` uses the repository test runner in `scripts/run-vscode-tests.mjs`
+- The runner exists because the stock Windows path handling was unreliable in repo paths with spaces
+- Manual verification in an Extension Development Host is still required for UI-heavy changes
 
-- Use strict TypeScript mode
-- Define interfaces for all data structures
-- Avoid `any` types when possible
-- Use async/await for asynchronous operations
+## Code Guidelines
 
-### Code Style
+- Keep commands thin and put business logic in managers
+- Keep storage and export behavior deterministic and testable
+- Follow the current naming used by the extension UI and package manifest
+- Use strict TypeScript patterns and avoid unnecessary `any`
+- Add or update tests when behavior changes
+- Update documentation when user-visible behavior, settings, or release steps change
 
-- Follow existing code formatting
-- Use meaningful variable and function names
-- Add JSDoc comments for public APIs
-- Keep functions focused and single-purpose
+## Pull Request Expectations
 
-### Commit Messages
+Each pull request should:
 
-Follow conventional commit format:
+1. Describe the behavioral change clearly.
+2. Include tests or explain why tests were not practical.
+3. Update relevant docs when user-facing behavior changes.
+4. Avoid unrelated cleanup unless it directly supports the change.
+
+Recommended PR checklist:
+
+- [ ] `package.json`, docs, and commands agree on names and behavior
+- [ ] Tests cover the changed path or a reasonable equivalent
+- [ ] Screenshots are attached for meaningful UI changes
+- [ ] Migration notes are updated if storage or upgrade behavior changed
+
+## Commit Messages
+
+Use conventional commits where practical:
 
 ```text
-feat: add new feature
-fix: resolve bug
-docs: update documentation
-refactor: restructure code
-test: add or update tests
-chore: maintenance tasks
+feat: add anchored annotation reattachment
+fix: recover cleanly from corrupt annotation storage
+docs: align release process with manual workflow
+test: add sidebar webview regression coverage
 ```
 
-Examples:
+## Release Ownership
 
-- `feat: add batch annotation export`
-- `fix: resolve sidebar rendering issue`
-- `docs: update README with new commands`
+Maintainers handle releases.
 
-### Architecture Guidelines
+Current release flow:
 
-- **Commands** (`src/commands/`) - User-facing command implementations
-- **Managers** (`src/managers/`) - Core business logic and state management
-- **UI** (`src/ui/`) - Webview and tree view components
-- **Tags** (`src/tags/`) - Tag system implementation
+1. Prepare the release version and changelog in git.
+2. Merge the release-ready commit to `main`.
+3. Run `npm run release:check` locally if you are preparing that release commit.
+4. Trigger the `Release To Marketplace` GitHub Actions workflow from `main`.
+5. Let the workflow validate, package, publish, and tag the already-versioned commit.
 
-Keep concerns separated:
+Contributors should not add ad hoc release automation, bump versions in unrelated PRs, or push directly to `main`.
 
-- Commands handle user input and orchestration
-- Managers handle data and business rules
-- UI components handle presentation
+## Reporting Issues
 
-## Pull Request Process
+When reporting bugs, include:
 
-1. Fork the repository
-2. Create a feature branch:
+- VS Code version
+- Annotative version
+- Operating system
+- Whether you opened a folder or loose files
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Relevant output or error text
 
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+## Documentation Map
 
-3. Make your changes:
-   - Write code following the standards above
-   - Add or update tests if applicable
-   - Update documentation if needed
-
-4. Test thoroughly:
-   - Run all quality checks
-   - Test in Extension Development Host
-   - Verify no regressions
-
-5. Commit your changes:
-
-   ```bash
-   git add .
-   git commit -m "feat: your feature description"
-   ```
-
-6. Push to your fork:
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-7. Open a pull request:
-   - Provide clear description of changes
-   - Reference any related issues
-   - Include screenshots for UI changes
-
-## Bug Reports
-
-When filing bug reports, include:
-
-- **VS Code version** - Help > About
-- **Extension version** - Check Extensions view
-- **Operating system** - Windows, macOS, or Linux
-- **Steps to reproduce** - Numbered steps
-- **Expected behavior** - What should happen
-- **Actual behavior** - What actually happens
-- **Error messages** - From Developer Tools console if available
-- **Screenshots** - If UI-related
-
-## Feature Requests
-
-When requesting features:
-
-- Check existing issues first
-- Describe the use case
-- Explain how it benefits users
-- Suggest implementation approach if possible
-
-## Documentation
-
-Update documentation when:
-
-- Adding new features
-- Changing existing behavior
-- Adding new commands
-- Modifying configuration options
-
-Documentation files:
-
-- [README.md](README.md) - User-facing documentation
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-- [docs/](docs/) - Technical documentation
-
-## Release Process
-
-Releases are managed by maintainers. The process includes:
-
-1. Prepare and commit the release version and changelog on `main`
-2. Run `npm run release:check` locally if you are preparing the release commit
-3. Trigger the manual GitHub Actions release workflow from `main`
-4. Let the workflow validate, package, publish, and tag that already-versioned commit
-
-Contributors do not need to manage versions or releases.
-
-Do not use local shortcuts that stage everything, bypass hooks, or push directly to `main` as part of normal contribution flow.
-
-## Questions
-
-For questions about contributing:
-
-- Open a discussion on GitHub
-- Check existing documentation in [docs/](docs/)
-- Review closed issues for similar topics
-
-## Code of Conduct
-
-- Be respectful and constructive
-- Focus on the technical merits
-- Welcome newcomers
-- Collaborate openly
+- [README.md](README.md) for user-facing behavior
+- [MIGRATION.md](MIGRATION.md) for upgrade guidance
+- [CHANGELOG.md](CHANGELOG.md) for release notes
+- [docs/](docs/) for maintainer and testing documentation
