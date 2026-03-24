@@ -8,7 +8,7 @@ Annotative is a VS Code extension for code annotation and review workflows. This
 
 ### Prerequisites
 
-- Node.js 22.x or higher
+- Node.js 20.x or 22.x
 - VS Code 1.105.0 or higher
 - Git
 
@@ -37,7 +37,7 @@ Annotative is a VS Code extension for code annotation and review workflows. This
 
 ### Project Structure
 
-```
+```text
 src/
   commands/         # Command implementations
   managers/         # Core business logic
@@ -57,6 +57,8 @@ scripts/           # Build and deployment scripts
 - `npm run compile` - Compile TypeScript once
 - `npm run watch` - Compile in watch mode for development
 - `npm run package` - Build production bundle with webpack
+- `npm run quality` - Run compile, lint, tests, and compliance checks
+- `npm run release:check` - Run the full local release verification flow
 
 ### Testing
 
@@ -79,7 +81,7 @@ npm test              # Run tests
 Or run all checks at once:
 
 ```bash
-npm run pretest
+npm run quality
 ```
 
 ## Code Standards
@@ -102,7 +104,7 @@ npm run pretest
 
 Follow conventional commit format:
 
-```
+```text
 feat: add new feature
 fix: resolve bug
 docs: update documentation
@@ -208,13 +210,14 @@ Documentation files:
 
 Releases are managed by maintainers. The process includes:
 
-1. Version bump in package.json
-2. Update CHANGELOG.md
-3. Create git tag
-4. Build and package extension
-5. Publish to VS Code Marketplace
+1. Prepare and commit the release version and changelog on `main`
+2. Run `npm run release:check` locally if you are preparing the release commit
+3. Trigger the manual GitHub Actions release workflow from `main`
+4. Let the workflow validate, package, publish, and tag that already-versioned commit
 
 Contributors do not need to manage versions or releases.
+
+Do not use local shortcuts that stage everything, bypass hooks, or push directly to `main` as part of normal contribution flow.
 
 ## Questions
 

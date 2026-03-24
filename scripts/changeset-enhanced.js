@@ -152,13 +152,14 @@ Delete sections you don't need. Save and close when done.
     // Read the content
     const content = fs.readFileSync(tempFile, 'utf-8').trim();
 
-    // Clean up
-    fs.unlinkSync(tempFile);
-
     return content;
   } catch (error) {
     console.log('Editor failed. Using simple text input instead.');
     return null;
+  } finally {
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile);
+    }
   }
 }
 
@@ -307,7 +308,7 @@ async function main() {
     execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, { stdio: 'inherit' });
 
     console.log('\nDone! Commit created.');
-    console.log('Push to main to trigger auto-release.');
+    console.log('Review the staged release plan separately; publishing is handled by the manual release workflow.');
 
   } catch (error) {
     console.error(`Error: ${error.message}`);

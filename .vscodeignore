@@ -24,6 +24,8 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 logs/**
 *.log
+*.vsix
+.changeset-temp.md
 
 # CI/CD
 .github/**

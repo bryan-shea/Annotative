@@ -22,9 +22,9 @@ This guide helps you upgrade from Annotative v1.5.0 to v2.0.0, which introduces 
 
 **What Changed:**
 
-- Annotations are now automatically stored in `.annotative/` folder in your workspace root
-- First annotation you create automatically initializes project storage
-- Global storage has been removed
+- Annotative now writes annotations and custom tags into a `.annotative/` folder in your workspace root
+- The folder is created on first annotation or custom-tag save, or manually with `Annotative: Initialize Storage`
+- Global-storage migration is not automatic in the current implementation
 - All annotations are project-scoped
 
 **Why:**
@@ -69,17 +69,30 @@ Since preset tags no longer exist, you'll need to create custom tags for the one
 
 ### Step 3: Initialize Project Storage
 
-**For existing annotations:**
+**Create the project storage folder:**
+
+You can initialize storage in either of these ways:
+
+1. Run `Annotative: Initialize Storage`
+2. Or create your first annotation or custom tag and let Annotative create `.annotative/` on save
+
+The folder will contain:
+
+- `README.md` - Storage and version-control guidance
+- `annotations.json` - Saved annotations
+- `customTags.json` - Saved custom tags
+
+### Step 4: Handle legacy v1.5.0 data
 
 If you have existing annotations in global storage from v1.5.0:
 
-1. The first time you add an annotation in v2.0.0, project storage will be automatically created
-2. Your existing annotations will continue to work
-3. New annotations will be saved to `.annotative/annotations.json`
+1. Do not assume they will appear automatically after upgrading
+2. The current extension code does not import legacy global-state annotations for you
+3. Recreate the annotations in the project workspace, or manually move/export the data before relying on v2.0.0 project storage
 
-**Note:** Existing annotations from v1.5.0 may still reference old preset tag names. You can edit these annotations and reassign them to your new custom tags.
+**Note:** If migrated or shared annotations still reference old preset tag names, edit them and map them onto your new custom tags.
 
-### Step 4: Update Existing Annotations
+### Step 5: Update Existing Annotations
 
 If you have annotations that reference old preset tags:
 
@@ -93,9 +106,9 @@ If you have annotations that reference old preset tags:
 **Bulk approach:**
 
 - You can also delete old annotations and recreate them with new tags
-- Use the search feature to find annotations by old tag names
+- Review annotations file-by-file and replace old preset tag references with project-specific tags
 
-### Step 5: Share with Your Team
+### Step 6: Share with Your Team
 
 Now that annotations are stored in `.annotative/`:
 
@@ -129,9 +142,9 @@ git add .annotative/
 
 Your `.annotative/` folder will contain:
 
+- `README.md` - Storage guidance created by Annotative
 - `annotations.json` - All annotations
 - `customTags.json` - Your custom tag definitions
-- `.gitignore` - Placeholder (can be deleted)
 
 ### Optional: Exclude Annotations from Version Control
 
@@ -139,7 +152,7 @@ If you want to keep annotations private:
 
 1. Add to your project's `.gitignore`:
 
-   ```
+   ```gitignore
    .annotative/
    ```
 
@@ -159,23 +172,24 @@ In v2.0.0, when you use "Add from Template":
 
 This makes templates more flexible and useful with your custom tag system.
 
-### No Manual Storage Initialization
+### Manual Storage Initialization Is Still Available
 
-You no longer need to run "Initialize Storage":
+You do not need to run `Annotative: Initialize Storage`, but the command still exists if you want the folder created before your first save.
 
-- Storage is automatically created when you add your first annotation
+- Storage is automatically created when you save your first annotation or custom tag
 - The `.annotative/` folder appears in your workspace root
-- No configuration required
+- `Annotative: Storage Info` shows whether storage has already been created for the current workspace
 
 ## Troubleshooting
 
 ### I don't see my old annotations
 
-Old annotations from v1.5.0 should still appear. If they don't:
+Legacy annotations from v1.5.0 are not imported automatically. If they are missing:
 
 1. Run `Annotative: Storage Info` to see your storage location
 2. Check if a `.annotative/` folder exists in your workspace root
-3. If annotations are missing, they may be in global storage from v1.5.0
+3. Check whether the old data still lives in VS Code global state from v1.5.0
+4. Recreate or manually migrate the annotations into `.annotative/annotations.json`
 
 ### Tags show as "undefined" or old tag names
 
@@ -203,7 +217,8 @@ If the `.annotative/` folder doesn't appear after adding an annotation:
 
 1. Check that you have a workspace folder open (not just loose files)
 2. Ensure you have write permissions in the workspace directory
-3. Check the Output panel (View > Output > Annotative) for errors
+3. Try `Annotative: Initialize Storage` to create the folder explicitly
+4. Check the Output panel (View > Output > Annotative) for errors
 
 ## FAQ
 
@@ -213,11 +228,11 @@ A: Yes! Create custom tags with the same names (bug, todo, review, etc.). The fu
 
 **Q: Do I need to manually initialize storage?**
 
-A: No. Storage is automatically created when you add your first annotation in v2.0.0.
+A: No. Storage is created on first save, but `Annotative: Initialize Storage` is still available if you want to create the folder before that.
 
 **Q: Will my old annotations be lost?**
 
-A: No. Existing annotations are preserved. They may reference old tag names, which you can update by editing the annotation.
+A: They are not imported automatically by the current implementation. Keep a copy of the old data and migrate it deliberately into project storage.
 
 **Q: Can I share annotations without version control?**
 
@@ -253,7 +268,8 @@ The v2.0.0 upgrade brings:
 The migration requires:
 
 - Creating custom tags to replace presets
-- Automatic storage initialization (no action needed)
+- Creating project storage on first save or with `Annotative: Initialize Storage`
+- Deliberately migrating any legacy global-storage data
 - Committing `.annotative/` to share with your team
 
 Welcome to Annotative v2.0.0!
