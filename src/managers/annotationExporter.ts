@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Annotation, ExportData } from '../types';
+import { getRelativePathForFile, getWorkspaceNameForAnnotations, groupAnnotationsByFile } from './exportSupport';
 
 /**
  * Export and utility functions for annotations
@@ -14,13 +15,12 @@ export class AnnotationExporter {
      * Export all annotations
      */
     async exportAnnotations(): Promise<ExportData> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        const workspaceName = workspaceFolders ? workspaceFolders[0].name : 'Unknown Workspace';
+        const annotations = this.getAllAnnotations();
 
         return {
-            annotations: this.getAllAnnotations(),
+            annotations,
             exportedAt: new Date(),
-            workspaceName
+            workspaceName: getWorkspaceNameForAnnotations(annotations)
         };
     }
 
@@ -38,16 +38,10 @@ export class AnnotationExporter {
         }
 
         // Group annotations by file
-        const annotationsByFile = new Map<string, Annotation[]>();
-        exportData.annotations.forEach(annotation => {
-            if (!annotationsByFile.has(annotation.filePath)) {
-                annotationsByFile.set(annotation.filePath, []);
-            }
-            annotationsByFile.get(annotation.filePath)!.push(annotation);
-        });
+        const annotationsByFile = groupAnnotationsByFile(exportData.annotations);
 
         annotationsByFile.forEach((annotations, filePath) => {
-            const relativePath = vscode.workspace.asRelativePath(filePath);
+            const relativePath = getRelativePathForFile(filePath);
             markdown += `## ${relativePath}\n\n`;
 
             annotations.forEach((annotation, index) => {

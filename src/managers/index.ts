@@ -6,5 +6,6 @@
 export { AnnotationManager } from './annotationManager';
 export { AnnotationCRUD } from './annotationCRUD';
 export { AnnotationDecorations } from './annotationDecorations';
+export { AnnotationExportService } from './annotationExportService';
 export { AnnotationStorageManager } from './annotationStorage';
 export { AnnotationExporter } from './annotationExporter';

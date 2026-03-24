@@ -13,8 +13,8 @@ import {
 import { TagManager } from '../tags';
 import { AnnotationCRUD } from './annotationCRUD';
 import { AnnotationDecorations } from './annotationDecorations';
+import { AnnotationExportService } from './annotationExportService';
 import { AnnotationStorageManager } from './annotationStorage';
-import { AnnotationExporter } from './annotationExporter';
 
 /**
  * Main annotation manager - orchestrates all annotation operations.
@@ -25,7 +25,7 @@ export class AnnotationManager {
     private crud: AnnotationCRUD;
     private decorations: AnnotationDecorations;
     private storage: AnnotationStorageManager;
-    private exporter: AnnotationExporter;
+    private exportService: AnnotationExportService;
     private onDidChangeAnnotationsEmitter = new vscode.EventEmitter<void>();
     public readonly onDidChangeAnnotations = this.onDidChangeAnnotationsEmitter.event;
     public readonly ready: Promise<void>;
@@ -35,7 +35,7 @@ export class AnnotationManager {
         this.decorations = new AnnotationDecorations();
         this.storage = new AnnotationStorageManager(this.annotations, context);
         this.crud = new AnnotationCRUD(this.annotations, this.decorations, this.storage);
-        this.exporter = new AnnotationExporter(this.annotations, (tagIds) => this.resolveTagLabels(tagIds));
+        this.exportService = new AnnotationExportService(this.annotations, (tagIds) => this.resolveTagLabels(tagIds));
 
         this.ready = this.initialize();
     }
@@ -191,7 +191,7 @@ export class AnnotationManager {
     }
 
     getAllTags(): string[] {
-        const usedTags = this.exporter.getAllTags();
+        const usedTags = this.exportService.getAllTags();
         const presetTagIds = this.tagManager.getPresetTags().map(tag => tag.id);
         const customTagIds = this.tagManager.getCustomTags().map(tag => tag.id);
         const allTags = new Set([...usedTags, ...presetTagIds, ...customTagIds]);
@@ -199,32 +199,36 @@ export class AnnotationManager {
     }
 
     getUsedTags(): string[] {
-        return this.exporter.getAllTags();
+        return this.exportService.getAllTags();
     }
 
     getAnnotationsForFile(filePath: string): Annotation[] {
-        return this.exporter.getAnnotationsForFile(filePath);
+        return this.exportService.getAnnotationsForFile(filePath);
     }
 
     getAllAnnotations(): Annotation[] {
-        return this.exporter.getAllAnnotations();
+        return this.exportService.getAllAnnotations();
     }
 
     getStatistics(): AnnotationStatistics {
-        return this.exporter.getStatistics();
+        return this.exportService.getStatistics();
     }
 
     updateDecorations(editor: vscode.TextEditor): void {
-        const fileAnnotations = this.exporter.getAnnotationsForFile(editor.document.uri.fsPath);
+        const fileAnnotations = this.exportService.getAnnotationsForFile(editor.document.uri.fsPath);
         this.decorations.updateDecorations(editor, fileAnnotations);
     }
 
     async exportAnnotations(): Promise<ExportData> {
-        return this.exporter.exportAnnotations();
+        return this.exportService.exportAnnotations();
     }
 
     async exportToMarkdown(): Promise<string> {
-        return this.exporter.exportToMarkdown();
+        return this.exportService.exportToMarkdown();
+    }
+
+    getExportService(): AnnotationExportService {
+        return this.exportService;
     }
 
     isProjectStorageActive(): boolean {

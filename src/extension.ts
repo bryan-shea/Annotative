@@ -48,11 +48,12 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Register Copilot Chat integration
-    context.subscriptions.push(registerChatParticipant(context, annotationManager));
-    const chatVariable = registerChatVariableIfAvailable(context, annotationManager);
-    if (chatVariable) {
-        context.subscriptions.push(chatVariable);
+    if (vscode.workspace.getConfiguration('annotative').get<boolean>('copilot.enabled', true)) {
+        context.subscriptions.push(registerChatParticipant(context, annotationManager));
+        const chatVariable = registerChatVariableIfAvailable(context, annotationManager);
+        if (chatVariable) {
+            context.subscriptions.push(chatVariable);
+        }
     }
 
     // Create command context

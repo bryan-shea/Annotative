@@ -9,6 +9,11 @@ import {
     TagPriority,
     TagStorageFile,
 } from '../types';
+import {
+    findWorkspaceFolderContainingChild,
+    getPreferredWorkspaceFolder,
+    resolveWorkspaceFolderForAnnotations,
+} from '../utils/workspaceContext';
 
 const STORAGE_SCHEMA_VERSION = 1;
 
@@ -49,12 +54,12 @@ export class AnnotationStorageManager {
     }
 
     private detectProjectStorage(): void {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
+        const storageFolder = findWorkspaceFolderContainingChild('.annotative');
+        if (!storageFolder) {
             return;
         }
 
-        const annotativeDir = path.join(workspaceFolders[0].uri.fsPath, '.annotative');
+        const annotativeDir = path.join(storageFolder.uri.fsPath, '.annotative');
         if (!fs.existsSync(annotativeDir)) {
             return;
         }
@@ -77,12 +82,12 @@ export class AnnotationStorageManager {
             return;
         }
 
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
+        const workspaceFolder = this.resolveStorageWorkspaceFolder();
+        if (!workspaceFolder) {
             throw new Error('No workspace folder open');
         }
 
-        const annotativeDir = path.join(workspaceFolders[0].uri.fsPath, '.annotative');
+        const annotativeDir = path.join(workspaceFolder.uri.fsPath, '.annotative');
         if (!fs.existsSync(annotativeDir)) {
             await fs.promises.mkdir(annotativeDir, { recursive: true });
 
@@ -97,12 +102,12 @@ export class AnnotationStorageManager {
     }
 
     async initializeProjectStorage(): Promise<boolean> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
+        const workspaceFolder = this.resolveStorageWorkspaceFolder();
+        if (!workspaceFolder) {
             throw new Error('No workspace folder open');
         }
 
-        const annotativeDir = path.join(workspaceFolders[0].uri.fsPath, '.annotative');
+        const annotativeDir = path.join(workspaceFolder.uri.fsPath, '.annotative');
         const existedBefore = fs.existsSync(annotativeDir);
         await this.ensureProjectStorage();
         return !existedBefore && !!this.projectStorageDir;
@@ -113,6 +118,16 @@ export class AnnotationStorageManager {
         this.storageFilePath = '';
         this.customTagsPath = '';
         this.detectProjectStorage();
+    }
+
+    private resolveStorageWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
+        const annotationScope = [...this.annotations.entries()].flatMap(([filePath, fileAnnotations]) =>
+            fileAnnotations.length > 0
+                ? fileAnnotations
+                : [{ filePath } as Annotation]
+        );
+
+        return resolveWorkspaceFolderForAnnotations(annotationScope) || getPreferredWorkspaceFolder();
     }
 
     async loadAnnotations(): Promise<LoadAnnotationsResult> {
