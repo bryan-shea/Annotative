@@ -164,7 +164,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             annotations,
         });
 
-        const tags = this.annotationManager.getAllTags();
+        const tags = this.annotationManager.getTagOptions();
         this.postMessage({
             command: 'tagsUpdated',
             tags,
@@ -327,9 +327,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             });
 
             if (newComment !== undefined && newComment.trim().length > 0) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 await this.annotationManager.editAnnotation(
                     annotation.id,
@@ -375,9 +373,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 if (!currentTags.includes(tag)) {
                     const updatedTags = [...currentTags, tag];
@@ -404,9 +400,7 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             const annotation = allAnnotations.find((a) => a.id === id);
 
             if (annotation) {
-                const currentTags = annotation.tags?.map((t) =>
-                    typeof t === 'string' ? t : t.id
-                ) || [];
+                const currentTags = annotation.tags || [];
 
                 const updatedTags = currentTags.filter(t => t !== tag);
                 await this.annotationManager.editAnnotation(

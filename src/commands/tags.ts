@@ -7,13 +7,6 @@ import * as vscode from 'vscode';
 import { AnnotationItem } from '../ui';
 import { CommandContext } from './index';
 
-/**
- * Helper to convert Tag to string
- */
-function tagToString(tag: string | { id: string }): string {
-    return typeof tag === 'string' ? tag : tag.id;
-}
-
 export function registerTagCommands(
     context: vscode.ExtensionContext,
     cmdContext: CommandContext
@@ -41,7 +34,7 @@ export function registerTagCommands(
             }
 
             // Filter out tags already on the annotation
-            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
+            const currentTags = annotation.tags || [];
             const availableTags = customTags.filter(tag => !currentTags.includes(tag.id));
 
             if (availableTags.length === 0) {
@@ -85,7 +78,7 @@ export function registerTagCommands(
             const annotation = item.annotation;
 
             // Get current tags
-            const currentTags = annotation.tags?.map((t) => tagToString(t)) || [];
+            const currentTags = annotation.tags || [];
 
             if (currentTags.length === 0) {
                 vscode.window.showInformationMessage('No tags to remove.');
@@ -95,9 +88,16 @@ export function registerTagCommands(
             // If tag not specified, let user select which tag to remove
             let selectedTag = tagToRemove;
             if (!selectedTag) {
-                selectedTag = await vscode.window.showQuickPick(currentTags, {
-                    placeHolder: 'Select tag to remove'
-                });
+                const selected = await vscode.window.showQuickPick(
+                    currentTags.map(tagId => ({
+                        label: annotationManager.resolveTagLabel(tagId),
+                        value: tagId,
+                    })),
+                    {
+                        placeHolder: 'Select tag to remove'
+                    }
+                );
+                selectedTag = selected?.value;
             }
 
             if (!selectedTag) {
@@ -115,7 +115,7 @@ export function registerTagCommands(
             );
 
             sidebarWebview.refreshAnnotations();
-            vscode.window.showInformationMessage(`Tag removed: ${selectedTag}`);
+            vscode.window.showInformationMessage(`Tag removed: ${annotationManager.resolveTagLabel(selectedTag)}`);
         }
     );
 
@@ -139,7 +139,12 @@ export function registerTagCommands(
                 return;
             }
 
-            const tagOptions = customTags.map(t => t.name);
+            const currentTags = annotation.tags || [];
+            const tagOptions = customTags.map(tag => ({
+                label: tag.name,
+                value: tag.id,
+                picked: currentTags.includes(tag.id),
+            }));
 
             // Let user select tags (multi-select)
             const selectedTags = await vscode.window.showQuickPick(tagOptions, {
@@ -156,7 +161,7 @@ export function registerTagCommands(
                 annotation.id,
                 annotation.filePath,
                 annotation.comment,
-                selectedTags,
+                selectedTags.map(tag => tag.value),
                 annotation.color
             );
 

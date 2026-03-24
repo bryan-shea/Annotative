@@ -12,6 +12,7 @@ const vscode = acquireVsCodeApi();
 const state = {
   annotations: [],
   availableTags: [],
+  tagLabels: {},
   filters: {
     status: 'all',
     tag: 'all',
@@ -97,8 +98,8 @@ class AnnotationHandlers {
     }
 
     // Get current tags
-    const currentTags = annotation.tags?.map((t) => (typeof t === 'string' ? t : t.id)) || [];
-    const filteredTags = availableTags.filter((tag) => !currentTags.includes(tag));
+    const currentTags = annotation.tags || [];
+    const filteredTags = availableTags.filter((tag) => !currentTags.includes(tag.id));
 
     if (filteredTags.length === 0) {
       // All tags already added
@@ -208,10 +209,7 @@ function filterAnnotations(annotations, filters) {
     }
 
     if (filters.tag && filters.tag !== 'all') {
-      const hasTag = ann.tags?.some((t) => {
-        const tagId = typeof t === 'string' ? t : t.id;
-        return tagId === filters.tag;
-      });
+      const hasTag = ann.tags?.some((tagId) => tagId === filters.tag);
       if (!hasTag) {
         return false;
       }
@@ -225,13 +223,16 @@ function extractTags(annotations) {
   const tags = new Set();
   annotations.forEach((ann) => {
     if (ann.tags && Array.isArray(ann.tags)) {
-      ann.tags.forEach((t) => {
-        const tagId = typeof t === 'string' ? t : t.id;
+      ann.tags.forEach((tagId) => {
         tags.add(tagId);
       });
     }
   });
   return Array.from(tags).sort();
+}
+
+function getTagLabel(tagId) {
+  return state.tagLabels[tagId] || tagId;
 }
 
 function calculateStats(annotations) {
@@ -250,7 +251,7 @@ function updateTagFilter(filterElement, tags, currentValue) {
   tags.forEach((tag) => {
     const option = document.createElement('option');
     option.value = tag;
-    option.textContent = tag;
+    option.textContent = getTagLabel(tag);
     filterElement.appendChild(option);
   });
 
@@ -325,17 +326,16 @@ function createAnnotationCard(annotation) {
   tagsContainer.className = 'card-tags';
 
   if (annotation.tags && annotation.tags.length > 0) {
-    annotation.tags.forEach((tag) => {
-      const tagId = typeof tag === 'string' ? tag : tag.id;
+    annotation.tags.forEach((tagId) => {
       const tagEl = document.createElement('span');
       tagEl.className = `tag tag-${tagId}`;
-      tagEl.textContent = tagId;
+      tagEl.textContent = getTagLabel(tagId);
 
       // Add remove button
       const removeBtn = document.createElement('button');
       removeBtn.className = 'tag-remove';
       removeBtn.innerHTML = '<i class="codicon codicon-close"></i>';
-      removeBtn.title = `Remove ${tagId} tag`;
+      removeBtn.title = `Remove ${getTagLabel(tagId)} tag`;
       removeBtn.dataset.action = 'removeTag';
       removeBtn.dataset.annotationId = annotation.id;
       removeBtn.dataset.tag = tagId;
@@ -420,15 +420,12 @@ function groupAnnotations(annotations, groupBy) {
       key = parts.length > 1 ? parts[parts.length - 2] : 'Root';
     } else if (groupBy === 'tag') {
       if (ann.tags && ann.tags.length > 0) {
-        const tagId = typeof ann.tags[0] === 'string' ? ann.tags[0] : ann.tags[0].id;
-        key = tagId;
+        key = getTagLabel(ann.tags[0]);
       } else {
         key = 'Untagged';
       }
     } else if (groupBy === 'status') {
       key = ann.resolved ? 'Resolved' : 'Unresolved';
-    } else if (groupBy === 'priority') {
-      key = ann.priority || 'Default';
     }
 
     if (!groups[key]) {
@@ -618,8 +615,9 @@ function handleUpdateAnnotations(annotations) {
 
 function handleTagsUpdated(tags) {
   try {
-    // Store available tags in state for use by tag picker
-    state.availableTags = tags || [];
+    const availableTags = Array.isArray(tags) ? tags : [];
+    state.availableTags = availableTags;
+    state.tagLabels = Object.fromEntries(availableTags.map((tag) => [tag.id, tag.label]));
     updateTagFilter(elements.tagFilter, extractTags(state.annotations), state.filters.tag);
   } catch (error) {
     console.error('[Annotative] Error updating tags:', error);
@@ -710,17 +708,17 @@ function showTagPicker(annotation, availableTags, onSelect) {
   list.innerHTML = '';
 
   // Create tag picker items
-  availableTags.forEach((tagId) => {
+  availableTags.forEach((tag) => {
     const item = document.createElement('button');
     item.className = 'tag-picker-item';
 
     const tagEl = document.createElement('span');
-    tagEl.className = `tag tag-${tagId}`;
-    tagEl.textContent = tagId;
+    tagEl.className = `tag tag-${tag.id}`;
+    tagEl.textContent = tag.label;
 
     item.appendChild(tagEl);
     item.addEventListener('click', () => {
-      onSelect(tagId);
+      onSelect(tag.id);
       hideTagPicker();
     });
 

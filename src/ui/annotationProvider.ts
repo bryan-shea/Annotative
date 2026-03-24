@@ -13,11 +13,10 @@ import {
     groupByFile,
     groupByTag,
     groupByStatus,
-    groupByFolder,
-    groupByPriority
+    groupByFolder
 } from './grouping';
 
-export type GroupBy = 'file' | 'tag' | 'status' | 'folder' | 'priority';
+export type GroupBy = 'file' | 'tag' | 'status' | 'folder';
 
 export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
@@ -126,11 +125,9 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
             if (this.groupBy === 'file') {
                 return Promise.resolve(groupByFile(filteredAnnotations) as TreeItem[]);
             } else if (this.groupBy === 'tag') {
-                return Promise.resolve(groupByTag(filteredAnnotations) as TreeItem[]);
+                return Promise.resolve(groupByTag(filteredAnnotations, (tagId) => this.annotationManager.resolveTagLabel(tagId)) as TreeItem[]);
             } else if (this.groupBy === 'folder') {
                 return Promise.resolve(groupByFolder(filteredAnnotations) as TreeItem[]);
-            } else if (this.groupBy === 'priority') {
-                return Promise.resolve(groupByPriority(filteredAnnotations) as TreeItem[]);
             } else {
                 return Promise.resolve(groupByStatus(filteredAnnotations) as TreeItem[]);
             }
@@ -142,7 +139,8 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
                 new AnnotationItem(
                     annotation,
                     vscode.TreeItemCollapsibleState.None,
-                    this.isAnnotationSelected(annotation.id)
+                    this.isAnnotationSelected(annotation.id),
+                    this.annotationManager.resolveTagLabels(annotation.tags)
                 )
             );
             return Promise.resolve(annotationItems as TreeItem[]);
@@ -188,7 +186,8 @@ export class AnnotationProvider implements vscode.TreeDataProvider<TreeItem> {
                 new AnnotationItem(
                     annotation,
                     vscode.TreeItemCollapsibleState.None,
-                    this.isAnnotationSelected(annotation.id)
+                    this.isAnnotationSelected(annotation.id),
+                    this.annotationManager.resolveTagLabels(annotation.tags)
                 )
             );
             return Promise.resolve(annotationItems as TreeItem[]);

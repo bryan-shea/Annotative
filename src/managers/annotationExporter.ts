@@ -5,7 +5,10 @@ import { Annotation, ExportData } from '../types';
  * Export and utility functions for annotations
  */
 export class AnnotationExporter {
-    constructor(private annotations: Map<string, Annotation[]>) {}
+    constructor(
+        private annotations: Map<string, Annotation[]>,
+        private resolveTagLabels: (tagIds?: readonly string[]) => string[] = (tagIds) => [...(tagIds || [])]
+    ) {}
 
     /**
      * Export all annotations
@@ -59,7 +62,7 @@ export class AnnotationExporter {
                 markdown += `**Comment:**\n${annotation.comment}\n\n`;
 
                 if (annotation.tags && annotation.tags.length > 0) {
-                    markdown += `**Tags:** ${annotation.tags.join(', ')}\n\n`;
+                    markdown += `**Tags:** ${this.resolveTagLabels(annotation.tags).join(', ')}\n\n`;
                 }
 
                 markdown += '---\n\n';
@@ -95,8 +98,7 @@ export class AnnotationExporter {
         this.annotations.forEach(fileAnnotations => {
             fileAnnotations.forEach(annotation => {
                 if (annotation.tags) {
-                    annotation.tags.forEach(tag => {
-                        const tagId = typeof tag === 'string' ? tag : tag.id;
+                    annotation.tags.forEach(tagId => {
                         tagSet.add(tagId);
                     });
                 }

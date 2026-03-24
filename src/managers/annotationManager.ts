@@ -1,5 +1,15 @@
 import * as vscode from 'vscode';
-import { Annotation, AnnotationTag, TagCategory, TagMetadata, AnnotationStatistics, TagSuggestion, ExportData } from '../types';
+import {
+    Annotation,
+    AnnotationStatistics,
+    AnnotationTag,
+    AnnotationTagOption,
+    ExportData,
+    TagCategory,
+    TagMetadata,
+    TagPriority,
+    TagSuggestion,
+} from '../types';
 import { TagManager } from '../tags';
 import { AnnotationCRUD } from './annotationCRUD';
 import { AnnotationDecorations } from './annotationDecorations';
@@ -7,8 +17,7 @@ import { AnnotationStorageManager } from './annotationStorage';
 import { AnnotationExporter } from './annotationExporter';
 
 /**
- * Main annotation manager - orchestrates all annotation operations
- * Delegates to specialized modules for specific responsibilities
+ * Main annotation manager - orchestrates all annotation operations.
  */
 export class AnnotationManager {
     private annotations: Map<string, Annotation[]> = new Map();
@@ -25,20 +34,20 @@ export class AnnotationManager {
         this.decorations = new AnnotationDecorations();
         this.storage = new AnnotationStorageManager(this.annotations, context);
         this.crud = new AnnotationCRUD(this.annotations, this.decorations, this.storage);
-        this.exporter = new AnnotationExporter(this.annotations);
+        this.exporter = new AnnotationExporter(this.annotations, (tagIds) => this.resolveTagLabels(tagIds));
 
-        this.initialize();
+        void this.initialize();
     }
 
-    /**
-     * Initialize manager
-     */
     private async initialize(): Promise<void> {
-        await this.storage.loadAnnotations();
-        this.loadCustomTags();
-    }
+        await this.loadCustomTags();
+        const annotationLoad = await this.storage.loadAnnotations();
+        const migratedAnnotations = this.normalizeLoadedAnnotations();
 
-    // ============== Tag Management ==============
+        if (annotationLoad.needsSave || migratedAnnotations) {
+            await this.storage.saveAnnotations();
+        }
+    }
 
     getTagManager(): TagManager {
         return this.tagManager;
@@ -50,6 +59,41 @@ export class AnnotationManager {
 
     getCustomTags(): AnnotationTag[] {
         return this.tagManager.getCustomTags();
+    }
+
+    getTagOptions(): AnnotationTagOption[] {
+        return this.tagManager
+            .getAllTags()
+            .map(tag => ({
+                id: tag.id,
+                label: tag.name,
+                color: tag.metadata?.color,
+                priority: tag.metadata?.priority,
+            }))
+            .sort((left, right) => left.label.localeCompare(right.label));
+    }
+
+    resolveTagLabel(tagId: string): string {
+        return this.tagManager.getTag(tagId)?.name || tagId;
+    }
+
+    resolveTagLabels(tagIds?: readonly string[]): string[] {
+        if (!tagIds || tagIds.length === 0) {
+            return [];
+        }
+
+        return tagIds.map(tagId => this.resolveTagLabel(tagId));
+    }
+
+    getAnnotationPriority(annotation: Annotation): TagPriority | undefined {
+        const priorityOrder: TagPriority[] = ['critical', 'high', 'medium', 'low'];
+        const priorities = (annotation.tags || [])
+            .map(tagId => this.tagManager.getTagPriority(tagId))
+            .filter((priority): priority is TagPriority =>
+                priority === 'critical' || priority === 'high' || priority === 'medium' || priority === 'low'
+            );
+
+        return priorityOrder.find(priority => priorities.includes(priority));
     }
 
     async createCustomTag(name: string, category: TagCategory, metadata?: TagMetadata): Promise<AnnotationTag> {
@@ -77,8 +121,6 @@ export class AnnotationManager {
     getTagSuggestions(comment: string): TagSuggestion[] {
         return this.tagManager.suggestTagsFromComment(comment);
     }
-
-    // ============== CRUD Operations ==============
 
     async addAnnotation(
         editor: vscode.TextEditor,
@@ -147,27 +189,14 @@ export class AnnotationManager {
         return result;
     }
 
-    // ============== Query Operations ==============
-
-    /**
-     * Get all tags used in annotations
-     */
     getAllTags(): string[] {
-        // Get tags used in annotations
         const usedTags = this.exporter.getAllTags();
-
-        // Get all preset and custom tag IDs
-        const presetTagIds = this.tagManager.getPresetTags().map(t => t.id);
-        const customTagIds = this.tagManager.getCustomTags().map(t => t.id);
-
-        // Combine and deduplicate
+        const presetTagIds = this.tagManager.getPresetTags().map(tag => tag.id);
+        const customTagIds = this.tagManager.getCustomTags().map(tag => tag.id);
         const allTags = new Set([...usedTags, ...presetTagIds, ...customTagIds]);
         return Array.from(allTags).sort();
     }
 
-    /**
-     * Get only tags that are used in current annotations
-     */
     getUsedTags(): string[] {
         return this.exporter.getAllTags();
     }
@@ -184,14 +213,10 @@ export class AnnotationManager {
         return this.exporter.getStatistics();
     }
 
-    // ============== Decoration & Styling ==============
-
     updateDecorations(editor: vscode.TextEditor): void {
         const fileAnnotations = this.exporter.getAnnotationsForFile(editor.document.uri.fsPath);
         this.decorations.updateDecorations(editor, fileAnnotations);
     }
-
-    // ============== Export & Import ==============
 
     async exportAnnotations(): Promise<ExportData> {
         return this.exporter.exportAnnotations();
@@ -201,50 +226,40 @@ export class AnnotationManager {
         return this.exporter.exportToMarkdown();
     }
 
-    // ============== Project Storage ==============
-
-    /**
-     * Check if project-based storage is active
-     */
     isProjectStorageActive(): boolean {
         return this.storage.isProjectStorageActive();
     }
 
-    /**
-     * Get the current storage directory
-     */
     getStorageDirectory(): string {
         return this.storage.getStorageDirectory();
     }
 
-    /**
-     * Initialize project-based storage (.annotative folder)
-     */
-    async initializeProjectStorage(migrateExisting: boolean = false): Promise<boolean> {
-        const result = await this.storage.initializeProjectStorage(migrateExisting);
-
-        // Reload annotations and tags from the new location
-        await this.storage.loadAnnotations();
+    async initializeProjectStorage(): Promise<boolean> {
+        const result = await this.storage.initializeProjectStorage();
         await this.loadCustomTags();
+        const annotationLoad = await this.storage.loadAnnotations();
+        const migratedAnnotations = this.normalizeLoadedAnnotations();
+        if (annotationLoad.needsSave || migratedAnnotations) {
+            await this.storage.saveAnnotations();
+        }
 
         this.notifyAnnotationsChanged();
         return result;
     }
 
-    /**
-     * Refresh storage detection
-     */
     refreshStorageDetection(): void {
         this.storage.refreshStorageDetection();
     }
 
-    // ============== Persistence ==============
-
     private async loadCustomTags(): Promise<void> {
         try {
-            const customTags = await this.storage.loadCustomTags();
-            if (customTags && customTags.length > 0) {
-                this.tagManager.importCustomTags(customTags);
+            const loaded = await this.storage.loadCustomTags();
+            if (loaded.tags.length > 0) {
+                this.tagManager.importCustomTags(loaded.tags);
+            }
+
+            if (loaded.needsSave) {
+                await this.saveCustomTags();
             }
         } catch (error) {
             console.error('Failed to load custom tags:', error);
@@ -260,17 +275,53 @@ export class AnnotationManager {
         }
     }
 
-    /**
-     * Notify listeners that annotations have changed
-     */
+    private normalizeLoadedAnnotations(): boolean {
+        const allTags = this.tagManager.getAllTags();
+        const tagsById = new Map(allTags.map(tag => [tag.id.toLowerCase(), tag.id]));
+        const tagsByName = new Map(allTags.map(tag => [tag.name.toLowerCase(), tag.id]));
+        let changed = false;
+
+        this.annotations.forEach(fileAnnotations => {
+            fileAnnotations.forEach(annotation => {
+                const nextTags: string[] = [];
+
+                (annotation.tags || []).forEach(rawTagId => {
+                    const normalizedInput = rawTagId.trim();
+                    if (!normalizedInput) {
+                        changed = true;
+                        return;
+                    }
+
+                    const lookupKey = normalizedInput.toLowerCase();
+                    const resolvedId = tagsById.get(lookupKey) || tagsByName.get(lookupKey) || normalizedInput;
+                    if (resolvedId !== rawTagId) {
+                        changed = true;
+                    }
+
+                    if (!nextTags.includes(resolvedId)) {
+                        nextTags.push(resolvedId);
+                    } else {
+                        changed = true;
+                    }
+                });
+
+                if ((annotation.tags || []).length !== nextTags.length) {
+                    changed = true;
+                }
+
+                annotation.tags = nextTags;
+            });
+        });
+
+        return changed;
+    }
+
     private notifyAnnotationsChanged(): void {
         this.onDidChangeAnnotationsEmitter.fire();
     }
 
-    /**
-     * Dispose resources
-     */
     dispose(): void {
+        void this.context;
         this.decorations.dispose();
         this.onDidChangeAnnotationsEmitter.dispose();
     }

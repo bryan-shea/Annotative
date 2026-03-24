@@ -57,7 +57,7 @@ export function registerFilterCommands(
             const options = [
                 { label: 'All Tags', value: 'all' as const, description: currentTag === 'all' ? '(current)' : '' },
                 ...allTags.map(tag => ({
-                    label: tag,
+                    label: annotationManager.resolveTagLabel(tag),
                     value: tag,
                     description: currentTag === tag ? '(current)' : ''
                 }))
@@ -130,8 +130,7 @@ export function registerFilterCommands(
                 { label: 'By File', value: 'file' as const, description: currentGroupBy === 'file' ? '(current)' : '' },
                 { label: 'By Tag', value: 'tag' as const, description: currentGroupBy === 'tag' ? '(current)' : '' },
                 { label: 'By Status', value: 'status' as const, description: currentGroupBy === 'status' ? '(current)' : '' },
-                { label: 'By Folder', value: 'folder' as const, description: currentGroupBy === 'folder' ? '(current)' : '' },
-                { label: 'By Priority', value: 'priority' as const, description: currentGroupBy === 'priority' ? '(current)' : '' }
+                { label: 'By Folder', value: 'folder' as const, description: currentGroupBy === 'folder' ? '(current)' : '' }
             ];
 
             const selected = await vscode.window.showQuickPick(options, {
