@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Annotation } from '../types';
+import { captureAnnotationAnchor } from './annotationAnchors';
 import { AnnotationDecorations } from './annotationDecorations';
 import { AnnotationStorageManager } from './annotationStorage';
 
@@ -27,6 +28,7 @@ export class AnnotationCRUD {
         color?: string
     ): Promise<Annotation> {
         const filePath = editor.document.uri.fsPath;
+        const documentText = editor.document.getText();
         const selectedText = editor.document.getText(range);
 
         const annotation: Annotation = {
@@ -39,7 +41,8 @@ export class AnnotationCRUD {
             timestamp: new Date(),
             resolved: false,
             tags: tags || [],
-            color: color || '#ffc107'
+            color: color || '#ffc107',
+            anchor: captureAnnotationAnchor(documentText, range),
         };
 
         if (!this.annotations.has(filePath)) {
@@ -113,10 +116,16 @@ export class AnnotationCRUD {
                 if (color) {
                     annotation.color = color;
                 }
+
+                const activeEditor = vscode.window.activeTextEditor;
+                if (activeEditor && activeEditor.document.uri.fsPath === filePath) {
+                    annotation.text = activeEditor.document.getText(annotation.range);
+                    annotation.anchor = captureAnnotationAnchor(activeEditor.document.getText(), annotation.range);
+                }
+
                 await this.storage.saveAnnotations();
 
                 // Update decorations for the active editor if it matches
-                const activeEditor = vscode.window.activeTextEditor;
                 if (activeEditor && activeEditor.document.uri.fsPath === filePath) {
                     this.decorations.updateDecorations(activeEditor, fileAnnotations);
                 }

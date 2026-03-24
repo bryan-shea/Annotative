@@ -110,11 +110,13 @@ export function registerFilterCommands(
         async (annotation: Annotation) => {
             try {
                 const document = await vscode.workspace.openTextDocument(vscode.Uri.file(annotation.filePath));
+                await annotationManager.rebaseAnnotationsForDocument(document);
                 const editor = await vscode.window.showTextDocument(document);
+                const resolvedAnnotation = annotationManager.getAnnotation(annotation.id, annotation.filePath) || annotation;
 
                 // Reveal and select the annotated range
-                editor.revealRange(annotation.range, vscode.TextEditorRevealType.InCenter);
-                editor.selection = new vscode.Selection(annotation.range.start, annotation.range.end);
+                editor.revealRange(resolvedAnnotation.range, vscode.TextEditorRevealType.InCenter);
+                editor.selection = new vscode.Selection(resolvedAnnotation.range.start, resolvedAnnotation.range.end);
             } catch (error) {
                 vscode.window.showErrorMessage(`Cannot open: ${annotation.filePath}`);
             }

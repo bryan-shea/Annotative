@@ -5,6 +5,7 @@ import {
     Annotation,
     AnnotationStorageFile,
     AnnotationTag,
+    AnnotationAnchor,
     StoredAnnotation,
     TagPriority,
     TagStorageFile,
@@ -15,7 +16,7 @@ import {
     resolveWorkspaceFolderForAnnotations,
 } from '../utils/workspaceContext';
 
-const STORAGE_SCHEMA_VERSION = 1;
+const STORAGE_SCHEMA_VERSION = 2;
 
 export interface LoadAnnotationsResult {
     needsSave: boolean;
@@ -44,6 +45,7 @@ export class AnnotationStorageManager {
     private storageFilePath = '';
     private customTagsPath = '';
     private projectStorageDir: string | undefined;
+    private writeQueue: Promise<void> = Promise.resolve();
 
     constructor(
         private annotations: Map<string, Annotation[]>,
@@ -158,19 +160,21 @@ export class AnnotationStorageManager {
 
     async saveAnnotations(): Promise<void> {
         try {
-            await this.ensureProjectStorage();
+            await this.enqueueWrite(async () => {
+                await this.ensureProjectStorage();
 
-            const storage: AnnotationStorageFile = {
-                schemaVersion: STORAGE_SCHEMA_VERSION,
-                workspaceAnnotations: Object.fromEntries(
-                    Array.from(this.annotations.entries()).map(([filePath, annotations]) => [
-                        filePath,
-                        annotations.map(annotation => this.serializeAnnotation(annotation))
-                    ])
-                )
-            };
+                const storage: AnnotationStorageFile = {
+                    schemaVersion: STORAGE_SCHEMA_VERSION,
+                    workspaceAnnotations: Object.fromEntries(
+                        Array.from(this.annotations.entries()).map(([filePath, annotations]) => [
+                            filePath,
+                            annotations.map(annotation => this.serializeAnnotation(annotation))
+                        ])
+                    )
+                };
 
-            await this.writeJsonAtomically(this.storageFilePath, storage);
+                await this.writeJsonAtomically(this.storageFilePath, storage);
+            });
         } catch (error) {
             console.error('Failed to save annotations:', error);
             vscode.window.showErrorMessage('Failed to save annotations');
@@ -197,14 +201,16 @@ export class AnnotationStorageManager {
 
     async saveCustomTags(tags: AnnotationTag[]): Promise<void> {
         try {
-            await this.ensureProjectStorage();
+            await this.enqueueWrite(async () => {
+                await this.ensureProjectStorage();
 
-            const storage: TagStorageFile = {
-                schemaVersion: STORAGE_SCHEMA_VERSION,
-                customTags: tags,
-            };
+                const storage: TagStorageFile = {
+                    schemaVersion: STORAGE_SCHEMA_VERSION,
+                    customTags: tags,
+                };
 
-            await this.writeJsonAtomically(this.customTagsPath, storage);
+                await this.writeJsonAtomically(this.customTagsPath, storage);
+            });
         } catch (error) {
             console.error('Failed to save custom tags:', error);
             vscode.window.showErrorMessage('Failed to save custom tags');
@@ -226,6 +232,7 @@ export class AnnotationStorageManager {
             },
             timestamp: annotation.timestamp.toISOString(),
             tags: annotation.tags ? [...annotation.tags] : undefined,
+            anchor: this.serializeAnchor(annotation.anchor),
         };
     }
 
@@ -248,6 +255,49 @@ export class AnnotationStorageManager {
             timestamp: this.parseTimestamp(annotation.timestamp),
             tags: normalizedTags,
             priority: this.normalizePriority(annotation.priority),
+            anchor: this.deserializeAnchor(annotation.anchor),
+        };
+    }
+
+    private serializeAnchor(anchor: AnnotationAnchor | undefined): AnnotationAnchor | undefined {
+        if (!anchor) {
+            return undefined;
+        }
+
+        return {
+            selectedText: anchor.selectedText,
+            prefixContext: anchor.prefixContext,
+            suffixContext: anchor.suffixContext,
+            selectedTextHash: anchor.selectedTextHash,
+            normalizedTextHash: anchor.normalizedTextHash,
+            contextHash: anchor.contextHash,
+        };
+    }
+
+    private deserializeAnchor(rawAnchor: unknown): AnnotationAnchor | undefined {
+        if (!rawAnchor || typeof rawAnchor !== 'object') {
+            return undefined;
+        }
+
+        const candidate = rawAnchor as Partial<AnnotationAnchor>;
+        if (
+            typeof candidate.selectedText !== 'string'
+            || typeof candidate.prefixContext !== 'string'
+            || typeof candidate.suffixContext !== 'string'
+            || typeof candidate.selectedTextHash !== 'string'
+            || typeof candidate.normalizedTextHash !== 'string'
+            || typeof candidate.contextHash !== 'string'
+        ) {
+            return undefined;
+        }
+
+        return {
+            selectedText: candidate.selectedText,
+            prefixContext: candidate.prefixContext,
+            suffixContext: candidate.suffixContext,
+            selectedTextHash: candidate.selectedTextHash,
+            normalizedTextHash: candidate.normalizedTextHash,
+            contextHash: candidate.contextHash,
         };
     }
 
@@ -363,6 +413,12 @@ export class AnnotationStorageManager {
 
             throw error;
         }
+    }
+
+    private async enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+        const nextWrite = this.writeQueue.then(operation, operation);
+        this.writeQueue = nextWrite.then(() => undefined, () => undefined);
+        return nextWrite;
     }
 
     private async recoverCorruptFile(filePath: string, label: string): Promise<void> {

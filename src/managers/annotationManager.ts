@@ -11,6 +11,7 @@ import {
     TagSuggestion,
 } from '../types';
 import { TagManager } from '../tags';
+import { reattachAnnotation } from './annotationAnchors';
 import { AnnotationCRUD } from './annotationCRUD';
 import { AnnotationDecorations } from './annotationDecorations';
 import { AnnotationExportService } from './annotationExportService';
@@ -27,6 +28,7 @@ export class AnnotationManager {
     private storage: AnnotationStorageManager;
     private exportService: AnnotationExportService;
     private onDidChangeAnnotationsEmitter = new vscode.EventEmitter<void>();
+    private persistenceScheduled = false;
     public readonly onDidChangeAnnotations = this.onDidChangeAnnotationsEmitter.event;
     public readonly ready: Promise<void>;
 
@@ -44,8 +46,9 @@ export class AnnotationManager {
         await this.loadCustomTags();
         const annotationLoad = await this.storage.loadAnnotations();
         const migratedAnnotations = this.normalizeLoadedAnnotations();
+        const rebasedAnnotations = await this.rebaseStoredAnnotations();
 
-        if (annotationLoad.needsSave || migratedAnnotations) {
+        if (annotationLoad.needsSave || migratedAnnotations || rebasedAnnotations) {
             await this.storage.saveAnnotations();
         }
     }
@@ -203,20 +206,45 @@ export class AnnotationManager {
     }
 
     getAnnotationsForFile(filePath: string): Annotation[] {
+        const openDocument = this.findOpenDocument(filePath);
+        if (openDocument && this.rebaseAnnotationsForText(filePath, openDocument.getText())) {
+            this.scheduleAnnotationPersistence();
+        }
+
         return this.exportService.getAnnotationsForFile(filePath);
     }
 
     getAllAnnotations(): Annotation[] {
+        this.refreshOpenDocuments();
         return this.exportService.getAllAnnotations();
     }
 
     getStatistics(): AnnotationStatistics {
+        this.refreshOpenDocuments();
         return this.exportService.getStatistics();
     }
 
     updateDecorations(editor: vscode.TextEditor): void {
+        if (this.rebaseAnnotationsForText(editor.document.uri.fsPath, editor.document.getText())) {
+            this.scheduleAnnotationPersistence();
+        }
+
         const fileAnnotations = this.exportService.getAnnotationsForFile(editor.document.uri.fsPath);
         this.decorations.updateDecorations(editor, fileAnnotations);
+    }
+
+    async rebaseAnnotationsForDocument(document: vscode.TextDocument): Promise<boolean> {
+        if (document.uri.scheme !== 'file') {
+            return false;
+        }
+
+        const changed = this.rebaseAnnotationsForText(document.uri.fsPath, document.getText());
+        if (changed) {
+            await this.storage.saveAnnotations();
+            this.notifyAnnotationsChanged();
+        }
+
+        return changed;
     }
 
     async exportAnnotations(): Promise<ExportData> {
@@ -315,10 +343,86 @@ export class AnnotationManager {
                 }
 
                 annotation.tags = nextTags;
+
+                if (annotation.anchor && annotation.anchor.selectedText !== annotation.text) {
+                    changed = true;
+                }
             });
         });
 
         return changed;
+    }
+
+    private async rebaseStoredAnnotations(): Promise<boolean> {
+        const filePaths = Array.from(this.annotations.keys());
+        let changed = false;
+
+        for (const filePath of filePaths) {
+            try {
+                const fileContents = await vscode.workspace.fs.readFile(vscode.Uri.file(filePath));
+                const documentText = Buffer.from(fileContents).toString('utf-8');
+                changed = this.rebaseAnnotationsForText(filePath, documentText) || changed;
+            } catch {
+                continue;
+            }
+        }
+
+        return changed;
+    }
+
+    private rebaseAnnotationsForText(filePath: string, documentText: string): boolean {
+        const fileAnnotations = this.annotations.get(filePath);
+        if (!fileAnnotations || fileAnnotations.length === 0) {
+            return false;
+        }
+
+        let changed = false;
+        fileAnnotations.forEach(annotation => {
+            const reattached = reattachAnnotation(annotation, documentText);
+            if (!reattached.changed) {
+                return;
+            }
+
+            annotation.range = reattached.range;
+            annotation.text = reattached.text;
+            annotation.anchor = reattached.anchor;
+            changed = true;
+        });
+
+        return changed;
+    }
+
+    private refreshOpenDocuments(): void {
+        let changed = false;
+
+        vscode.workspace.textDocuments.forEach(document => {
+            if (document.uri.scheme !== 'file') {
+                return;
+            }
+
+            changed = this.rebaseAnnotationsForText(document.uri.fsPath, document.getText()) || changed;
+        });
+
+        if (changed) {
+            this.scheduleAnnotationPersistence();
+        }
+    }
+
+    private findOpenDocument(filePath: string): vscode.TextDocument | undefined {
+        return vscode.workspace.textDocuments.find(document => document.uri.scheme === 'file' && document.uri.fsPath === filePath);
+    }
+
+    private scheduleAnnotationPersistence(): void {
+        if (this.persistenceScheduled) {
+            return;
+        }
+
+        this.persistenceScheduled = true;
+        void Promise.resolve().then(async () => {
+            this.persistenceScheduled = false;
+            await this.storage.saveAnnotations();
+            this.notifyAnnotationsChanged();
+        });
     }
 
     private notifyAnnotationsChanged(): void {
