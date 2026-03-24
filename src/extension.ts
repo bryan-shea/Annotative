@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import { AnnotationManager } from './managers';
-import { AnnotationProvider, SidebarWebview } from './ui';
+import { SidebarWebview } from './ui';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import {
     registerAnnotationCommands,
     registerExportCommands,
     registerFilterCommands,
-    registerBulkCommands,
     registerNavigationCommands,
     registerSidebarCommands,
     registerTagCommands,
@@ -26,13 +25,11 @@ const ANNOTATION_COLORS = [
 ];
 
 let annotationManager: AnnotationManager;
-let annotationProvider: AnnotationProvider;
 let sidebarWebview: SidebarWebview;
 
 export function activate(context: vscode.ExtensionContext) {
     // Initialize core managers
     annotationManager = new AnnotationManager(context);
-    annotationProvider = new AnnotationProvider(annotationManager);
     sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
 
     // Register sidebar webview provider
@@ -61,7 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
     // Create command context
     const cmdContext: CommandContext = {
         annotationManager,
-        annotationProvider,
         sidebarWebview,
         ANNOTATION_COLORS
     };
@@ -71,7 +67,6 @@ export function activate(context: vscode.ExtensionContext) {
         ...Object.values(registerAnnotationCommands(context, cmdContext)),
         ...Object.values(registerExportCommands(context, cmdContext)),
         ...Object.values(registerFilterCommands(context, cmdContext)),
-        ...Object.values(registerBulkCommands(context, cmdContext)),
         ...Object.values(registerNavigationCommands(context, cmdContext)),
         ...Object.values(registerSidebarCommands(context, cmdContext)),
         ...Object.values(registerTagCommands(context, cmdContext))

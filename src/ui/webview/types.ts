@@ -18,7 +18,8 @@ export type WebviewToExtensionCommand =
   | 'edit'
   | 'addTag'
   | 'removeTag'
-  | 'manageTags';
+  | 'manageTags'
+  | 'filterStateChanged';
 
 export interface WebviewMessage {
   command: WebviewToExtensionCommand;
@@ -39,13 +40,15 @@ export type ExtensionToWebviewCommand =
   | 'tagsUpdated'
   | 'annotationAdded'
   | 'annotationRemoved'
-  | 'annotationUpdated';
+  | 'annotationUpdated'
+  | 'filterStateUpdated';
 
 export interface ExtensionMessage {
   command: ExtensionToWebviewCommand;
   annotations?: Annotation[];
   tags?: string[];
   annotation?: Annotation;
+  filters?: FilterState;
   [key: string]: unknown;
 }
 

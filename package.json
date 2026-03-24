@@ -286,43 +286,6 @@
           "when": "view == annotativeView",
           "group": "3_bulk@3"
         }
-      ],
-      "view/item/context": [
-        {
-          "command": "annotative.viewAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@1"
-        },
-        {
-          "command": "annotative.editAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@2"
-        },
-        {
-          "command": "annotative.toggleResolved",
-          "when": "view == annotativeView && viewItem == unresolvedAnnotation",
-          "group": "inline@3"
-        },
-        {
-          "command": "annotative.toggleResolved",
-          "when": "view == annotativeView && viewItem == resolvedAnnotation",
-          "group": "inline@3"
-        },
-        {
-          "command": "annotative.removeAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "inline@4"
-        },
-        {
-          "command": "annotative.askCopilotAboutAnnotation",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "copilot@1"
-        },
-        {
-          "command": "annotative.copyAsCopilotContext",
-          "when": "view == annotativeView && (viewItem == unresolvedAnnotation || viewItem == resolvedAnnotation)",
-          "group": "copilot@2"
-        }
       ]
     },
     "chatParticipants": [

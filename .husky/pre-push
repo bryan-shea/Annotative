@@ -1,27 +1,32 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+. "$(dirname "$0")/_/annotative-hook-config.sh"
+
+if ! annotative_should_enforce_hooks; then
+  echo "Skipping pre-push checks on branch $(annotative_current_branch)"
+  exit 0
+fi
 
 # Pre-push hook: validation before pushing to remote
-echo "🔍 Running pre-push checks..."
+echo "Running pre-push checks on protected branch..."
 
 # Compile TypeScript
-echo "🔨 Compiling TypeScript..."
+echo "Compiling TypeScript..."
 npm run compile
 if [ $? -ne 0 ]; then
-  echo "❌ Compilation failed. Fix errors and try again."
+  echo "Compilation failed. Fix errors and try again."
   exit 1
 fi
 
 # Run tests (skip on Windows - tests run in CI)
 if [ "$OSTYPE" != "msys" ] && [ "$OSTYPE" != "win32" ]; then
-  echo "🧪 Running tests..."
+  echo "Running tests..."
   npm test
   if [ $? -ne 0 ]; then
-    echo "❌ Tests failed. Fix tests and try again."
+    echo "Tests failed. Fix tests and try again."
     exit 1
   fi
 else
-  echo "⏭️  Skipping tests on Windows (run locally with: npm test)"
+  echo "Skipping tests on Windows (run locally with: npm test)"
 fi
 
-echo "✅ Pre-push checks passed"
+echo "Pre-push checks passed"

@@ -21,6 +21,10 @@ export function registerBulkCommands(
 ) {
     const { annotationManager, annotationProvider, sidebarWebview, ANNOTATION_COLORS } = cmdContext;
 
+    if (!annotationProvider) {
+        return {};
+    }
+
     // Command: Bulk tag annotations
     const bulkTagCommand = vscode.commands.registerCommand(
         'annotative.bulkTag',

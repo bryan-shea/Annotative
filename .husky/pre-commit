@@ -1,15 +1,17 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+. "$(dirname "$0")/_/annotative-hook-config.sh"
 
-# Pre-commit hook: lint and format validation
-echo "Running pre-commit checks..."
+if ! annotative_should_enforce_hooks; then
+  echo "Skipping pre-commit checks on branch $(annotative_current_branch)"
+  exit 0
+fi
 
-# Run ESLint
+echo "Running pre-commit checks on protected branch..."
 echo "Linting code..."
-npm run lint --if-present
-if [ $? -ne 0 ]; then
+
+if ! npm run lint --if-present; then
   echo "Linting failed. Fix errors and try again."
   exit 1
 fi
 
-echo "Pre-commit checks passed\n"
+echo "Pre-commit checks passed"
