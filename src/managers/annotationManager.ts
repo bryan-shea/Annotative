@@ -28,6 +28,7 @@ export class AnnotationManager {
     private exporter: AnnotationExporter;
     private onDidChangeAnnotationsEmitter = new vscode.EventEmitter<void>();
     public readonly onDidChangeAnnotations = this.onDidChangeAnnotationsEmitter.event;
+    public readonly ready: Promise<void>;
 
     constructor(private context: vscode.ExtensionContext) {
         this.tagManager = new TagManager();
@@ -36,7 +37,7 @@ export class AnnotationManager {
         this.crud = new AnnotationCRUD(this.annotations, this.decorations, this.storage);
         this.exporter = new AnnotationExporter(this.annotations, (tagIds) => this.resolveTagLabels(tagIds));
 
-        void this.initialize();
+        this.ready = this.initialize();
     }
 
     private async initialize(): Promise<void> {
