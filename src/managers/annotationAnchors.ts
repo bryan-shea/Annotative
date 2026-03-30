@@ -315,7 +315,7 @@ function buildLineOffsets(documentText: string): number[] {
 }
 
 function buildNormalizedText(documentText: string): { normalizedText: string; normalizedOffsets: number[] } {
-    let normalizedText = '';
+    let normalizedText: string[] = [];
     const normalizedOffsets: number[] = [];
     let pendingWhitespaceOffset: number | undefined;
 
@@ -333,16 +333,16 @@ function buildNormalizedText(documentText: string): { normalizedText: string; no
             && !isNormalizedPunctuation(previousCharacter)
             && !isNormalizedPunctuation(character)
         ) {
-            normalizedText += ' ';
+            normalizedText.push(' ');
             normalizedOffsets.push(pendingWhitespaceOffset);
         }
 
-        normalizedText += character;
+        normalizedText.push(character);
         normalizedOffsets.push(index);
         pendingWhitespaceOffset = undefined;
     }
 
-    return { normalizedText, normalizedOffsets };
+    return { normalizedText: normalizedText.join(''), normalizedOffsets };
 }
 
 function clampStoredRange(range: vscode.Range, documentText: string, lineOffsets: number[]): { startOffset: number; endOffset: number } {
