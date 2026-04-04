@@ -1,77 +1,120 @@
-# Annotative VS Code Extension
+# GitHub Copilot repository instructions for Annotative
 
-Code annotation and review workflows for VS Code. Add comments to code selections, organize with custom tags, and export as Markdown.
+Annotative is a VS Code extension for persistent, structured review annotations and AI-oriented exports. Treat it as an in-IDE review-memory layer for AI-assisted development, not as a generic PR review client and not as a separate browser app.
 
-## Product Positioning
+## Product positioning
 
-- **Primary Use Case**: Reviewing AI-generated code changes from Copilot, ChatGPT, Claude, etc.
-- **Secondary Use Cases**: Code reviews, documentation, issue tracking, team collaboration
-- **Key Value**: Simple annotation system with Markdown export optimized for AI tools and team discussions
+- Primary use case: reviewing AI-generated code changes from Copilot, ChatGPT, Claude, and similar tools
+- Secondary use cases: code review, documentation, issue tracking, and team collaboration
+- Key value: structured, persistent review context that can be exported for AI workflows and team discussion
 
-## Development Guidelines
+For the current initiative, preserve Annotative's existing strengths:
 
-- Follow TypeScript best practices for VS Code extensions
-- Use VS Code Extension API for UI components and editor interactions
-- Implement proper error handling and user feedback
-- Store annotations per workspace in `.annotative/` folder or global state
-- Keep UI simple - use native VS Code input boxes and quick picks
-- Ensure export formats are optimized for AI tools
-- Focus on speed and simplicity
+- local persistence
+- structured annotations
+- exportable review context
+- sidebar/webview workflows
+- Copilot integration
 
-## Architecture
+Prefer additive, backward-compatible changes unless explicitly told otherwise.
 
-### Core Structure
+## Architecture expectations
 
-- Main extension file: `src/extension.ts`
-- Command modules: `src/commands/` (organized by feature area)
-- Core managers: `src/managers/` (AnnotationManager, etc.)
-- Tag system: `src/tags/` (TagManager, validation, suggestions)
-- UI components: `src/ui/` (webview sidebar, providers)
-- Type definitions: `src/types.ts`
+Follow the existing extension structure and naming patterns in the repo:
+
+- Main extension entry: `src/extension.ts`
+- Command modules: `src/commands/`
+- Core managers/services: `src/managers/`
+- Tag system: `src/tags/`
+- UI and webview code: `src/ui/`
+- Shared types: `src/types.ts`
 - Copilot integration: `src/copilotExporter.ts` and `src/copilotChatParticipant.ts`
 
-### Command Organization
+Keep commands thin. Put business logic in managers and services.
 
-Commands are organized in separate modules:
+Reuse storage, export, webview, and Copilot-participant patterns that already exist in the repo. Avoid building duplicate subsystems when an existing manager or service can be extended.
 
-- `annotation.ts` - Add, remove, edit, toggle, undo
-- `export.ts` - Export to clipboard, document, AI formats
-- `filters.ts` - Filter by status, tag, search, clear
-- `bulk.ts` - Bulk operations (resolve all, delete all)
-- `navigation.ts` - Navigate between annotations
-- `sidebar.ts` - Sidebar view management, project storage
-- `tags.ts` - Custom tag CRUD operations
+For the AI review workflows initiative, prefer one shared `ReviewArtifact` abstraction over separate one-off models for:
 
-## Key Features
+- markdown plans
+- AI responses
+- local diffs
 
-1. Quick annotation with keyboard shortcuts (Ctrl+Shift+A / Cmd+Shift+A)
-2. Native VS Code input boxes for comments and tags
-3. Visual highlighting with eight color options
-4. Custom tag system - all tags are user-defined
-5. Resolution tracking and status management
-6. Markdown export optimized for AI tools
-7. Webview sidebar with grouping and filtering
-8. Project-based storage in `.annotative/` folder
-9. Template support for common scenarios
-10. GitHub Copilot Chat integration via @annotative participant
+## Development guidelines
 
-## Naming Conventions
+- Follow TypeScript best practices for VS Code extensions
+- Keep TypeScript strictness intact
+- Use the VS Code Extension API for editor interactions and UI
+- Implement proper error handling and user feedback
+- Keep local-file writes atomic and schema-aware
+- Preserve conservative behavior for content anchoring and reattachment
+- Add TODOs instead of pretending unknown behavior is complete
+- Avoid speculative abstractions unless they clearly reduce repeated logic
 
-Use exact command names and terminology from the extension:
+## UX guidelines
+
+- Keep the product inside VS Code
+- Stay consistent with existing Annotative UI patterns
+- Favor simple, reviewable UI over elaborate first-pass polish
+- Prefer native VS Code interactions where they are sufficient
+- Use webviews when they clearly improve the review workflow
+- Minimize modal flows
+- Make failures obvious and recoverable
+- Do not silently mutate user source files
+
+## Storage and export expectations
+
+- Store annotations and review artifacts in project-local `.annotative/` storage unless explicitly told otherwise
+- Ensure export formats remain useful for AI tools and team discussions
+- Prefer extending existing export infrastructure rather than creating a parallel export pipeline
+
+## Testing expectations
+
+For new logic, add or update tests as appropriate:
+
+- unit tests for parsing, models, and export logic
+- storage round-trip tests
+- webview message-routing tests when UI behavior changes
+- at least one happy-path integration test per phase where practical
+
+Never leave new storage or export logic untested.
+
+## Scope guardrails
+
+Do not build the following unless explicitly asked:
+
+- remote PR review or provider APIs
+- GitHub comment publishing
+- encrypted sharing links
+- cloud sync
+- a separate browser-first review surface
+- major refactors outside the initiative's direct path
+
+## Naming conventions
+
+Use the extension's existing terminology:
 
 - "Add Annotation" not "Create Annotation"
 - "Toggle Status" not "Mark Resolved"
-- "Remove" not "Delete" (in UI)
+- "Remove" not "Delete" in UI text
 - "Export to Clipboard" not "Copy Export"
 - "Filter by Status" and "Filter by Tag"
 - "Storage Info" not "Show Storage"
 
-## No Emojis
+Match existing file organization and naming conventions in the repo.
+
+## Communication style in generated work
 
 Do not use emojis in:
 
-- Code or comments
-- Documentation
-- Commit messages
-- User-facing text
+- code or comments
+- documentation
+- commit messages
+- user-facing text
 - UI labels
+
+When responding to a task:
+
+- start with a concise implementation plan
+- keep changes modular
+- summarize files changed, what works, and any remaining TODOs or risks
