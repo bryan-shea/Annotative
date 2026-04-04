@@ -33,6 +33,7 @@ yarn-error.log*
 # Development files
 docs/*
 .github/agents/*
+.github/instructions/*
 logs/*
 scripts/dev/*
 src/ui/AGENT.md
