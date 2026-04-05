@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { AnnotationManager, MarkdownPlanReviewService, ReviewArtifactManager } from '../managers';
+import { AiResponseReviewService, AnnotationManager, MarkdownPlanReviewService, ReviewArtifactManager } from '../managers';
 import { AnnotationProvider, PlanReviewPanel, SidebarWebview } from '../ui';
 
 export type CommandContext = {
@@ -12,6 +12,7 @@ export type CommandContext = {
     sidebarWebview: SidebarWebview;
     annotationProvider?: AnnotationProvider;
     reviewArtifactManager?: ReviewArtifactManager;
+    aiResponseReviewService?: AiResponseReviewService;
     markdownPlanReviewService?: MarkdownPlanReviewService;
     planReviewPanel?: PlanReviewPanel;
     ANNOTATION_COLORS: Array<{ label: string; value: string }>;
@@ -19,6 +20,7 @@ export type CommandContext = {
 
 // Import all command modules
 export { registerAnnotationCommands } from './annotation';
+export { registerAiResponseReviewCommands } from './aiResponseReview';
 export { registerExportCommands } from './export';
 export { registerFilterCommands } from './filters';
 export { registerNavigationCommands } from './navigation';

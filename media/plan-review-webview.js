@@ -4,11 +4,34 @@
     const root = document.getElementById('plan-review-root');
     const categoryLabels = {
         approve_note: 'Approve Note',
+        comment: 'Comment',
         request_change: 'Request Change',
         missing_step: 'Missing Step',
         risk: 'Risk',
         replacement: 'Replacement',
+        suggested_replacement: 'Suggested Replacement',
+        question: 'Question',
         global_comment: 'Global Comment'
+    };
+    const artifactConfigs = {
+        plan: {
+            eyebrow: 'Persisted Plan Review',
+            emptyStateTitle: 'No plan review loaded',
+            globalActionLabel: 'Add Global Comment',
+            globalHeading: 'Global Comments'
+        },
+        aiResponse: {
+            eyebrow: 'Persisted AI Response Review',
+            emptyStateTitle: 'No AI response review loaded',
+            globalActionLabel: 'Add Comment',
+            globalHeading: 'Artifact Comments'
+        },
+        localDiff: {
+            eyebrow: 'Persisted Local Diff Review',
+            emptyStateTitle: 'No local diff review loaded',
+            globalActionLabel: 'Add Comment',
+            globalHeading: 'Artifact Comments'
+        }
     };
     let artifact = stateElement ? JSON.parse(stateElement.textContent || 'null') : null;
 
@@ -57,6 +80,14 @@
     function formatAnnotationLabel(annotation) {
         const category = annotation.metadata && annotation.metadata.category;
         return categoryLabels[category] || annotation.kind;
+    }
+
+    function getArtifactConfig() {
+        if (!artifact) {
+            return artifactConfigs.plan;
+        }
+
+        return artifactConfigs[artifact.kind] || artifactConfigs.plan;
     }
 
     function formatTarget(annotation) {
@@ -134,8 +165,10 @@
     }
 
     function render() {
+        const config = getArtifactConfig();
+
         if (!artifact) {
-            root.innerHTML = '<div class="empty-state"><h1>No plan review loaded</h1></div>';
+            root.innerHTML = '<div class="empty-state"><h1>' + escapeHtml(config.emptyStateTitle) + '</h1></div>';
             return;
         }
 
@@ -151,12 +184,12 @@
             '<main class="page">',
             '<header class="hero">',
             '<div>',
-            '<p class="eyebrow">Persisted Plan Review</p>',
+            '<p class="eyebrow">' + escapeHtml(config.eyebrow) + '</p>',
             '<h1>' + escapeHtml(artifact.title) + '</h1>',
             '<p class="hero-meta">Updated ' + escapeHtml(formatDate(artifact.updatedAt)) + ' • Source ' + escapeHtml(artifact.source.type) + '</p>',
             '</div>',
             '<div class="hero-actions">',
-            '<button class="primary" data-command="addAnnotation" data-target-type="artifact">Add Global Comment</button>',
+            '<button class="primary" data-command="addAnnotation" data-target-type="artifact">' + escapeHtml(config.globalActionLabel) + '</button>',
             '<button class="secondary" data-command="exportArtifact" data-export-target="clipboard">Export to Clipboard</button>',
             '<button class="secondary" data-command="exportArtifact" data-export-target="document">Export to Document</button>',
             '<button class="secondary" data-command="refresh">Refresh</button>',
@@ -170,7 +203,7 @@
             '<article class="stat-card"><span class="stat-label">Open</span><strong>' + escapeHtml(openCount) + '</strong></article>',
             '<article class="stat-card"><span class="stat-label">Exports</span><strong>' + escapeHtml(exportCount) + '</strong></article>',
             '</section>',
-            globalAnnotations.length > 0 ? '<section class="global-annotations"><h2>Global Comments</h2><div class="annotation-list">' + globalAnnotations.map(renderAnnotation).join('') + '</div></section>' : '',
+            globalAnnotations.length > 0 ? '<section class="global-annotations"><h2>' + escapeHtml(config.globalHeading) + '</h2><div class="annotation-list">' + globalAnnotations.map(renderAnnotation).join('') + '</div></section>' : '',
             '<section class="sections">' + sections.map(renderSection).join('') + '</section>',
             '</main>'
         ].join('');

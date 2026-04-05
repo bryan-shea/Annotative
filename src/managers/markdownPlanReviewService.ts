@@ -75,6 +75,10 @@ export class MarkdownPlanReviewService {
 }
 
 export function parseMarkdownPlan(rawText: string): ParsedMarkdownPlan {
+    return parseStructuredMarkdownContent(rawText, PLAN_PARSER_ID);
+}
+
+export function parseStructuredMarkdownContent(rawText: string, parserId: string): ParsedMarkdownPlan {
     const normalized = normalizeLineEndings(rawText);
     const lines = normalized.split('\n');
     const sourceSections: MutableSection[] = [];
@@ -184,7 +188,7 @@ export function parseMarkdownPlan(rawText: string): ParsedMarkdownPlan {
         sections,
         blocks,
         metadata: {
-            parser: PLAN_PARSER_ID,
+            parser: parserId,
             sectionCount: sections.length,
             blockCount: blocks.length,
         },

@@ -3,6 +3,7 @@ import {
     CopilotReviewPromptReviewArtifactExportAdapter,
     GenericMarkdownReviewArtifactExportAdapter,
     parseMarkdownPlan,
+    parseStructuredMarkdownContent,
     ReviewArtifactExportService,
 } from '../../managers';
 import { createReviewAnnotation, createReviewArtifact, readReviewArtifactFixture } from './testUtils';
@@ -377,5 +378,49 @@ suite('ReviewArtifactExportService', () => {
                 '',
             ].join('\n')
         );
+    });
+
+    test('exports AI response suggested replacements through the shared adapter flow', async () => {
+        const aiResponseText = await readReviewArtifactFixture('ai-response-basic.md');
+        const parsed = parseStructuredMarkdownContent(aiResponseText, 'aiResponseMarkdownV1');
+        const artifact = createReviewArtifact({
+            id: 'ai-response-export',
+            kind: 'aiResponse',
+            title: 'Review Last AI Response',
+            source: {
+                type: 'manualPaste',
+                workspaceFolder: 'c:/workspace',
+                metadata: { sourceMode: 'clipboard' },
+            },
+            content: {
+                rawText: aiResponseText,
+                sections: parsed.sections,
+                blocks: parsed.blocks,
+                metadata: parsed.metadata,
+            },
+            annotations: [
+                createReviewAnnotation({
+                    id: 'ai-response-replacement',
+                    kind: 'maintainability',
+                    target: { type: 'artifact' },
+                    body: 'Do not skip manager tests in this phase.',
+                    suggestedReplacement: 'Keep the manager tests and add deterministic coverage for AI response artifact creation.',
+                    severity: 'high',
+                    metadata: { category: 'suggested_replacement' },
+                }),
+            ],
+        });
+        const service = new ReviewArtifactExportService([
+            new GenericMarkdownReviewArtifactExportAdapter(),
+            new CopilotReviewPromptReviewArtifactExportAdapter(),
+        ]);
+
+        const genericExport = await service.exportArtifact(artifact, 'genericMarkdown');
+        const copilotExport = await service.exportArtifact(artifact, 'copilotReviewPrompt');
+
+        assert.ok(genericExport.content.includes('- Kind: aiResponse'));
+        assert.ok(genericExport.content.includes('Suggested replacement:'));
+        assert.ok(copilotExport.content.includes('### 1. Suggested Replacement [high]'));
+        assert.ok(copilotExport.content.includes('Suggested revision:'));
     });
 });
