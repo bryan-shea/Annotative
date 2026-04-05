@@ -18,6 +18,7 @@ export {
 } from './markdownPlanReviewService';
 export {
 	ReviewArtifactExportService,
+	CopilotReviewPromptReviewArtifactExportAdapter,
 	GenericMarkdownReviewArtifactExportAdapter,
 	type ReviewArtifactExportAdapter,
 	type ReviewArtifactExportResult,

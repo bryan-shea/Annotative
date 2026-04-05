@@ -108,22 +108,34 @@ suite('PlanReviewPanel', () => {
             annotations: [],
         });
         const calls = {
-            exportArtifact: 0,
-            recordExport: [] as Array<{ artifactId: string; target: string }>,
+            exportArtifact: [] as Array<{ artifactId: string; adapterId?: string }>,
+            recordExport: [] as Array<{ artifactId: string; adapterId: string; target: string }>,
         };
         const reviewArtifactManager = {
             getArtifact: async () => artifact,
-            exportArtifact: async () => {
-                calls.exportArtifact += 1;
+            getSupportedExportAdapters: () => [
+                {
+                    id: 'genericMarkdown',
+                    label: 'Generic Markdown',
+                    description: 'Readable markdown export for human review and archival.',
+                },
+                {
+                    id: 'copilotReviewPrompt',
+                    label: 'Copilot Review Prompt',
+                    description: 'Structured follow-up export for Copilot-style coding agents.',
+                },
+            ],
+            exportArtifact: async (exportArtifact: { id: string }, adapterId?: string) => {
+                calls.exportArtifact.push({ artifactId: exportArtifact.id, adapterId });
                 return {
-                    adapterId: 'genericMarkdown',
+                    adapterId: adapterId ?? 'genericMarkdown',
                     content: '# Exported Plan Review',
                     language: 'markdown' as const,
                     fileExtension: 'md',
                 };
             },
-            recordExport: async (artifactId: string, input: { target?: string }) => {
-                calls.recordExport.push({ artifactId, target: input.target ?? '' });
+            recordExport: async (artifactId: string, input: { adapterId: string; target?: string }) => {
+                calls.recordExport.push({ artifactId, adapterId: input.adapterId, target: input.target ?? '' });
                 return artifact;
             },
         };
@@ -132,6 +144,16 @@ suite('PlanReviewPanel', () => {
             (() => panelInstance as unknown as vscode.WebviewPanel);
         (vscode.window as unknown as { showInformationMessage: typeof vscode.window.showInformationMessage }).showInformationMessage =
             (async () => undefined) as typeof vscode.window.showInformationMessage;
+        (vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }).showQuickPick =
+            (async () => ({
+                label: 'Copilot Review Prompt',
+                description: 'Structured follow-up export for Copilot-style coding agents.',
+                adapter: {
+                    id: 'copilotReviewPrompt',
+                    label: 'Copilot Review Prompt',
+                    description: 'Structured follow-up export for Copilot-style coding agents.',
+                },
+            })) as unknown as typeof vscode.window.showQuickPick;
         (vscode.workspace as unknown as { openTextDocument: typeof vscode.workspace.openTextDocument }).openTextDocument =
             (async () => ({
                 uri: vscode.Uri.file(`${getWorkspaceRoot()}\\export.md`),
@@ -154,8 +176,8 @@ suite('PlanReviewPanel', () => {
 
         assert.strictEqual(panelInstance.title, 'Plan Review: Panel Review Plan');
         assert.ok(panelInstance.webview.html.includes('plan-review-webview.js'));
-        assert.strictEqual(calls.exportArtifact, 1);
-        assert.deepStrictEqual(calls.recordExport, [{ artifactId: 'plan-panel', target: 'document' }]);
+        assert.deepStrictEqual(calls.exportArtifact, [{ artifactId: 'plan-panel', adapterId: 'copilotReviewPrompt' }]);
+        assert.deepStrictEqual(calls.recordExport, [{ artifactId: 'plan-panel', adapterId: 'copilotReviewPrompt', target: 'document' }]);
         assert.deepStrictEqual(panelInstance.webview.postedMessages.map(message => message.command), ['updateArtifact']);
 
         panel.dispose();

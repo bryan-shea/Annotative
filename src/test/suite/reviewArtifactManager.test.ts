@@ -46,16 +46,22 @@ suite('ReviewArtifactManager', () => {
 
         const loaded = await manager.getArtifact(artifact.id);
         const listed = await manager.listArtifacts({ kind: 'aiResponse' });
+        const supportedAdapters = manager.getSupportedExportAdapters(artifact);
         const exported = await manager.exportArtifact(artifact);
+        const copilotExport = await manager.exportArtifact(artifact, 'copilotReviewPrompt');
 
         assert.strictEqual(artifact.id, 'ai-response-fixture');
         assert.ok(loaded, 'Expected the review artifact to load after save.');
         assert.strictEqual(loaded?.kind, 'aiResponse');
         assert.strictEqual(listed.length, 1);
         assert.strictEqual(listed[0].id, artifact.id);
+        assert.deepStrictEqual(supportedAdapters.map(adapter => adapter.id), ['genericMarkdown', 'copilotReviewPrompt']);
         assert.strictEqual(exported.adapterId, 'genericMarkdown');
         assert.ok(exported.content.includes('# Review Artifact: Review Payment Form Response'));
         assert.ok(exported.content.includes('Risky recommendation: skip manager tests for now'));
+        assert.strictEqual(copilotExport.adapterId, 'copilotReviewPrompt');
+        assert.ok(copilotExport.content.includes('## Review Context'));
+        assert.ok(copilotExport.content.includes('## Risks Or Concerns'));
     });
 
     test('adds, updates, removes, and records plan review annotations', async () => {

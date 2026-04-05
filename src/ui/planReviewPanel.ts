@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ReviewAnnotation, ReviewAnnotationKind, ReviewAnnotationTarget, ReviewArtifact } from '../types';
-import { ReviewArtifactManager } from '../managers';
+import { ReviewArtifactManager, type ReviewArtifactExportAdapter } from '../managers';
 
 type ExportTarget = 'clipboard' | 'document';
 
@@ -226,11 +226,16 @@ export class PlanReviewPanel implements vscode.Disposable {
 
     private async exportArtifact(target: ExportTarget): Promise<void> {
         const artifact = await this.getRequiredArtifact();
-        const exported = await this.reviewArtifactManager.exportArtifact(artifact);
+        const adapter = await this.pickExportAdapter(artifact, target);
+        if (!adapter) {
+            return;
+        }
+
+        const exported = await this.reviewArtifactManager.exportArtifact(artifact, adapter.id);
 
         if (target === 'clipboard') {
             await vscode.env.clipboard.writeText(exported.content);
-            vscode.window.showInformationMessage('Plan review exported to clipboard.');
+            vscode.window.showInformationMessage(`Plan review exported to clipboard as ${adapter.label}.`);
         } else {
             const document = await vscode.workspace.openTextDocument({
                 content: exported.content,
@@ -245,6 +250,37 @@ export class PlanReviewPanel implements vscode.Disposable {
         });
 
         await this.refresh();
+    }
+
+    private async pickExportAdapter(
+        artifact: ReviewArtifact,
+        target: ExportTarget
+    ): Promise<ReviewArtifactExportAdapter | undefined> {
+        const adapters = this.reviewArtifactManager.getSupportedExportAdapters(artifact);
+
+        if (adapters.length === 0) {
+            throw new Error(`No export adapters support ${artifact.kind} review artifacts.`);
+        }
+
+        if (adapters.length === 1) {
+            return adapters[0];
+        }
+
+        const selected = await vscode.window.showQuickPick(
+            adapters.map(adapter => ({
+                label: adapter.label,
+                description: adapter.description,
+                detail: target === 'clipboard'
+                    ? 'Copy this export format to the clipboard.'
+                    : 'Open this export format in a new document.',
+                adapter,
+            })),
+            {
+                placeHolder: 'Choose a plan review export format',
+            }
+        );
+
+        return selected?.adapter;
     }
 
     private async openSource(message: PlanReviewPanelMessage): Promise<void> {
