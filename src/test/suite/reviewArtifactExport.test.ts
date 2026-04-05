@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import {
     CopilotReviewPromptReviewArtifactExportAdapter,
     GenericMarkdownReviewArtifactExportAdapter,
+    parseUnifiedDiff,
     parseMarkdownPlan,
     parseStructuredMarkdownContent,
     ReviewArtifactExportService,
@@ -422,5 +423,65 @@ suite('ReviewArtifactExportService', () => {
         assert.ok(genericExport.content.includes('Suggested replacement:'));
         assert.ok(copilotExport.content.includes('### 1. Suggested Replacement [high]'));
         assert.ok(copilotExport.content.includes('Suggested revision:'));
+    });
+
+    test('exports local diff artifacts with file and hunk references through shared adapters', async () => {
+        const rawDiff = await readReviewArtifactFixture('local-diff-basic.diff');
+        const parsed = parseUnifiedDiff(rawDiff);
+        const artifact = createReviewArtifact({
+            id: 'local-diff-export',
+            kind: 'localDiff',
+            title: 'Review Local Diff: Annotative',
+            source: {
+                type: 'gitDiff',
+                workspaceFolder: 'c:/workspace',
+                revision: 'abc123def456',
+                metadata: {
+                    repositoryRoot: 'c:/workspace',
+                    snapshotMode: 'headToWorkingTreeTracked',
+                    trackedFilesOnly: true,
+                },
+            },
+            content: {
+                rawText: rawDiff,
+                diffFiles: parsed.diffFiles,
+                metadata: parsed.metadata,
+            },
+            annotations: [
+                createReviewAnnotation({
+                    id: 'diff-file-follow-up',
+                    kind: 'comment',
+                    target: { type: 'diffFile', diffFileId: parsed.diffFiles[0].id },
+                    body: 'Follow up on the placeholder workspace export behavior before broadening scope.',
+                    metadata: { category: 'follow_up' },
+                }),
+                createReviewAnnotation({
+                    id: 'diff-hunk-test-gap',
+                    kind: 'testGap',
+                    target: { type: 'diffHunk', diffHunkId: parsed.diffFiles[0].hunks[0].id },
+                    body: 'Add a deterministic test for the new exportArtifactsForWorkspace placeholder branch.',
+                    severity: 'high',
+                    metadata: { category: 'test_gap' },
+                }),
+            ],
+        });
+        const service = new ReviewArtifactExportService([
+            new GenericMarkdownReviewArtifactExportAdapter(),
+            new CopilotReviewPromptReviewArtifactExportAdapter(),
+        ]);
+
+        const genericExport = await service.exportArtifact(artifact, 'genericMarkdown');
+        const copilotExport = await service.exportArtifact(artifact, 'copilotReviewPrompt');
+
+        assert.ok(genericExport.content.includes('## Diff Files'));
+        assert.ok(genericExport.content.includes('- Diff File ID: diff-file-src-managers-reviewartifactmanager-ts'));
+        assert.ok(genericExport.content.includes('- Hunk ID: diff-file-src-managers-reviewartifactmanager-ts-hunk-1'));
+        assert.ok(genericExport.content.includes('- Target: diffFile:diff-file-src-managers-reviewartifactmanager-ts'));
+        assert.ok(genericExport.content.includes('- Target: diffHunk:diff-file-src-managers-reviewartifactmanager-ts-hunk-1'));
+        assert.ok(copilotExport.content.includes('### Diff Files Under Review'));
+        assert.ok(copilotExport.content.includes('- src/managers/reviewArtifactManager.ts [modified]'));
+        assert.ok(copilotExport.content.includes('- src/test/suite/reviewArtifactExport.test.ts [added]'));
+        assert.ok(copilotExport.content.includes('### 1. Test Gap [high]'));
+        assert.ok(copilotExport.content.includes('- Target: diffHunk:diff-file-src-managers-reviewartifactmanager-ts-hunk-1'));
     });
 });

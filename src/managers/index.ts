@@ -15,6 +15,12 @@ export {
 	type CreateAiResponseArtifactInput,
 } from './aiResponseReviewService';
 export {
+	LocalDiffReviewService,
+	parseUnifiedDiff,
+	type CreateLocalDiffArtifactInput,
+	type ParsedLocalDiff,
+} from './localDiffReviewService';
+export {
 	MarkdownPlanReviewService,
 	parseMarkdownPlan,
 	parseStructuredMarkdownContent,

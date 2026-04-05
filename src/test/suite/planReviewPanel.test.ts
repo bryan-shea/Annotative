@@ -329,4 +329,107 @@ suite('PlanReviewPanel', () => {
 
         panel.dispose();
     });
+
+    test('routes diff-hunk annotations through the shared review panel for local diff artifacts', async () => {
+        const panelInstance = new FakePanel();
+        const quickPickResults: Array<Record<string, unknown>> = [
+            {
+                label: 'Test Gap',
+                description: 'Capture missing or weak test coverage',
+                option: {
+                    id: 'test_gap',
+                    label: 'Test Gap',
+                    description: 'Capture missing or weak test coverage',
+                    kind: 'testGap',
+                },
+            },
+            {
+                label: 'High',
+                value: 'high',
+            },
+        ];
+        const artifact = createReviewArtifact({
+            id: 'local-diff-panel',
+            kind: 'localDiff',
+            title: 'Shared Local Diff Review',
+            source: {
+                type: 'gitDiff',
+                workspaceFolder: getWorkspaceRoot(),
+                metadata: { repositoryRoot: getWorkspaceRoot() },
+            },
+            annotations: [],
+            content: {
+                rawText: 'diff --git a/src/example.ts b/src/example.ts',
+                diffFiles: [
+                    {
+                        id: 'diff-file-src-example-ts',
+                        oldPath: 'src/example.ts',
+                        newPath: 'src/example.ts',
+                        status: 'modified',
+                        metadata: { hunkCount: 1, addedLineCount: 1, deletedLineCount: 0 },
+                        hunks: [
+                            {
+                                id: 'diff-file-src-example-ts-hunk-1',
+                                header: '@@ -1,2 +1,3 @@ export function example() {',
+                                oldStart: 1,
+                                oldLines: 2,
+                                newStart: 1,
+                                newLines: 3,
+                                lines: [
+                                    { type: 'context', content: 'export function example() {', oldLineNumber: 1, newLineNumber: 1 },
+                                    { type: 'add', content: '    return true;', newLineNumber: 2 },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+        const calls = {
+            addAnnotation: [] as Array<{ artifactId: string; targetType: string; diffFileId?: string; diffHunkId?: string; severity?: string }>,
+        };
+        const reviewArtifactManager = {
+            getArtifact: async () => artifact,
+            addAnnotation: async (artifactId: string, input: { target: { type: string; diffFileId?: string; diffHunkId?: string }; severity?: string }) => {
+                calls.addAnnotation.push({
+                    artifactId,
+                    targetType: input.target.type,
+                    diffFileId: input.target.diffFileId,
+                    diffHunkId: input.target.diffHunkId,
+                    severity: input.severity,
+                });
+                return artifact;
+            },
+        };
+
+        (vscode.window as unknown as { createWebviewPanel: typeof vscode.window.createWebviewPanel }).createWebviewPanel =
+            (() => panelInstance as unknown as vscode.WebviewPanel);
+        (vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }).showQuickPick =
+            (async () => quickPickResults.shift()) as typeof vscode.window.showQuickPick;
+        (vscode.window as unknown as { showInputBox: typeof vscode.window.showInputBox }).showInputBox =
+            (async () => 'Add coverage for the diff review creation flow.') as typeof vscode.window.showInputBox;
+
+        const panel = new PlanReviewPanel(vscode.Uri.file(getWorkspaceRoot()), reviewArtifactManager as never);
+
+        await panel.showArtifact('local-diff-panel');
+        await panelInstance.webview.dispatch({
+            command: 'addAnnotation',
+            targetType: 'diffHunk',
+            diffFileId: 'diff-file-src-example-ts',
+            diffHunkId: 'diff-file-src-example-ts-hunk-1',
+            lineStart: 1,
+            lineEnd: 3,
+        });
+
+        assert.strictEqual(panelInstance.title, 'Local Diff Review: Shared Local Diff Review');
+        assert.deepStrictEqual(calls.addAnnotation, [{
+            artifactId: 'local-diff-panel',
+            targetType: 'diffHunk',
+            diffFileId: 'diff-file-src-example-ts',
+            diffHunkId: 'diff-file-src-example-ts-hunk-1',
+            severity: 'high',
+        }]);
+
+        panel.dispose();
+    });
 });

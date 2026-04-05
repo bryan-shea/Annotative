@@ -60,7 +60,8 @@ body {
 .hero-meta,
 .section-meta,
 .annotation-meta,
-.block-lines {
+.block-lines,
+.diff-file-meta {
   margin: 6px 0 0;
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
@@ -96,6 +97,17 @@ body {
 .block-list {
   display: grid;
   gap: 12px;
+}
+
+.diff-file-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.diff-code {
+  font-family: var(--vscode-editor-font-family, var(--vscode-font-family));
 }
 
 .section-card__header,

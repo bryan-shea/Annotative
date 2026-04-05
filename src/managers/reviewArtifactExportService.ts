@@ -588,6 +588,7 @@ function isRequestedChange(annotation: ReviewAnnotation): boolean {
     return annotation.kind === 'requestChange'
         || annotation.kind === 'maintainability'
         || annotation.metadata?.category === 'request_change'
+    || annotation.metadata?.category === 'maintainability'
         || annotation.metadata?.category === 'replacement'
         || annotation.metadata?.category === 'suggested_replacement';
 }
@@ -597,7 +598,12 @@ function isMissingStep(annotation: ReviewAnnotation): boolean {
 }
 
 function isRiskOrConcern(annotation: ReviewAnnotation): boolean {
-    return annotation.kind === 'risk' || annotation.kind === 'testGap';
+    return annotation.kind === 'risk'
+        || annotation.kind === 'testGap'
+        || annotation.metadata?.category === 'bug_risk'
+        || annotation.metadata?.category === 'performance'
+        || annotation.metadata?.category === 'security'
+        || annotation.metadata?.category === 'test_gap';
 }
 
 function buildCopilotNextSteps(
@@ -631,6 +637,23 @@ function buildCopilotNextSteps(
 }
 
 function formatAnnotationLabel(annotation: ReviewAnnotation): string {
+    switch (annotation.metadata?.category) {
+        case 'bug_risk':
+            return 'Bug Risk';
+        case 'follow_up':
+            return 'Follow Up';
+        case 'maintainability':
+            return 'Maintainability';
+        case 'performance':
+            return 'Performance';
+        case 'security':
+            return 'Security';
+        case 'test_gap':
+            return 'Test Gap';
+        default:
+            break;
+    }
+
     if (annotation.metadata?.category === 'replacement' || annotation.metadata?.category === 'suggested_replacement') {
         return 'Suggested Replacement';
     }
