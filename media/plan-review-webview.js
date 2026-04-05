@@ -4,12 +4,18 @@
     const root = document.getElementById('plan-review-root');
     const categoryLabels = {
         approve_note: 'Approve Note',
+        bug_risk: 'Bug Risk',
         comment: 'Comment',
+        follow_up: 'Follow Up',
+        maintainability: 'Maintainability',
+        performance: 'Performance',
         request_change: 'Request Change',
         missing_step: 'Missing Step',
         risk: 'Risk',
+        security: 'Security',
         replacement: 'Replacement',
         suggested_replacement: 'Suggested Replacement',
+        test_gap: 'Test Gap',
         question: 'Question',
         global_comment: 'Global Comment'
     };
@@ -29,8 +35,8 @@
         localDiff: {
             eyebrow: 'Persisted Local Diff Review',
             emptyStateTitle: 'No local diff review loaded',
-            globalActionLabel: 'Add Comment',
-            globalHeading: 'Artifact Comments'
+            globalActionLabel: 'Add Review Note',
+            globalHeading: 'Artifact Notes'
         }
     };
     let artifact = stateElement ? JSON.parse(stateElement.textContent || 'null') : null;
@@ -71,6 +77,18 @@
         });
     }
 
+    function getAnnotationsForDiffFile(diffFileId) {
+        return artifact.annotations.filter(function (annotation) {
+            return annotation.target.type === 'diffFile' && annotation.target.diffFileId === diffFileId;
+        });
+    }
+
+    function getAnnotationsForDiffHunk(diffHunkId) {
+        return artifact.annotations.filter(function (annotation) {
+            return annotation.target.type === 'diffHunk' && annotation.target.diffHunkId === diffHunkId;
+        });
+    }
+
     function getGlobalAnnotations() {
         return artifact.annotations.filter(function (annotation) {
             return annotation.target.type === 'artifact';
@@ -96,6 +114,12 @@
         }
         if (annotation.target.type === 'section' && annotation.target.sectionId) {
             return 'Section ' + annotation.target.sectionId;
+        }
+        if (annotation.target.type === 'diffFile' && annotation.target.diffFileId) {
+            return 'Diff File ' + annotation.target.diffFileId;
+        }
+        if (annotation.target.type === 'diffHunk' && annotation.target.diffHunkId) {
+            return 'Diff Hunk ' + annotation.target.diffHunkId;
         }
         return 'Artifact';
     }
@@ -164,6 +188,131 @@
         ].join('');
     }
 
+    function getSourceBasePath() {
+        if (!artifact || !artifact.source) {
+            return '';
+        }
+
+        return String(
+            (artifact.source.metadata && artifact.source.metadata.repositoryRoot)
+            || artifact.source.workspaceFolder
+            || ''
+        );
+    }
+
+    function getDiffSourcePath(diffFile) {
+        if (diffFile.status === 'deleted') {
+            return diffFile.oldPath || diffFile.newPath || '';
+        }
+
+        return diffFile.newPath || diffFile.oldPath || '';
+    }
+
+    function getDiffOpenRange(diffFile, hunk) {
+        if (!hunk) {
+            const firstHunk = diffFile.hunks && diffFile.hunks.length > 0 ? diffFile.hunks[0] : undefined;
+            if (!firstHunk) {
+                return { lineStart: 1, lineEnd: 1 };
+            }
+
+            return getDiffOpenRange(diffFile, firstHunk);
+        }
+
+        const usesOldRange = diffFile.status === 'deleted';
+        const lineStart = usesOldRange ? hunk.oldStart : hunk.newStart;
+        const lineCount = usesOldRange ? hunk.oldLines : hunk.newLines;
+        return {
+            lineStart: lineStart || 1,
+            lineEnd: Math.max(lineStart || 1, (lineStart || 1) + Math.max((lineCount || 1) - 1, 0))
+        };
+    }
+
+    function renderDiffLines(hunk) {
+        return hunk.lines.map(function (line) {
+            const prefix = line.type === 'add' ? '+' : (line.type === 'delete' ? '-' : ' ');
+            return prefix + line.content;
+        }).join('\n');
+    }
+
+    function renderDiffHunk(diffFile, hunk) {
+        const annotations = getAnnotationsForDiffHunk(hunk.id);
+        const sourcePath = getDiffSourcePath(diffFile);
+        const sourceBasePath = getSourceBasePath();
+        const range = getDiffOpenRange(diffFile, hunk);
+
+        return [
+            '<div class="block-card diff-hunk-card">',
+            '<div class="block-card__header">',
+            '<div>',
+            '<span class="badge">Hunk</span>',
+            '<span class="block-lines">' + escapeHtml(hunk.header) + '</span>',
+            '</div>',
+            '<div class="section-actions">',
+            sourcePath ? '<button class="secondary" data-command="openSource" data-source-path="' + escapeHtml(sourcePath) + '" data-source-base-path="' + escapeHtml(sourceBasePath) + '" data-line-start="' + escapeHtml(range.lineStart) + '" data-line-end="' + escapeHtml(range.lineEnd) + '">Open Source</button>' : '',
+            '<button class="primary" data-command="addAnnotation" data-target-type="diffHunk" data-diff-file-id="' + escapeHtml(diffFile.id) + '" data-diff-hunk-id="' + escapeHtml(hunk.id) + '" data-line-start="' + escapeHtml(range.lineStart) + '" data-line-end="' + escapeHtml(range.lineEnd) + '">Add Annotation</button>',
+            '</div>',
+            '</div>',
+            '<pre class="block-content diff-code">' + escapeHtml(renderDiffLines(hunk)) + '</pre>',
+            annotations.length > 0 ? '<div class="annotation-list">' + annotations.map(renderAnnotation).join('') + '</div>' : '',
+            '</div>'
+        ].join('');
+    }
+
+    function renderDiffFile(diffFile) {
+        const annotations = getAnnotationsForDiffFile(diffFile.id);
+        const sourcePath = getDiffSourcePath(diffFile);
+        const sourceBasePath = getSourceBasePath();
+        const range = getDiffOpenRange(diffFile);
+        const metadata = diffFile.metadata || {};
+
+        return [
+            '<section class="section-card diff-file-card">',
+            '<div class="section-card__header">',
+            '<div>',
+            '<h2>' + escapeHtml(diffFile.newPath || diffFile.oldPath || diffFile.id) + '</h2>',
+            '<p class="section-meta">Status ' + escapeHtml(diffFile.status) + ' • ' + escapeHtml(metadata.hunkCount || diffFile.hunks.length) + ' hunks • +' + escapeHtml(metadata.addedLineCount || 0) + ' / -' + escapeHtml(metadata.deletedLineCount || 0) + '</p>',
+            '</div>',
+            '<div class="section-actions">',
+            sourcePath ? '<button class="secondary" data-command="openSource" data-source-path="' + escapeHtml(sourcePath) + '" data-source-base-path="' + escapeHtml(sourceBasePath) + '" data-line-start="' + escapeHtml(range.lineStart) + '" data-line-end="' + escapeHtml(range.lineEnd) + '">Open Source</button>' : '',
+            '<button class="primary" data-command="addAnnotation" data-target-type="diffFile" data-diff-file-id="' + escapeHtml(diffFile.id) + '">Add Annotation</button>',
+            '</div>',
+            '</div>',
+            '<div class="diff-file-meta">',
+            '<span class="badge badge--category">' + escapeHtml(diffFile.status) + '</span>',
+            '<span class="block-lines">Old ' + escapeHtml(diffFile.oldPath || 'n/a') + '</span>',
+            '<span class="block-lines">New ' + escapeHtml(diffFile.newPath || 'n/a') + '</span>',
+            '</div>',
+            annotations.length > 0 ? '<div class="annotation-list">' + annotations.map(renderAnnotation).join('') + '</div>' : '',
+            '<div class="block-list">' + diffFile.hunks.map(function (hunk) { return renderDiffHunk(diffFile, hunk); }).join('') + '</div>',
+            '</section>'
+        ].join('');
+    }
+
+    function buildStatCards(config) {
+        if (artifact.kind === 'localDiff') {
+            const diffFiles = artifact.content.diffFiles || [];
+            const hunkCount = diffFiles.reduce(function (count, diffFile) {
+                return count + diffFile.hunks.length;
+            }, 0);
+
+            return [
+                { label: 'Diff Files', value: diffFiles.length },
+                { label: 'Hunks', value: hunkCount },
+                { label: 'Annotations', value: artifact.annotations.length },
+                { label: 'Open', value: artifact.annotations.filter(function (annotation) { return annotation.status === 'open'; }).length },
+                { label: 'Exports', value: artifact.exportState && artifact.exportState.exports ? artifact.exportState.exports.length : 0 }
+            ];
+        }
+
+        return [
+            { label: 'Sections', value: (artifact.content.sections || []).length },
+            { label: 'Blocks', value: (artifact.content.blocks || []).length },
+            { label: 'Annotations', value: artifact.annotations.length },
+            { label: 'Open', value: artifact.annotations.filter(function (annotation) { return annotation.status === 'open'; }).length },
+            { label: 'Exports', value: artifact.exportState && artifact.exportState.exports ? artifact.exportState.exports.length : 0 }
+        ];
+    }
+
     function render() {
         const config = getArtifactConfig();
 
@@ -173,12 +322,9 @@
         }
 
         const sections = artifact.content.sections || [];
-        const blocks = artifact.content.blocks || [];
+        const diffFiles = artifact.content.diffFiles || [];
         const globalAnnotations = getGlobalAnnotations();
-        const exportCount = artifact.exportState && artifact.exportState.exports ? artifact.exportState.exports.length : 0;
-        const openCount = artifact.annotations.filter(function (annotation) {
-            return annotation.status === 'open';
-        }).length;
+        const statCards = buildStatCards(config);
 
         root.innerHTML = [
             '<main class="page">',
@@ -196,15 +342,13 @@
             artifact.source.uri && artifact.source.uri.indexOf('file:') === 0 ? '<button class="secondary" data-command="openSource" data-line-start="1" data-line-end="1">Open Source</button>' : '',
             '</div>',
             '</header>',
-            '<section class="stats-grid">',
-            '<article class="stat-card"><span class="stat-label">Sections</span><strong>' + escapeHtml(sections.length) + '</strong></article>',
-            '<article class="stat-card"><span class="stat-label">Blocks</span><strong>' + escapeHtml(blocks.length) + '</strong></article>',
-            '<article class="stat-card"><span class="stat-label">Annotations</span><strong>' + escapeHtml(artifact.annotations.length) + '</strong></article>',
-            '<article class="stat-card"><span class="stat-label">Open</span><strong>' + escapeHtml(openCount) + '</strong></article>',
-            '<article class="stat-card"><span class="stat-label">Exports</span><strong>' + escapeHtml(exportCount) + '</strong></article>',
-            '</section>',
+            '<section class="stats-grid">' + statCards.map(function (card) {
+                return '<article class="stat-card"><span class="stat-label">' + escapeHtml(card.label) + '</span><strong>' + escapeHtml(card.value) + '</strong></article>';
+            }).join('') + '</section>',
             globalAnnotations.length > 0 ? '<section class="global-annotations"><h2>' + escapeHtml(config.globalHeading) + '</h2><div class="annotation-list">' + globalAnnotations.map(renderAnnotation).join('') + '</div></section>' : '',
-            '<section class="sections">' + sections.map(renderSection).join('') + '</section>',
+            artifact.kind === 'localDiff'
+                ? '<section class="sections">' + diffFiles.map(renderDiffFile).join('') + '</section>'
+                : '<section class="sections">' + sections.map(renderSection).join('') + '</section>',
             '</main>'
         ].join('');
     }
@@ -229,8 +373,12 @@
             targetType: button.getAttribute('data-target-type') || undefined,
             sectionId: button.getAttribute('data-section-id') || undefined,
             blockId: button.getAttribute('data-block-id') || undefined,
+            diffFileId: button.getAttribute('data-diff-file-id') || undefined,
+            diffHunkId: button.getAttribute('data-diff-hunk-id') || undefined,
             lineStart: button.getAttribute('data-line-start') ? Number(button.getAttribute('data-line-start')) : undefined,
-            lineEnd: button.getAttribute('data-line-end') ? Number(button.getAttribute('data-line-end')) : undefined
+            lineEnd: button.getAttribute('data-line-end') ? Number(button.getAttribute('data-line-end')) : undefined,
+            sourcePath: button.getAttribute('data-source-path') || undefined,
+            sourceBasePath: button.getAttribute('data-source-base-path') || undefined
         };
 
         vscode.postMessage(message);

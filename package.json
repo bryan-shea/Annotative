@@ -201,6 +201,11 @@
         "command": "annotative.reviewLastAIResponse",
         "title": "Annotative: Review Last AI Response",
         "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "annotative.reviewLocalDiff",
+        "title": "Annotative: Review Local Diff",
+        "icon": "$(diff-multiple)"
       }
     ],
     "viewsContainers": {

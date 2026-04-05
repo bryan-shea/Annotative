@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AiResponseReviewService, AnnotationManager, MarkdownPlanReviewService, ReviewArtifactManager } from './managers';
+import { AiResponseReviewService, AnnotationManager, LocalDiffReviewService, MarkdownPlanReviewService, ReviewArtifactManager } from './managers';
 import { PlanReviewPanel, SidebarWebview } from './ui';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import {
@@ -7,6 +7,7 @@ import {
     registerAiResponseReviewCommands,
     registerExportCommands,
     registerFilterCommands,
+    registerLocalDiffReviewCommands,
     registerNavigationCommands,
     registerPlanReviewCommands,
     registerSidebarCommands,
@@ -30,6 +31,7 @@ let annotationManager: AnnotationManager;
 let sidebarWebview: SidebarWebview;
 let reviewArtifactManager: ReviewArtifactManager;
 let aiResponseReviewService: AiResponseReviewService;
+let localDiffReviewService: LocalDiffReviewService;
 let markdownPlanReviewService: MarkdownPlanReviewService;
 let planReviewPanel: PlanReviewPanel;
 
@@ -38,6 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
     annotationManager = new AnnotationManager(context);
     reviewArtifactManager = new ReviewArtifactManager();
     aiResponseReviewService = new AiResponseReviewService(reviewArtifactManager);
+    localDiffReviewService = new LocalDiffReviewService(reviewArtifactManager);
     markdownPlanReviewService = new MarkdownPlanReviewService(reviewArtifactManager);
     sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
     planReviewPanel = new PlanReviewPanel(context.extensionUri, reviewArtifactManager);
@@ -72,6 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
         sidebarWebview,
         reviewArtifactManager,
         aiResponseReviewService,
+        localDiffReviewService,
         markdownPlanReviewService,
         planReviewPanel,
         ANNOTATION_COLORS
@@ -83,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
         ...Object.values(registerAiResponseReviewCommands(context, cmdContext)),
         ...Object.values(registerExportCommands(context, cmdContext)),
         ...Object.values(registerFilterCommands(context, cmdContext)),
+        ...Object.values(registerLocalDiffReviewCommands(context, cmdContext)),
         ...Object.values(registerNavigationCommands(context, cmdContext)),
         ...Object.values(registerPlanReviewCommands(context, cmdContext)),
         ...Object.values(registerSidebarCommands(context, cmdContext)),

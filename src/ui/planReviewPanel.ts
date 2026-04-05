@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { ReviewAnnotation, ReviewAnnotationKind, ReviewAnnotationTarget, ReviewArtifact, ReviewArtifactKind } from '../types';
 import { ReviewArtifactManager, type ReviewArtifactExportAdapter } from '../managers';
@@ -11,8 +12,12 @@ interface PlanReviewPanelMessage {
     targetType?: ReviewAnnotationTarget['type'];
     sectionId?: string;
     blockId?: string;
+    diffFileId?: string;
+    diffHunkId?: string;
     lineStart?: number;
     lineEnd?: number;
+    sourcePath?: string;
+    sourceBasePath?: string;
 }
 
 interface AnnotationCategoryOption {
@@ -37,6 +42,15 @@ const AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS: AnnotationCategoryOption[] = [
     { id: 'risk', label: 'Risk', description: 'Highlight a risky recommendation or omission', kind: 'risk' },
     { id: 'question', label: 'Question', description: 'Capture a clarification question', kind: 'question' },
     { id: 'suggested_replacement', label: 'Suggested Replacement', description: 'Suggest better wording or replacement text', kind: 'maintainability' },
+];
+
+const LOCAL_DIFF_ANNOTATION_CATEGORY_OPTIONS: AnnotationCategoryOption[] = [
+    { id: 'bug_risk', label: 'Bug Risk', description: 'Highlight a risky behavior or logic change', kind: 'risk' },
+    { id: 'test_gap', label: 'Test Gap', description: 'Capture missing or weak test coverage', kind: 'testGap' },
+    { id: 'maintainability', label: 'Maintainability', description: 'Flag readability or complexity concerns', kind: 'maintainability' },
+    { id: 'security', label: 'Security', description: 'Highlight a security-sensitive change', kind: 'risk' },
+    { id: 'performance', label: 'Performance', description: 'Highlight a performance-sensitive change', kind: 'risk' },
+    { id: 'follow_up', label: 'Follow Up', description: 'Capture a deferred follow-up item', kind: 'comment' },
 ];
 
 interface ReviewArtifactUiCopy {
@@ -317,20 +331,26 @@ export class PlanReviewPanel implements vscode.Disposable {
 
     private async openSource(message: PlanReviewPanelMessage): Promise<void> {
         const artifact = await this.getRequiredArtifact();
-        if (!artifact.source.uri?.startsWith('file:')) {
+        const sourceUri = resolveSourceUri(artifact, message);
+        if (!sourceUri) {
             return;
         }
 
-        const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(artifact.source.uri));
-        const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-        const startLine = Math.max(0, (message.lineStart ?? 1) - 1);
-        const endLine = Math.min(
-            document.lineCount - 1,
-            Math.max(startLine, (message.lineEnd ?? message.lineStart ?? 1) - 1)
-        );
-        const range = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).range.end.character);
-        editor.selection = new vscode.Selection(range.start, range.end);
-        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        try {
+            const document = await vscode.workspace.openTextDocument(sourceUri);
+            const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+            const startLine = Math.max(0, (message.lineStart ?? 1) - 1);
+            const endLine = Math.min(
+                document.lineCount - 1,
+                Math.max(startLine, (message.lineEnd ?? message.lineStart ?? 1) - 1)
+            );
+            const range = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).range.end.character);
+            editor.selection = new vscode.Selection(range.start, range.end);
+            editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        } catch (error) {
+            const messageText = error instanceof Error ? error.message : String(error);
+            vscode.window.showWarningMessage(`Unable to open diff source: ${messageText}`);
+        }
     }
 
     private async refresh(): Promise<void> {
@@ -398,6 +418,8 @@ function buildTarget(message: PlanReviewPanelMessage): ReviewAnnotationTarget {
         type: message.targetType ?? 'artifact',
         sectionId: message.sectionId,
         blockId: message.blockId,
+        diffFileId: message.diffFileId,
+        diffHunkId: message.diffHunkId,
         lineStart: message.lineStart,
         lineEnd: message.lineEnd,
     };
@@ -408,7 +430,7 @@ function getAnnotationCategoryOptions(kind: ReviewArtifactKind): AnnotationCateg
         case 'aiResponse':
             return AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS;
         case 'localDiff':
-            return AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS;
+            return LOCAL_DIFF_ANNOTATION_CATEGORY_OPTIONS;
         case 'plan':
         default:
             return ANNOTATION_CATEGORY_OPTIONS;
@@ -420,7 +442,7 @@ function getUiCopy(kind: ReviewArtifactKind): ReviewArtifactUiCopy {
 }
 
 async function pickSeverity(categoryId: string): Promise<ReviewAnnotation['severity'] | null | undefined> {
-    if (categoryId === 'approve_note' || categoryId === 'global_comment') {
+    if (categoryId === 'approve_note' || categoryId === 'follow_up' || categoryId === 'global_comment') {
         return null;
     }
 
@@ -450,4 +472,22 @@ function getNonce(): string {
     }
 
     return value;
+}
+
+function resolveSourceUri(artifact: ReviewArtifact, message: PlanReviewPanelMessage): vscode.Uri | undefined {
+    if (message.sourcePath) {
+        const basePath = message.sourceBasePath
+            || (typeof artifact.source.metadata?.repositoryRoot === 'string' ? artifact.source.metadata.repositoryRoot : undefined)
+            || artifact.source.workspaceFolder;
+
+        if (basePath) {
+            return vscode.Uri.file(path.join(basePath, message.sourcePath));
+        }
+    }
+
+    if (artifact.source.uri?.startsWith('file:')) {
+        return vscode.Uri.parse(artifact.source.uri);
+    }
+
+    return undefined;
 }
