@@ -1,6 +1,7 @@
 import {
     ReviewAnnotation,
     ReviewArtifact,
+    ReviewArtifactBlock,
     ReviewArtifactDiffFile,
     ReviewArtifactDiffHunk,
     ReviewArtifactMetadata,
@@ -76,7 +77,7 @@ export class GenericMarkdownReviewArtifactExportAdapter implements ReviewArtifac
             });
 
             sections.forEach((section, index) => {
-                this.appendSection(lines, section, index + 1);
+                this.appendSection(lines, artifact, section, index + 1);
             });
         }
 
@@ -128,7 +129,7 @@ export class GenericMarkdownReviewArtifactExportAdapter implements ReviewArtifac
         return `${lines.join('\n').trimEnd()}\n`;
     }
 
-    private appendSection(lines: string[], section: ReviewArtifactSection, index: number): void {
+    private appendSection(lines: string[], artifact: ReviewArtifact, section: ReviewArtifactSection, index: number): void {
         lines.push(`### ${index}. ${section.heading || section.id}`);
         lines.push(`- Section ID: ${section.id}`);
         lines.push(`- Level: ${section.level}`);
@@ -142,6 +143,35 @@ export class GenericMarkdownReviewArtifactExportAdapter implements ReviewArtifac
         lines.push('');
         lines.push('```text');
         lines.push(section.content);
+        lines.push('```');
+
+        const sectionBlocks = (artifact.content.blocks ?? []).filter(block => block.sectionId === section.id);
+        if (sectionBlocks.length > 0) {
+            lines.push('');
+            lines.push('#### Blocks');
+            lines.push('');
+
+            sectionBlocks.forEach((block, blockIndex) => {
+                this.appendBlock(lines, block, blockIndex + 1);
+            });
+        }
+
+        lines.push('');
+    }
+
+    private appendBlock(lines: string[], block: ReviewArtifactBlock, index: number): void {
+        lines.push(`##### ${index}. ${block.kind}`);
+        lines.push(`- Block ID: ${block.id}`);
+        lines.push(`- Order: ${block.order}`);
+
+        if (typeof block.lineStart === 'number' && typeof block.lineEnd === 'number') {
+            lines.push(`- Lines: ${block.lineStart}-${block.lineEnd}`);
+        }
+
+        this.appendMetadata(lines, 'Block Metadata', block.metadata);
+        lines.push('');
+        lines.push('```text');
+        lines.push(block.content);
         lines.push('```');
         lines.push('');
     }
@@ -226,6 +256,8 @@ export class GenericMarkdownReviewArtifactExportAdapter implements ReviewArtifac
         switch (target.type) {
             case 'section':
                 return target.sectionId ? `section:${target.sectionId}` : 'section';
+            case 'block':
+                return target.blockId ? `block:${target.blockId}` : 'block';
             case 'diffFile':
                 return target.diffFileId ? `diffFile:${target.diffFileId}` : 'diffFile';
             case 'diffHunk':

@@ -110,4 +110,56 @@ suite('ReviewArtifactExportService', () => {
             ].join('\n')
         );
     });
+
+    test('includes parsed plan blocks and block targets in exported markdown', async () => {
+        const artifact = createReviewArtifact({
+            id: 'plan-export-blocks',
+            title: 'Review Blocked Plan',
+            content: {
+                rawText: '# Review Blocked Plan',
+                metadata: { sectionCount: 1, blockCount: 1 },
+                sections: [
+                    {
+                        id: 'steps',
+                        heading: 'Steps',
+                        level: 2,
+                        order: 1,
+                        content: '1. Add command wiring.',
+                        lineStart: 3,
+                        lineEnd: 4,
+                    },
+                ],
+                blocks: [
+                    {
+                        id: 'steps-block-1',
+                        sectionId: 'steps',
+                        kind: 'list',
+                        order: 1,
+                        content: '1. Add command wiring.',
+                        lineStart: 4,
+                        lineEnd: 4,
+                    },
+                ],
+            },
+            annotations: [
+                createReviewAnnotation({
+                    id: 'annotation-block',
+                    target: { type: 'block', blockId: 'steps-block-1' },
+                    body: 'Split command wiring and panel activation into separate steps.',
+                    metadata: { category: 'missing_step' },
+                }),
+            ],
+        });
+        const service = new ReviewArtifactExportService([
+            new GenericMarkdownReviewArtifactExportAdapter(),
+        ]);
+
+        const exported = await service.exportArtifact(artifact);
+
+        assert.ok(exported.content.includes('#### Blocks'));
+        assert.ok(exported.content.includes('##### 1. list'));
+        assert.ok(exported.content.includes('- Block ID: steps-block-1'));
+        assert.ok(exported.content.includes('- Target: block:steps-block-1'));
+        assert.ok(exported.content.includes('- category: missing_step'));
+    });
 });

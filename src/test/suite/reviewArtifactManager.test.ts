@@ -57,4 +57,46 @@ suite('ReviewArtifactManager', () => {
         assert.ok(exported.content.includes('# Review Artifact: Review Payment Form Response'));
         assert.ok(exported.content.includes('Risky recommendation: skip manager tests for now'));
     });
+
+    test('adds, updates, removes, and records plan review annotations', async () => {
+        const planText = await readReviewArtifactFixture('plan-basic.md');
+        const manager = new ReviewArtifactManager({
+            clock: () => new Date('2026-04-05T11:45:00.000Z'),
+            createId: () => 'plan-manager-fixture',
+        });
+
+        await manager.createAndSaveArtifact({
+            kind: 'plan',
+            title: 'Review Plan Manager Flow',
+            source: {
+                type: 'manualPaste',
+                workspaceFolder: getWorkspaceRoot(),
+            },
+            content: {
+                rawText: planText,
+            },
+        });
+
+        await manager.addAnnotation('plan-manager-fixture', {
+            kind: 'requestChange',
+            target: { type: 'section', sectionId: 'goal' },
+            body: 'Clarify the migration safety constraints.',
+            metadata: { category: 'request_change' },
+        });
+        await manager.updateAnnotation('plan-manager-fixture', 'requestChange-section-goal-20260405114500000', {
+            body: 'Clarify the migration safety constraints before coding.',
+        });
+        await manager.recordExport('plan-manager-fixture', {
+            adapterId: 'genericMarkdown',
+            target: 'clipboard',
+        });
+        await manager.removeAnnotation('plan-manager-fixture', 'requestChange-section-goal-20260405114500000');
+
+        const stored = await manager.getArtifact('plan-manager-fixture');
+
+        assert.ok(stored, 'Expected the saved artifact to be reloadable.');
+        assert.strictEqual(stored?.annotations.length, 0);
+        assert.strictEqual(stored?.exportState?.lastExportedAt, '2026-04-05T11:45:00.000Z');
+        assert.strictEqual(stored?.exportState?.exports?.length, 1);
+    });
 });
