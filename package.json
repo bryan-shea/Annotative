@@ -212,7 +212,7 @@
       "activitybar": [
         {
           "id": "annotative",
-          "title": "Annotations",
+          "title": "[Annotative]",
           "icon": "$(selection)"
         }
       ]
@@ -221,9 +221,10 @@
       "annotative": [
         {
           "id": "annotativeView",
-          "name": "Annotations",
+          "name": "[Annotative]",
           "type": "webview",
-          "when": "true"
+          "when": "true",
+		  "icon": "$(selection)"
         }
       ]
     },
@@ -247,26 +248,6 @@
           "group": "navigation@1"
         },
         {
-          "command": "annotative.filterByStatus",
-          "when": "view == annotativeView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "annotative.filterByTag",
-          "when": "view == annotativeView",
-          "group": "navigation@3"
-        },
-        {
-          "command": "annotative.searchAnnotations",
-          "when": "view == annotativeView",
-          "group": "navigation@4"
-        },
-        {
-          "command": "annotative.clearFilters",
-          "when": "view == annotativeView",
-          "group": "1_filters@1"
-        },
-        {
           "command": "annotative.exportAnnotations",
           "when": "view == annotativeView",
           "group": "2_export@1"
@@ -277,24 +258,9 @@
           "group": "2_export@2"
         },
         {
-          "command": "annotative.exportForAI",
-          "when": "view == annotativeView",
-          "group": "2_export@3"
-        },
-        {
           "command": "annotative.batchAIReview",
           "when": "view == annotativeView",
-          "group": "2_export@4"
-        },
-        {
-          "command": "annotative.resolveAll",
-          "when": "view == annotativeView",
-          "group": "3_bulk@1"
-        },
-        {
-          "command": "annotative.deleteResolved",
-          "when": "view == annotativeView",
-          "group": "3_bulk@2"
+          "group": "2_export@3"
         },
         {
           "command": "annotative.deleteAll",

@@ -36,28 +36,89 @@ export function generateWebviewHtml(options: HtmlBuilderOptions): string {
         <main class="app-content">
             <!-- Controls Section -->
             <section class="controls-section">
-                <!-- Filter Row -->
-                <div class="filter-row">
-                    <select id="filter-status" class="filter-select" title="Filter by status">
-                        <option value="all">All Status</option>
-                        <option value="unresolved">Unresolved</option>
-                        <option value="resolved">Resolved</option>
+                <div class="workflow-row">
+                    <select id="workflow-select" class="filter-select" title="Choose a workflow action" aria-label="Choose a workflow action">
+                        <option value="">Open workflow...</option>
+                        <option value="reviewMarkdownPlan">Review Plan</option>
+                        <option value="reviewLastAIResponse">Review AI Response</option>
+                        <option value="reviewLocalDiff">Review Local Diff</option>
+                        <option value="exportForAI">Export for AI</option>
+                        <option value="showAnnotativeCommands">Annotative Commands</option>
                     </select>
-                    <select id="filter-tag" class="filter-select" title="Filter by tag">
-                        <option value="all">All Tags</option>
-                    </select>
+                    <button
+                        id="btn-run-workflow"
+                        class="action-button compact-action-button"
+                        type="button"
+                        title="Run the selected workflow"
+                        disabled
+                    >
+                        <i class="codicon codicon-run-all"></i>
+                        <span class="action-label">Open</span>
+                    </button>
                 </div>
 
-                <!-- Group By Row -->
-                <div class="groupby-row">
-                    <label for="groupby-select" class="groupby-label">Group by:</label>
-                    <select id="groupby-select" class="filter-select" title="Group annotations">
-                        <option value="file">File</option>
-                        <option value="tag">Tag</option>
-                        <option value="status">Status</option>
-                        <option value="folder">Folder</option>
-                    </select>
+                <div class="search-row">
+                    <input
+                        id="filter-search"
+                        class="filter-input"
+                        type="search"
+                        placeholder="Search annotations"
+                        title="Search annotations"
+                        aria-label="Search annotations"
+                    >
+                    <button
+                        id="btn-clear-search"
+                        class="icon-button inline-control-button"
+                        type="button"
+                        title="Clear search"
+                        aria-label="Clear search"
+                    >
+                        <i class="codicon codicon-close"></i>
+                    </button>
                 </div>
+
+                <details class="control-panel">
+                    <summary class="control-summary">
+                        <span class="control-summary-title">Filters and Grouping</span>
+                        <span class="control-summary-hint">Status, tags, layout</span>
+                    </summary>
+                    <div class="control-panel-body">
+                        <!-- Filter Row -->
+                        <div class="filter-row">
+                            <select id="filter-status" class="filter-select" title="Filter by status">
+                                <option value="all">All Status</option>
+                                <option value="unresolved">Unresolved</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                            <select id="filter-tag" class="filter-select" title="Filter by tag">
+                                <option value="all">All Tags</option>
+                            </select>
+                        </div>
+
+                        <!-- Group By Row -->
+                        <div class="groupby-row">
+                            <label for="groupby-select" class="groupby-label">Group by:</label>
+                            <select id="groupby-select" class="filter-select" title="Group annotations">
+                                <option value="file">File</option>
+                                <option value="tag">Tag</option>
+                                <option value="status">Status</option>
+                                <option value="folder">Folder</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button
+                                id="btn-reset-filters"
+                                class="action-button compact-action-button secondary-action-button"
+                                type="button"
+                                title="Reset search, filters, and grouping"
+                            >
+                                <i class="codicon codicon-clear-all"></i>
+                                <span class="action-label">Reset Filters</span>
+                            </button>
+                        </div>
+                    </div>
+                </details>
             </section>
 
             <!-- Annotations List -->
