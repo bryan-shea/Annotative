@@ -1,0 +1,368 @@
+import * as vscode from 'vscode';
+import { ReviewAnnotation, ReviewAnnotationKind, ReviewAnnotationTarget, ReviewArtifact } from '../types';
+import { ReviewArtifactManager } from '../managers';
+
+type ExportTarget = 'clipboard' | 'document';
+
+interface PlanReviewPanelMessage {
+    command: 'refresh' | 'openSource' | 'addAnnotation' | 'editAnnotation' | 'toggleAnnotationStatus' | 'deleteAnnotation' | 'exportArtifact';
+    annotationId?: string;
+    exportTarget?: ExportTarget;
+    targetType?: ReviewAnnotationTarget['type'];
+    sectionId?: string;
+    blockId?: string;
+    lineStart?: number;
+    lineEnd?: number;
+}
+
+interface AnnotationCategoryOption {
+    id: string;
+    label: string;
+    description: string;
+    kind: ReviewAnnotationKind;
+}
+
+const ANNOTATION_CATEGORY_OPTIONS: AnnotationCategoryOption[] = [
+    { id: 'approve_note', label: 'Approve Note', description: 'Record what is already acceptable', kind: 'comment' },
+    { id: 'request_change', label: 'Request Change', description: 'Call out a required change', kind: 'requestChange' },
+    { id: 'missing_step', label: 'Missing Step', description: 'Capture a missing plan step', kind: 'issue' },
+    { id: 'risk', label: 'Risk', description: 'Highlight a delivery or design risk', kind: 'risk' },
+    { id: 'replacement', label: 'Replacement', description: 'Suggest a better replacement approach', kind: 'maintainability' },
+    { id: 'global_comment', label: 'Global Comment', description: 'Capture artifact-level feedback', kind: 'comment' },
+];
+
+export class PlanReviewPanel implements vscode.Disposable {
+    private panel: vscode.WebviewPanel | undefined;
+    private currentArtifactId: string | undefined;
+    private readonly disposables: vscode.Disposable[] = [];
+
+    constructor(
+        private readonly extensionUri: vscode.Uri,
+        private readonly reviewArtifactManager: ReviewArtifactManager
+    ) {}
+
+    async showArtifact(artifactId: string): Promise<void> {
+        this.currentArtifactId = artifactId;
+
+        if (!this.panel) {
+            this.panel = vscode.window.createWebviewPanel(
+                'annotative.planReview',
+                'Plan Review',
+                vscode.ViewColumn.Beside,
+                {
+                    enableScripts: true,
+                    retainContextWhenHidden: true,
+                    localResourceRoots: [
+                        vscode.Uri.joinPath(this.extensionUri, 'dist', 'media'),
+                        vscode.Uri.joinPath(this.extensionUri, 'media'),
+                    ],
+                }
+            );
+
+            this.panel.iconPath = vscode.Uri.joinPath(this.extensionUri, 'images', 'icon.png');
+            this.panel.onDidDispose(() => {
+                this.panel = undefined;
+                this.currentArtifactId = undefined;
+            }, null, this.disposables);
+
+            this.panel.webview.onDidReceiveMessage(
+                async (message: PlanReviewPanelMessage) => {
+                    await this.handleMessage(message);
+                },
+                null,
+                this.disposables
+            );
+        } else {
+            this.panel.reveal(vscode.ViewColumn.Beside);
+        }
+
+        const artifact = await this.getRequiredArtifact();
+        this.panel.title = `Plan Review: ${artifact.title}`;
+        this.panel.webview.html = this.renderHtml(this.panel.webview, artifact);
+    }
+
+    dispose(): void {
+        this.panel?.dispose();
+        while (this.disposables.length > 0) {
+            this.disposables.pop()?.dispose();
+        }
+    }
+
+    private async handleMessage(message: PlanReviewPanelMessage): Promise<void> {
+        switch (message.command) {
+            case 'refresh':
+                await this.refresh();
+                return;
+            case 'openSource':
+                await this.openSource(message);
+                return;
+            case 'addAnnotation':
+                await this.addAnnotation(message);
+                return;
+            case 'editAnnotation':
+                if (message.annotationId) {
+                    await this.editAnnotation(message.annotationId);
+                }
+                return;
+            case 'toggleAnnotationStatus':
+                if (message.annotationId) {
+                    await this.reviewArtifactManager.toggleAnnotationStatus(this.requireArtifactId(), message.annotationId);
+                    await this.refresh();
+                }
+                return;
+            case 'deleteAnnotation':
+                if (message.annotationId) {
+                    await this.deleteAnnotation(message.annotationId);
+                }
+                return;
+            case 'exportArtifact':
+                await this.exportArtifact(message.exportTarget ?? 'clipboard');
+                return;
+        }
+    }
+
+    private async addAnnotation(message: PlanReviewPanelMessage): Promise<void> {
+        const artifact = await this.getRequiredArtifact();
+        const category = await vscode.window.showQuickPick(
+            ANNOTATION_CATEGORY_OPTIONS.map(option => ({
+                label: option.label,
+                description: option.description,
+                option,
+            })),
+            { placeHolder: 'Select a review annotation category' }
+        );
+
+        if (!category) {
+            return;
+        }
+
+        const body = await vscode.window.showInputBox({
+            prompt: `Enter ${category.option.label.toLowerCase()} details`,
+            placeHolder: 'Add review feedback',
+            validateInput: value => value.trim().length === 0 ? 'Feedback cannot be empty' : undefined,
+        });
+
+        if (body === undefined) {
+            return;
+        }
+
+        const severity = await pickSeverity(category.option.id);
+        if (severity === undefined) {
+            return;
+        }
+
+        const suggestedReplacement = category.option.id === 'replacement'
+            ? await vscode.window.showInputBox({
+                prompt: 'Suggested replacement text',
+                placeHolder: 'Optional replacement detail',
+            })
+            : undefined;
+
+        await this.reviewArtifactManager.addAnnotation(artifact.id, {
+            kind: category.option.kind,
+            severity: severity ?? undefined,
+            target: buildTarget(message),
+            body,
+            suggestedReplacement,
+            metadata: {
+                category: category.option.id,
+            },
+        });
+
+        await this.refresh();
+    }
+
+    private async editAnnotation(annotationId: string): Promise<void> {
+        const artifact = await this.getRequiredArtifact();
+        const annotation = artifact.annotations.find(item => item.id === annotationId);
+        if (!annotation) {
+            return;
+        }
+
+        const body = await vscode.window.showInputBox({
+            prompt: 'Edit review annotation',
+            value: annotation.body,
+            validateInput: value => value.trim().length === 0 ? 'Feedback cannot be empty' : undefined,
+        });
+
+        if (body === undefined) {
+            return;
+        }
+
+        const suggestedReplacement = annotation.suggestedReplacement !== undefined
+            ? await vscode.window.showInputBox({
+                prompt: 'Edit suggested replacement',
+                value: annotation.suggestedReplacement,
+            })
+            : annotation.metadata?.category === 'replacement'
+                ? await vscode.window.showInputBox({
+                    prompt: 'Suggested replacement text',
+                    placeHolder: 'Optional replacement detail',
+                })
+                : undefined;
+
+        await this.reviewArtifactManager.updateAnnotation(artifact.id, annotation.id, {
+            body,
+            suggestedReplacement,
+        });
+
+        await this.refresh();
+    }
+
+    private async deleteAnnotation(annotationId: string): Promise<void> {
+        const confirmation = await vscode.window.showWarningMessage(
+            'Remove this review annotation?',
+            { modal: false },
+            'Remove'
+        );
+
+        if (confirmation !== 'Remove') {
+            return;
+        }
+
+        await this.reviewArtifactManager.removeAnnotation(this.requireArtifactId(), annotationId);
+        await this.refresh();
+    }
+
+    private async exportArtifact(target: ExportTarget): Promise<void> {
+        const artifact = await this.getRequiredArtifact();
+        const exported = await this.reviewArtifactManager.exportArtifact(artifact);
+
+        if (target === 'clipboard') {
+            await vscode.env.clipboard.writeText(exported.content);
+            vscode.window.showInformationMessage('Plan review exported to clipboard.');
+        } else {
+            const document = await vscode.workspace.openTextDocument({
+                content: exported.content,
+                language: exported.language,
+            });
+            await vscode.window.showTextDocument(document, vscode.ViewColumn.Beside);
+        }
+
+        await this.reviewArtifactManager.recordExport(artifact.id, {
+            adapterId: exported.adapterId,
+            target,
+        });
+
+        await this.refresh();
+    }
+
+    private async openSource(message: PlanReviewPanelMessage): Promise<void> {
+        const artifact = await this.getRequiredArtifact();
+        if (!artifact.source.uri?.startsWith('file:')) {
+            return;
+        }
+
+        const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(artifact.source.uri));
+        const editor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+        const startLine = Math.max(0, (message.lineStart ?? 1) - 1);
+        const endLine = Math.min(
+            document.lineCount - 1,
+            Math.max(startLine, (message.lineEnd ?? message.lineStart ?? 1) - 1)
+        );
+        const range = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).range.end.character);
+        editor.selection = new vscode.Selection(range.start, range.end);
+        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+    }
+
+    private async refresh(): Promise<void> {
+        if (!this.panel) {
+            return;
+        }
+
+        const artifact = await this.getRequiredArtifact();
+        this.panel.title = `Plan Review: ${artifact.title}`;
+        await this.panel.webview.postMessage({
+            command: 'updateArtifact',
+            artifact,
+        });
+    }
+
+    private async getRequiredArtifact(): Promise<ReviewArtifact> {
+        const artifactId = this.requireArtifactId();
+        const artifact = await this.reviewArtifactManager.getArtifact(artifactId);
+        if (!artifact) {
+            throw new Error(`Review artifact not found: ${artifactId}`);
+        }
+
+        return artifact;
+    }
+
+    private requireArtifactId(): string {
+        if (!this.currentArtifactId) {
+            throw new Error('No plan review artifact is currently open.');
+        }
+
+        return this.currentArtifactId;
+    }
+
+    private getWebviewUri(webview: vscode.Webview, fileName: string): vscode.Uri {
+        return webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'dist', 'media', fileName));
+    }
+
+    private renderHtml(webview: vscode.Webview, artifact: ReviewArtifact): string {
+        const nonce = getNonce();
+        const cssUri = this.getWebviewUri(webview, 'plan-review-webview.css');
+        const jsUri = this.getWebviewUri(webview, 'plan-review-webview.js');
+        const initialState = JSON.stringify(artifact).replace(/</g, '\\u003c');
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+    <link rel="stylesheet" href="${cssUri}">
+    <title>Plan Review</title>
+</head>
+<body>
+    <div id="plan-review-root"></div>
+    <script nonce="${nonce}" id="plan-review-state" type="application/json">${initialState}</script>
+    <script nonce="${nonce}" src="${jsUri}"></script>
+</body>
+</html>`;
+    }
+}
+
+function buildTarget(message: PlanReviewPanelMessage): ReviewAnnotationTarget {
+    return {
+        type: message.targetType ?? 'artifact',
+        sectionId: message.sectionId,
+        blockId: message.blockId,
+        lineStart: message.lineStart,
+        lineEnd: message.lineEnd,
+    };
+}
+
+async function pickSeverity(categoryId: string): Promise<ReviewAnnotation['severity'] | null | undefined> {
+    if (categoryId === 'approve_note' || categoryId === 'global_comment') {
+        return null;
+    }
+
+    const selected = await vscode.window.showQuickPick([
+        { label: 'No severity', value: '' },
+        { label: 'Low', value: 'low' },
+        { label: 'Medium', value: 'medium' },
+        { label: 'High', value: 'high' },
+        { label: 'Critical', value: 'critical' },
+    ], {
+        placeHolder: 'Select an optional severity',
+    });
+
+    if (!selected) {
+        return undefined;
+    }
+
+    return selected.value.length > 0 ? selected.value as ReviewAnnotation['severity'] : null;
+}
+
+function getNonce(): string {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let value = '';
+
+    for (let index = 0; index < 32; index += 1) {
+        value += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+
+    return value;
+}

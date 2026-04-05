@@ -147,9 +147,10 @@ export type ReviewArtifactKind = 'plan' | 'aiResponse' | 'localDiff';
 export type ReviewArtifactSourceType = 'markdownFile' | 'chatResponse' | 'gitDiff' | 'manualPaste';
 export type ReviewAnnotationKind = 'comment' | 'issue' | 'requestChange' | 'question' | 'risk' | 'testGap' | 'maintainability';
 export type ReviewAnnotationStatus = 'open' | 'resolved';
-export type ReviewAnnotationTargetType = 'artifact' | 'section' | 'diffFile' | 'diffHunk' | 'lineRange';
+export type ReviewAnnotationTargetType = 'artifact' | 'section' | 'block' | 'diffFile' | 'diffHunk' | 'lineRange';
 export type ReviewArtifactDiffFileStatus = 'added' | 'modified' | 'deleted' | 'renamed' | 'copied' | 'unknown';
 export type ReviewArtifactDiffLineType = 'context' | 'add' | 'delete';
+export type ReviewArtifactBlockKind = 'paragraph' | 'list' | 'code' | 'quote' | 'table' | 'other';
 export type ReviewArtifactMetadataValue = string | number | boolean | null;
 export type ReviewArtifactMetadata = Record<string, ReviewArtifactMetadataValue>;
 
@@ -165,6 +166,17 @@ export interface ReviewArtifactSection {
     id: string;
     heading?: string;
     level: number;
+    order: number;
+    content: string;
+    lineStart?: number;
+    lineEnd?: number;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewArtifactBlock {
+    id: string;
+    sectionId?: string;
+    kind: ReviewArtifactBlockKind;
     order: number;
     content: string;
     lineStart?: number;
@@ -201,6 +213,7 @@ export interface ReviewArtifactDiffFile {
 export interface ReviewArtifactContent {
     rawText: string;
     sections?: ReviewArtifactSection[];
+    blocks?: ReviewArtifactBlock[];
     diffFiles?: ReviewArtifactDiffFile[];
     metadata?: ReviewArtifactMetadata;
 }
@@ -208,6 +221,7 @@ export interface ReviewArtifactContent {
 export interface ReviewAnnotationTarget {
     type: ReviewAnnotationTargetType;
     sectionId?: string;
+    blockId?: string;
     diffFileId?: string;
     diffHunkId?: string;
     lineStart?: number;

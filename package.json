@@ -191,6 +191,11 @@
         "command": "annotative.listTags",
         "title": "List Tags",
         "icon": "$(list-unordered)"
+      },
+      {
+        "command": "annotative.reviewMarkdownPlan",
+        "title": "Annotative: Review Markdown Plan",
+        "icon": "$(note)"
       }
     ],
     "viewsContainers": {
