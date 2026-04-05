@@ -275,4 +275,58 @@ suite('PlanReviewPanel', () => {
 
         panel.dispose();
     });
+
+    test('reuses the shared review panel for AI response artifacts', async () => {
+        const panelInstance = new FakePanel();
+        const artifact = createReviewArtifact({
+            id: 'ai-response-panel',
+            kind: 'aiResponse',
+            title: 'Shared AI Response Review',
+            source: {
+                type: 'manualPaste',
+                workspaceFolder: getWorkspaceRoot(),
+                metadata: { sourceMode: 'clipboard' },
+            },
+            content: {
+                rawText: 'Summarize the migration risks.\n\n1. Keep storage atomic.',
+                sections: [
+                    {
+                        id: 'overview',
+                        heading: 'Overview',
+                        level: 0,
+                        order: 1,
+                        content: 'Summarize the migration risks.\n\n1. Keep storage atomic.',
+                        lineStart: 1,
+                        lineEnd: 3,
+                    },
+                ],
+                blocks: [
+                    {
+                        id: 'overview-block-1',
+                        sectionId: 'overview',
+                        kind: 'paragraph',
+                        order: 1,
+                        content: 'Summarize the migration risks.',
+                        lineStart: 1,
+                        lineEnd: 1,
+                    },
+                ],
+            },
+            annotations: [],
+        });
+
+        (vscode.window as unknown as { createWebviewPanel: typeof vscode.window.createWebviewPanel }).createWebviewPanel =
+            (() => panelInstance as unknown as vscode.WebviewPanel);
+
+        const panel = new PlanReviewPanel(vscode.Uri.file(getWorkspaceRoot()), {
+            getArtifact: async () => artifact,
+        } as never);
+
+        await panel.showArtifact('ai-response-panel');
+
+        assert.strictEqual(panelInstance.title, 'AI Response Review: Shared AI Response Review');
+        assert.ok(panelInstance.webview.html.includes('plan-review-webview.js'));
+
+        panel.dispose();
+    });
 });

@@ -11,8 +11,13 @@ export { AnnotationStorageManager } from './annotationStorage';
 export { AnnotationExporter } from './annotationExporter';
 export { ReviewArtifactManager, REVIEW_ARTIFACT_MODEL_VERSION, type CreateReviewArtifactInput } from './reviewArtifactManager';
 export {
+	AiResponseReviewService,
+	type CreateAiResponseArtifactInput,
+} from './aiResponseReviewService';
+export {
 	MarkdownPlanReviewService,
 	parseMarkdownPlan,
+	parseStructuredMarkdownContent,
 	type CreateMarkdownPlanArtifactInput,
 	type ParsedMarkdownPlan,
 } from './markdownPlanReviewService';

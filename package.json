@@ -196,6 +196,11 @@
         "command": "annotative.reviewMarkdownPlan",
         "title": "Annotative: Review Markdown Plan",
         "icon": "$(note)"
+      },
+      {
+        "command": "annotative.reviewLastAIResponse",
+        "title": "Annotative: Review Last AI Response",
+        "icon": "$(comment-discussion)"
       }
     ],
     "viewsContainers": {

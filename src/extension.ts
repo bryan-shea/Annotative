@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { AnnotationManager, MarkdownPlanReviewService, ReviewArtifactManager } from './managers';
+import { AiResponseReviewService, AnnotationManager, MarkdownPlanReviewService, ReviewArtifactManager } from './managers';
 import { PlanReviewPanel, SidebarWebview } from './ui';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import {
     registerAnnotationCommands,
+    registerAiResponseReviewCommands,
     registerExportCommands,
     registerFilterCommands,
     registerNavigationCommands,
@@ -28,6 +29,7 @@ const ANNOTATION_COLORS = [
 let annotationManager: AnnotationManager;
 let sidebarWebview: SidebarWebview;
 let reviewArtifactManager: ReviewArtifactManager;
+let aiResponseReviewService: AiResponseReviewService;
 let markdownPlanReviewService: MarkdownPlanReviewService;
 let planReviewPanel: PlanReviewPanel;
 
@@ -35,6 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize core managers
     annotationManager = new AnnotationManager(context);
     reviewArtifactManager = new ReviewArtifactManager();
+    aiResponseReviewService = new AiResponseReviewService(reviewArtifactManager);
     markdownPlanReviewService = new MarkdownPlanReviewService(reviewArtifactManager);
     sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
     planReviewPanel = new PlanReviewPanel(context.extensionUri, reviewArtifactManager);
@@ -68,6 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
         annotationManager,
         sidebarWebview,
         reviewArtifactManager,
+        aiResponseReviewService,
         markdownPlanReviewService,
         planReviewPanel,
         ANNOTATION_COLORS
@@ -76,6 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register all command modules
     context.subscriptions.push(
         ...Object.values(registerAnnotationCommands(context, cmdContext)),
+        ...Object.values(registerAiResponseReviewCommands(context, cmdContext)),
         ...Object.values(registerExportCommands(context, cmdContext)),
         ...Object.values(registerFilterCommands(context, cmdContext)),
         ...Object.values(registerNavigationCommands(context, cmdContext)),

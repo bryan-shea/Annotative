@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ReviewAnnotation, ReviewAnnotationKind, ReviewAnnotationTarget, ReviewArtifact } from '../types';
+import { ReviewAnnotation, ReviewAnnotationKind, ReviewAnnotationTarget, ReviewArtifact, ReviewArtifactKind } from '../types';
 import { ReviewArtifactManager, type ReviewArtifactExportAdapter } from '../managers';
 
 type ExportTarget = 'clipboard' | 'document';
@@ -30,6 +30,38 @@ const ANNOTATION_CATEGORY_OPTIONS: AnnotationCategoryOption[] = [
     { id: 'replacement', label: 'Replacement', description: 'Suggest a better replacement approach', kind: 'maintainability' },
     { id: 'global_comment', label: 'Global Comment', description: 'Capture artifact-level feedback', kind: 'comment' },
 ];
+
+const AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS: AnnotationCategoryOption[] = [
+    { id: 'comment', label: 'Comment', description: 'Capture a review note about the response', kind: 'comment' },
+    { id: 'request_change', label: 'Request Change', description: 'Call out a required revision', kind: 'requestChange' },
+    { id: 'risk', label: 'Risk', description: 'Highlight a risky recommendation or omission', kind: 'risk' },
+    { id: 'question', label: 'Question', description: 'Capture a clarification question', kind: 'question' },
+    { id: 'suggested_replacement', label: 'Suggested Replacement', description: 'Suggest better wording or replacement text', kind: 'maintainability' },
+];
+
+interface ReviewArtifactUiCopy {
+    panelTitle: string;
+    pageTitle: string;
+    exportLabel: string;
+}
+
+const REVIEW_ARTIFACT_UI_COPY: Record<ReviewArtifactKind, ReviewArtifactUiCopy> = {
+    plan: {
+        panelTitle: 'Plan Review',
+        pageTitle: 'Plan Review',
+        exportLabel: 'plan review',
+    },
+    aiResponse: {
+        panelTitle: 'AI Response Review',
+        pageTitle: 'AI Response Review',
+        exportLabel: 'AI response review',
+    },
+    localDiff: {
+        panelTitle: 'Local Diff Review',
+        pageTitle: 'Local Diff Review',
+        exportLabel: 'local diff review',
+    },
+};
 
 export class PlanReviewPanel implements vscode.Disposable {
     private panel: vscode.WebviewPanel | undefined;
@@ -77,7 +109,7 @@ export class PlanReviewPanel implements vscode.Disposable {
         }
 
         const artifact = await this.getRequiredArtifact();
-        this.panel.title = `Plan Review: ${artifact.title}`;
+        this.panel.title = `${getUiCopy(artifact.kind).panelTitle}: ${artifact.title}`;
         this.panel.webview.html = this.renderHtml(this.panel.webview, artifact);
     }
 
@@ -124,7 +156,7 @@ export class PlanReviewPanel implements vscode.Disposable {
     private async addAnnotation(message: PlanReviewPanelMessage): Promise<void> {
         const artifact = await this.getRequiredArtifact();
         const category = await vscode.window.showQuickPick(
-            ANNOTATION_CATEGORY_OPTIONS.map(option => ({
+            getAnnotationCategoryOptions(artifact.kind).map(option => ({
                 label: option.label,
                 description: option.description,
                 option,
@@ -235,7 +267,7 @@ export class PlanReviewPanel implements vscode.Disposable {
 
         if (target === 'clipboard') {
             await vscode.env.clipboard.writeText(exported.content);
-            vscode.window.showInformationMessage(`Plan review exported to clipboard as ${adapter.label}.`);
+            vscode.window.showInformationMessage(`${getUiCopy(artifact.kind).panelTitle} exported to clipboard as ${adapter.label}.`);
         } else {
             const document = await vscode.workspace.openTextDocument({
                 content: exported.content,
@@ -276,7 +308,7 @@ export class PlanReviewPanel implements vscode.Disposable {
                 adapter,
             })),
             {
-                placeHolder: 'Choose a plan review export format',
+                placeHolder: `Choose an export format for this ${getUiCopy(artifact.kind).exportLabel}`,
             }
         );
 
@@ -307,7 +339,7 @@ export class PlanReviewPanel implements vscode.Disposable {
         }
 
         const artifact = await this.getRequiredArtifact();
-        this.panel.title = `Plan Review: ${artifact.title}`;
+        this.panel.title = `${getUiCopy(artifact.kind).panelTitle}: ${artifact.title}`;
         await this.panel.webview.postMessage({
             command: 'updateArtifact',
             artifact,
@@ -326,7 +358,7 @@ export class PlanReviewPanel implements vscode.Disposable {
 
     private requireArtifactId(): string {
         if (!this.currentArtifactId) {
-            throw new Error('No plan review artifact is currently open.');
+            throw new Error('No review artifact is currently open.');
         }
 
         return this.currentArtifactId;
@@ -341,6 +373,7 @@ export class PlanReviewPanel implements vscode.Disposable {
         const cssUri = this.getWebviewUri(webview, 'plan-review-webview.css');
         const jsUri = this.getWebviewUri(webview, 'plan-review-webview.js');
         const initialState = JSON.stringify(artifact).replace(/</g, '\\u003c');
+        const uiCopy = getUiCopy(artifact.kind);
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -349,7 +382,7 @@ export class PlanReviewPanel implements vscode.Disposable {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
     <link rel="stylesheet" href="${cssUri}">
-    <title>Plan Review</title>
+    <title>${uiCopy.pageTitle}</title>
 </head>
 <body>
     <div id="plan-review-root"></div>
@@ -368,6 +401,22 @@ function buildTarget(message: PlanReviewPanelMessage): ReviewAnnotationTarget {
         lineStart: message.lineStart,
         lineEnd: message.lineEnd,
     };
+}
+
+function getAnnotationCategoryOptions(kind: ReviewArtifactKind): AnnotationCategoryOption[] {
+    switch (kind) {
+        case 'aiResponse':
+            return AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS;
+        case 'localDiff':
+            return AI_RESPONSE_ANNOTATION_CATEGORY_OPTIONS;
+        case 'plan':
+        default:
+            return ANNOTATION_CATEGORY_OPTIONS;
+    }
+}
+
+function getUiCopy(kind: ReviewArtifactKind): ReviewArtifactUiCopy {
+    return REVIEW_ARTIFACT_UI_COPY[kind];
 }
 
 async function pickSeverity(categoryId: string): Promise<ReviewAnnotation['severity'] | null | undefined> {

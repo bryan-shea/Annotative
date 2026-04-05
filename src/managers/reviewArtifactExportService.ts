@@ -585,7 +585,11 @@ function groupAnnotationsForCopilot(annotations: ReviewAnnotation[]): CopilotAnn
 }
 
 function isRequestedChange(annotation: ReviewAnnotation): boolean {
-    return annotation.kind === 'requestChange' || annotation.kind === 'maintainability' || annotation.metadata?.category === 'request_change';
+    return annotation.kind === 'requestChange'
+        || annotation.kind === 'maintainability'
+        || annotation.metadata?.category === 'request_change'
+        || annotation.metadata?.category === 'replacement'
+        || annotation.metadata?.category === 'suggested_replacement';
 }
 
 function isMissingStep(annotation: ReviewAnnotation): boolean {
@@ -627,6 +631,10 @@ function buildCopilotNextSteps(
 }
 
 function formatAnnotationLabel(annotation: ReviewAnnotation): string {
+    if (annotation.metadata?.category === 'replacement' || annotation.metadata?.category === 'suggested_replacement') {
+        return 'Suggested Replacement';
+    }
+
     switch (annotation.kind) {
         case 'requestChange':
             return 'Request Change';
