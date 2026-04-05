@@ -1,8 +1,8 @@
 {
   "name": "annotative",
   "displayName": "Annotative",
-  "description": "Code annotation and review workflows. Add comments to code selections, organize with custom tags, and export as Markdown.",
-  "version": "3.0.2",
+  "description": "Persistent AI review workflows for VS Code. Review markdown plans, AI responses, and local diffs with structured annotations and exportable feedback.",
+  "version": "3.1.0",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/annotative-logo/128px/annotative-logo.png",
@@ -224,7 +224,7 @@
           "name": "[Annotative]",
           "type": "webview",
           "when": "true",
-		  "icon": "$(selection)"
+          "icon": "$(selection)"
         }
       ]
     },
