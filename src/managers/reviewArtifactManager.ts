@@ -11,7 +11,7 @@ import {
     ReviewExportState,
     TagPriority,
 } from '../types';
-import { ReviewArtifactExportResult, ReviewArtifactExportService } from './reviewArtifactExportService';
+import { ReviewArtifactExportAdapter, ReviewArtifactExportResult, ReviewArtifactExportService } from './reviewArtifactExportService';
 import { ReviewArtifactStorageManager } from './reviewArtifactStorage';
 
 export const REVIEW_ARTIFACT_MODEL_VERSION = 1;
@@ -85,6 +85,10 @@ export class ReviewArtifactManager {
 
     getExportService(): ReviewArtifactExportService {
         return this.exportService;
+    }
+
+    getSupportedExportAdapters(artifact: ReviewArtifact): ReviewArtifactExportAdapter[] {
+        return this.exportService.getSupportedAdapters(artifact);
     }
 
     createAnnotation(input: CreateReviewAnnotationInput): ReviewAnnotation {
