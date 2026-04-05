@@ -1,8 +1,8 @@
 {
   "name": "annotative",
   "displayName": "Annotative",
-  "description": "Code annotation and review workflows. Add comments to code selections, organize with custom tags, and export as Markdown.",
-  "version": "3.0.2",
+  "description": "Persistent AI review workflows for VS Code. Review markdown plans, AI responses, and local diffs with structured annotations and exportable feedback.",
+  "version": "3.1.0",
   "publisher": "bryan-shea",
   "license": "MIT",
   "icon": "media/annotative-logo/128px/annotative-logo.png",
@@ -191,13 +191,28 @@
         "command": "annotative.listTags",
         "title": "List Tags",
         "icon": "$(list-unordered)"
+      },
+      {
+        "command": "annotative.reviewMarkdownPlan",
+        "title": "Annotative: Review Markdown Plan",
+        "icon": "$(note)"
+      },
+      {
+        "command": "annotative.reviewLastAIResponse",
+        "title": "Annotative: Review Last AI Response",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "annotative.reviewLocalDiff",
+        "title": "Annotative: Review Local Diff",
+        "icon": "$(diff-multiple)"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "annotative",
-          "title": "Annotations",
+          "title": "[Annotative]",
           "icon": "$(selection)"
         }
       ]
@@ -206,9 +221,10 @@
       "annotative": [
         {
           "id": "annotativeView",
-          "name": "Annotations",
+          "name": "[Annotative]",
           "type": "webview",
-          "when": "true"
+          "when": "true",
+          "icon": "$(selection)"
         }
       ]
     },
@@ -232,26 +248,6 @@
           "group": "navigation@1"
         },
         {
-          "command": "annotative.filterByStatus",
-          "when": "view == annotativeView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "annotative.filterByTag",
-          "when": "view == annotativeView",
-          "group": "navigation@3"
-        },
-        {
-          "command": "annotative.searchAnnotations",
-          "when": "view == annotativeView",
-          "group": "navigation@4"
-        },
-        {
-          "command": "annotative.clearFilters",
-          "when": "view == annotativeView",
-          "group": "1_filters@1"
-        },
-        {
           "command": "annotative.exportAnnotations",
           "when": "view == annotativeView",
           "group": "2_export@1"
@@ -262,24 +258,9 @@
           "group": "2_export@2"
         },
         {
-          "command": "annotative.exportForAI",
-          "when": "view == annotativeView",
-          "group": "2_export@3"
-        },
-        {
           "command": "annotative.batchAIReview",
           "when": "view == annotativeView",
-          "group": "2_export@4"
-        },
-        {
-          "command": "annotative.resolveAll",
-          "when": "view == annotativeView",
-          "group": "3_bulk@1"
-        },
-        {
-          "command": "annotative.deleteResolved",
-          "when": "view == annotativeView",
-          "group": "3_bulk@2"
+          "group": "2_export@3"
         },
         {
           "command": "annotative.deleteAll",

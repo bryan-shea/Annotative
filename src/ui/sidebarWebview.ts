@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { AnnotationManager } from '../managers';
 import { Annotation } from '../types';
 import { generateWebviewHtml } from './webview';
-import { FilterState, WebviewMessage } from './webview/types';
+import { FilterState, SidebarAction, WebviewMessage } from './webview/types';
 
 type SidebarFilterState = FilterState;
 
@@ -245,6 +245,12 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
                             await this.handleManageTags(message.id, message.tags);
                         }
                         break;
+
+                    case 'sidebarAction':
+                        if (message.action) {
+                            await this.handleSidebarAction(message.action);
+                        }
+                        break;
                 }
             },
             null,
@@ -437,6 +443,22 @@ export class SidebarWebview implements vscode.WebviewViewProvider {
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to manage tags: ${error}`);
+        }
+    }
+
+    private async handleSidebarAction(action: SidebarAction) {
+        const commandMap: Record<SidebarAction, string> = {
+            reviewMarkdownPlan: 'annotative.reviewMarkdownPlan',
+            reviewLastAIResponse: 'annotative.reviewLastAIResponse',
+            reviewLocalDiff: 'annotative.reviewLocalDiff',
+            exportForAI: 'annotative.exportForAI',
+            showAnnotativeCommands: 'workbench.action.showCommands',
+        };
+
+        try {
+            await vscode.commands.executeCommand(commandMap[action]);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to run sidebar action: ${error}`);
         }
     }
 

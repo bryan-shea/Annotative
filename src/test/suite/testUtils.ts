@@ -2,12 +2,16 @@ import * as assert from 'assert';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { Annotation, AnnotationTag, StoredAnnotation } from '../../types';
+import { Annotation, AnnotationTag, ReviewAnnotation, ReviewArtifact, StoredAnnotation } from '../../types';
 
 export function getWorkspaceRoot(): string {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder, 'Expected the VS Code test workspace to be open.');
     return workspaceFolder.uri.fsPath;
+}
+
+export function getRepositoryRoot(): string {
+    return path.resolve(__dirname, '..', '..', '..');
 }
 
 export function createTestContext(): vscode.ExtensionContext {
@@ -51,6 +55,26 @@ export function getStoragePaths(): { storageDir: string; annotationsPath: string
     };
 }
 
+export function getReviewStoragePaths(artifactId?: string): {
+    storageDir: string;
+    reviewsDir: string;
+    artifactPath?: string;
+} {
+    const storageDir = path.join(getWorkspaceRoot(), '.annotative');
+    const reviewsDir = path.join(storageDir, 'reviews');
+
+    return {
+        storageDir,
+        reviewsDir,
+        artifactPath: artifactId ? path.join(reviewsDir, `${artifactId}.json`) : undefined,
+    };
+}
+
+export async function readReviewArtifactFixture(fileName: string): Promise<string> {
+    const fixturePath = path.join(getRepositoryRoot(), 'src', 'test', 'fixtures', 'review-artifacts', fileName);
+    return fs.readFile(fixturePath, 'utf-8');
+}
+
 export function createAnnotation(overrides: Partial<Annotation> & { filePath: string }): Annotation {
     return {
         id: overrides.id ?? 'annotation-1',
@@ -65,6 +89,53 @@ export function createAnnotation(overrides: Partial<Annotation> & { filePath: st
         priority: overrides.priority,
         color: overrides.color ?? '#ffc107',
         aiConversations: overrides.aiConversations,
+    };
+}
+
+export function createReviewAnnotation(overrides: Partial<ReviewAnnotation> = {}): ReviewAnnotation {
+    return {
+        id: overrides.id ?? 'review-annotation-1',
+        kind: overrides.kind ?? 'requestChange',
+        status: overrides.status ?? 'open',
+        target: overrides.target ?? { type: 'artifact' },
+        body: overrides.body ?? 'Tighten this review artifact before export.',
+        createdAt: overrides.createdAt ?? '2026-04-01T12:00:00.000Z',
+        updatedAt: overrides.updatedAt ?? '2026-04-01T12:00:00.000Z',
+        ...(overrides.severity ? { severity: overrides.severity } : {}),
+        ...(overrides.suggestedReplacement ? { suggestedReplacement: overrides.suggestedReplacement } : {}),
+        ...(overrides.metadata ? { metadata: overrides.metadata } : {}),
+    };
+}
+
+export function createReviewArtifact(overrides: Partial<ReviewArtifact> & { id: string }): ReviewArtifact {
+    return {
+        id: overrides.id,
+        version: overrides.version ?? 1,
+        kind: overrides.kind ?? 'plan',
+        title: overrides.title ?? 'Review API Migration Plan',
+        createdAt: overrides.createdAt ?? '2026-04-01T12:00:00.000Z',
+        updatedAt: overrides.updatedAt ?? '2026-04-01T12:00:00.000Z',
+        source: overrides.source ?? {
+            type: 'markdownFile',
+            uri: 'file:///workspace/docs/plan.md',
+            workspaceFolder: getWorkspaceRoot(),
+        },
+        content: overrides.content ?? {
+            rawText: '# Review API Migration Plan\n\n## Goal\nShip the migration safely.\n',
+            sections: [
+                {
+                    id: 'goal',
+                    heading: 'Goal',
+                    level: 2,
+                    order: 1,
+                    content: 'Ship the migration safely.',
+                    lineStart: 3,
+                    lineEnd: 4,
+                },
+            ],
+        },
+        annotations: overrides.annotations ?? [createReviewAnnotation()],
+        ...(overrides.exportState ? { exportState: overrides.exportState } : {}),
     };
 }
 

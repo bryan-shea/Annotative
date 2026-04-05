@@ -9,3 +9,33 @@ export { AnnotationDecorations } from './annotationDecorations';
 export { AnnotationExportService } from './annotationExportService';
 export { AnnotationStorageManager } from './annotationStorage';
 export { AnnotationExporter } from './annotationExporter';
+export { ReviewArtifactManager, REVIEW_ARTIFACT_MODEL_VERSION, type CreateReviewArtifactInput } from './reviewArtifactManager';
+export {
+	AiResponseReviewService,
+	type CreateAiResponseArtifactInput,
+} from './aiResponseReviewService';
+export {
+	LocalDiffReviewService,
+	parseUnifiedDiff,
+	type CreateLocalDiffArtifactInput,
+	type ParsedLocalDiff,
+} from './localDiffReviewService';
+export {
+	MarkdownPlanReviewService,
+	parseMarkdownPlan,
+	parseStructuredMarkdownContent,
+	type CreateMarkdownPlanArtifactInput,
+	type ParsedMarkdownPlan,
+} from './markdownPlanReviewService';
+export {
+	ReviewArtifactExportService,
+	CopilotReviewPromptReviewArtifactExportAdapter,
+	GenericMarkdownReviewArtifactExportAdapter,
+	type ReviewArtifactExportAdapter,
+	type ReviewArtifactExportResult,
+} from './reviewArtifactExportService';
+export {
+	ReviewArtifactStorageManager,
+	type LoadReviewArtifactResult,
+	type ListReviewArtifactsResult,
+} from './reviewArtifactStorage';

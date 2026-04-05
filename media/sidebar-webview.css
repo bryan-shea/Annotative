@@ -159,6 +159,13 @@ input {
   background-color: var(--vscode-sideBar-background);
 }
 
+.workflow-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: stretch;
+}
+
+.search-row,
 .filter-row,
 .groupby-row {
   display: flex;
@@ -167,6 +174,7 @@ input {
   flex-wrap: nowrap;
 }
 
+.filter-input,
 .filter-select {
   flex: 1;
   min-width: 0;
@@ -181,14 +189,68 @@ input {
   line-height: 1.4;
 }
 
+.filter-input:focus,
 .filter-select:focus {
   border-color: var(--vscode-focusBorder);
   outline: 1px solid var(--vscode-focusBorder);
   outline-offset: -1px;
 }
 
+.filter-input:hover,
 .filter-select:hover {
   background-color: var(--vscode-input-background);
+}
+
+.inline-control-button {
+  border: 1px solid var(--vscode-input-border, transparent);
+  background-color: var(--vscode-input-background);
+}
+
+.inline-control-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.control-panel {
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.25));
+  border-radius: var(--border-radius-sm);
+  background-color: var(--vscode-editor-background);
+}
+
+.control-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 8px var(--spacing-sm);
+  cursor: pointer;
+  list-style: none;
+}
+
+.control-summary::-webkit-details-marker {
+  display: none;
+}
+
+.control-summary-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.control-summary-hint {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.control-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-sm) var(--spacing-sm);
+}
+
+.filter-actions {
+  display: flex;
 }
 
 .groupby-label {
@@ -654,6 +716,15 @@ input {
   font-size: 13px;
 }
 
+.compact-action-button {
+  flex: 0 0 auto;
+  min-width: 84px;
+}
+
+.secondary-action-button {
+  width: 100%;
+}
+
 /* ==================== Context Menu ==================== */
 .context-menu {
   position: fixed;
@@ -832,6 +903,7 @@ input {
 
 /* ==================== Light Mode Overrides ==================== */
 @media (prefers-color-scheme: light) {
+  .filter-input,
   .filter-select {
     background-color: var(--vscode-inputBox-background, #ffffff);
     color: var(--vscode-inputBox-foreground, #333333);
@@ -852,6 +924,7 @@ input {
 
 /* ==================== Dark Mode Overrides ==================== */
 @media (prefers-color-scheme: dark) {
+  .filter-input,
   .filter-select {
     background-color: var(--vscode-inputBox-background, #3c3c3c);
     color: var(--vscode-inputBox-foreground, #cccccc);

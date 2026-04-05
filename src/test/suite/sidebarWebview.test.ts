@@ -43,6 +43,12 @@ class FakeWebviewView {
 }
 
 suite('SidebarWebview', () => {
+    const originalExecuteCommand = vscode.commands.executeCommand;
+
+    teardown(() => {
+        (vscode.commands as unknown as { executeCommand: typeof vscode.commands.executeCommand }).executeCommand = originalExecuteCommand;
+    });
+
     test('loads initial annotations, tags, and filter state into the webview', () => {
         const filePath = `${getWorkspaceRoot()}\\sample.ts`;
         const annotation = createAnnotation({ filePath, id: 'sidebar-initial' });
@@ -67,6 +73,10 @@ suite('SidebarWebview', () => {
             'filterStateUpdated',
         ]);
         assert.ok(webview.html.includes('sidebar-webview.js'));
+        assert.ok(webview.html.includes('workflow-select'));
+        assert.ok(webview.html.includes('btn-run-workflow'));
+        assert.ok(webview.html.includes('filter-search'));
+        assert.ok(webview.html.includes('btn-reset-filters'));
     });
 
     test('routes critical sidebar messages to the annotation manager and tracks filters', async () => {
@@ -151,5 +161,40 @@ suite('SidebarWebview', () => {
         assert.deepStrictEqual(calls.edits[2].tags, ['docs-tag', 'security-tag']);
         assert.strictEqual(calls.resolveAll, 1);
         assert.strictEqual(calls.deleteResolved, 1);
+    });
+
+    test('maps sidebar workflow actions to shipped commands', async () => {
+        const executedCommands: string[] = [];
+        const annotationManager = {
+            getAllAnnotations: () => [],
+            getTagOptions: () => [],
+        };
+        const sidebar = new SidebarWebview(vscode.Uri.file(getWorkspaceRoot()), annotationManager as never);
+        const webview = new FakeWebview();
+
+        (vscode.commands as unknown as { executeCommand: typeof vscode.commands.executeCommand }).executeCommand =
+            (async (command: string) => {
+                executedCommands.push(command);
+            }) as typeof vscode.commands.executeCommand;
+
+        sidebar.resolveWebviewView(
+            new FakeWebviewView(webview) as unknown as vscode.WebviewView,
+            {} as vscode.WebviewViewResolveContext,
+            {} as vscode.CancellationToken
+        );
+
+        await webview.dispatch({ command: 'sidebarAction', action: 'reviewMarkdownPlan' });
+        await webview.dispatch({ command: 'sidebarAction', action: 'reviewLastAIResponse' });
+        await webview.dispatch({ command: 'sidebarAction', action: 'reviewLocalDiff' });
+        await webview.dispatch({ command: 'sidebarAction', action: 'exportForAI' });
+        await webview.dispatch({ command: 'sidebarAction', action: 'showAnnotativeCommands' });
+
+        assert.deepStrictEqual(executedCommands, [
+            'annotative.reviewMarkdownPlan',
+            'annotative.reviewLastAIResponse',
+            'annotative.reviewLocalDiff',
+            'annotative.exportForAI',
+            'workbench.action.showCommands',
+        ]);
     });
 });

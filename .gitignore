@@ -33,9 +33,11 @@ yarn-error.log*
 # Development files
 docs/*
 .github/agents/*
+.github/instructions/*
 logs/*
 scripts/dev/*
 src/ui/AGENT.md
 src/AGENT.md
 .vscode-agent.md
 Annotative.code-workspace
+.vscode-smoke/

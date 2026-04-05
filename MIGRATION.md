@@ -1,8 +1,8 @@
-# Migration Guide for v3.0.2
+# Migration Guide for v3.1.0
 
-This branch prepares Annotative `v3.0.2`.
+This branch prepares Annotative `v3.1.0`.
 
-For most current users, `v3.0.2` is an in-place upgrade over `v2.x`. The project storage model stays the same, and there is no new manual migration step for existing `.annotative/` data.
+For most current users, `v3.1.0` is an in-place upgrade over `v2.x`. The project storage model stays the same, and there is no new manual migration step for existing `.annotative/` data.
 
 ## Who Needs to Do What
 
@@ -12,14 +12,17 @@ No manual storage migration is required.
 
 Recommended steps:
 
-1. Update the extension to `v3.0.2`.
+1. Update the extension to `v3.1.0`.
 1. Open a folder or workspace, not loose files.
 1. Confirm `.annotative/annotations.json` and `.annotative/customTags.json` are still present.
 1. Open the `Annotations` sidebar and verify annotations, tags, and exports behave as expected.
 1. Commit any resulting storage normalization changes if you track `.annotative/` in version control.
 
-What changes in `v3.0.2`:
+What changes in `v3.1.0`:
 
+- Persistent AI review workflows for markdown plans, AI responses, and local diffs
+- Structured review artifact storage under `.annotative/reviews/`
+- Reusable review exports for generic Markdown and Copilot follow-up prompts
 - Storage writes are more defensive
 - Annotation anchoring is more resilient to nearby source edits
 - Export handling is cleaner and more consistent
@@ -35,18 +38,19 @@ If you are still on the pre-`v2` model, you still need the legacy migration path
 
 Recommended steps:
 
-1. Install `v3.0.2`.
+1. Install `v3.1.0`.
 2. Recreate the custom tags you want to keep.
 3. Initialize project storage with `Annotative: Initialize Storage`, or let the first save create `.annotative/`.
 4. Recreate or manually migrate any legacy annotations into `.annotative/annotations.json`.
 5. Commit `.annotative/` if you want the project to share annotations and tags.
 
-## Storage Expectations in v3.0.2
+## Storage Expectations in v3.1.0
 
 Annotative stores project data in:
 
 - `.annotative/annotations.json`
 - `.annotative/customTags.json`
+- `.annotative/reviews/*.json`
 
 The folder is created automatically when needed. You can also create it explicitly with `Annotative: Initialize Storage`.
 
@@ -55,7 +59,7 @@ If you want to share annotations with the team, keep `.annotative/` in version c
 ## Recommended Upgrade Checklist
 
 1. Back up `.annotative/` before a major upgrade.
-2. Install or build `v3.0.2`.
+2. Install or build `v3.1.0`.
 3. Open the project in a proper workspace.
 4. Verify annotations, tags, sidebar grouping, and exports.
 5. Run `Annotative: Storage Info` if you need to confirm the active storage path.

@@ -142,3 +142,132 @@ export interface AnnotationStatistics {
     unresolved: number;
     byFile: Map<string, { total: number; resolved: number; unresolved: number }>;
 }
+
+export type ReviewArtifactKind = 'plan' | 'aiResponse' | 'localDiff';
+export type ReviewArtifactSourceType = 'markdownFile' | 'chatResponse' | 'gitDiff' | 'manualPaste';
+export type ReviewAnnotationKind = 'comment' | 'issue' | 'requestChange' | 'question' | 'risk' | 'testGap' | 'maintainability';
+export type ReviewAnnotationStatus = 'open' | 'resolved';
+export type ReviewAnnotationTargetType = 'artifact' | 'section' | 'block' | 'diffFile' | 'diffHunk' | 'lineRange';
+export type ReviewArtifactDiffFileStatus = 'added' | 'modified' | 'deleted' | 'renamed' | 'copied' | 'unknown';
+export type ReviewArtifactDiffLineType = 'context' | 'add' | 'delete';
+export type ReviewArtifactBlockKind = 'paragraph' | 'list' | 'code' | 'quote' | 'table' | 'other';
+export type ReviewArtifactMetadataValue = string | number | boolean | null;
+export type ReviewArtifactMetadata = Record<string, ReviewArtifactMetadataValue>;
+
+export interface ReviewArtifactSource {
+    type: ReviewArtifactSourceType;
+    uri?: string;
+    workspaceFolder?: string;
+    revision?: string;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewArtifactSection {
+    id: string;
+    heading?: string;
+    level: number;
+    order: number;
+    content: string;
+    lineStart?: number;
+    lineEnd?: number;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewArtifactBlock {
+    id: string;
+    sectionId?: string;
+    kind: ReviewArtifactBlockKind;
+    order: number;
+    content: string;
+    lineStart?: number;
+    lineEnd?: number;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewArtifactDiffLine {
+    type: ReviewArtifactDiffLineType;
+    content: string;
+    oldLineNumber?: number;
+    newLineNumber?: number;
+}
+
+export interface ReviewArtifactDiffHunk {
+    id: string;
+    header: string;
+    oldStart: number;
+    oldLines: number;
+    newStart: number;
+    newLines: number;
+    lines: ReviewArtifactDiffLine[];
+}
+
+export interface ReviewArtifactDiffFile {
+    id: string;
+    oldPath: string;
+    newPath: string;
+    status: ReviewArtifactDiffFileStatus;
+    hunks: ReviewArtifactDiffHunk[];
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewArtifactContent {
+    rawText: string;
+    sections?: ReviewArtifactSection[];
+    blocks?: ReviewArtifactBlock[];
+    diffFiles?: ReviewArtifactDiffFile[];
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewAnnotationTarget {
+    type: ReviewAnnotationTargetType;
+    sectionId?: string;
+    blockId?: string;
+    diffFileId?: string;
+    diffHunkId?: string;
+    lineStart?: number;
+    lineEnd?: number;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewAnnotation {
+    id: string;
+    kind: ReviewAnnotationKind;
+    status: ReviewAnnotationStatus;
+    severity?: TagPriority;
+    target: ReviewAnnotationTarget;
+    body: string;
+    suggestedReplacement?: string;
+    createdAt: string;
+    updatedAt: string;
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewExportRecord {
+    adapterId: string;
+    exportedAt: string;
+    target?: 'clipboard' | 'document' | 'file';
+    metadata?: ReviewArtifactMetadata;
+}
+
+export interface ReviewExportState {
+    lastExportedAt?: string;
+    exports?: ReviewExportRecord[];
+}
+
+export interface ReviewArtifact {
+    id: string;
+    version: number;
+    kind: ReviewArtifactKind;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    source: ReviewArtifactSource;
+    content: ReviewArtifactContent;
+    annotations: ReviewAnnotation[];
+    exportState?: ReviewExportState;
+}
+
+export interface ReviewArtifactStorageFile {
+    schemaVersion: number;
+    artifact: ReviewArtifact;
+}

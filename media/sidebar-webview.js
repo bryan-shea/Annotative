@@ -23,9 +23,14 @@ const state = {
 
 // DOM Elements
 const elements = {
+  workflowSelect: document.getElementById('workflow-select'),
+  runWorkflowBtn: document.getElementById('btn-run-workflow'),
+  searchInput: document.getElementById('filter-search'),
+  clearSearchBtn: document.getElementById('btn-clear-search'),
   statusFilter: document.getElementById('filter-status'),
   tagFilter: document.getElementById('filter-tag'),
   groupBySelect: document.getElementById('groupby-select'),
+  resetFiltersBtn: document.getElementById('btn-reset-filters'),
   resolveAllBtn: document.getElementById('btn-resolve-all'),
   deleteResolvedBtn: document.getElementById('btn-delete-resolved'),
   annotationsList: document.getElementById('annotations-list'),
@@ -78,6 +83,13 @@ class AnnotationHandlers {
   handleDeleteResolved() {
     this.vscode.postMessage({
       command: 'deleteResolved',
+    });
+  }
+
+  handleSidebarAction(action) {
+    this.vscode.postMessage({
+      command: 'sidebarAction',
+      action,
     });
   }
 
@@ -215,6 +227,24 @@ function filterAnnotations(annotations, filters) {
       }
     }
 
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const searchText = [
+        ann.comment,
+        ann.text,
+        ann.filePath,
+        ann.author,
+        ...(ann.tags || []).map((tagId) => getTagLabel(tagId)),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (!searchText.includes(searchLower)) {
+        return false;
+      }
+    }
+
     return true;
   });
 }
@@ -263,6 +293,18 @@ function updateTagFilter(filterElement, tags, currentValue) {
 }
 
 function updateFilterControls(filters) {
+  if (elements.workflowSelect && !elements.workflowSelect.value) {
+    elements.runWorkflowBtn.disabled = true;
+  }
+
+  if (elements.searchInput) {
+    elements.searchInput.value = filters.search;
+  }
+
+  if (elements.clearSearchBtn) {
+    elements.clearSearchBtn.disabled = !filters.search;
+  }
+
   if (elements.statusFilter) {
     elements.statusFilter.value = filters.status;
   }
@@ -477,9 +519,14 @@ function init() {
     if (!elements.annotationsList) {
       console.error('[Annotative] Critical: annotations-list container not found');
       console.error('[Annotative] Available elements:', {
+        workflowSelect: !!elements.workflowSelect,
+        runWorkflowBtn: !!elements.runWorkflowBtn,
+        searchInput: !!elements.searchInput,
+        clearSearchBtn: !!elements.clearSearchBtn,
         statusFilter: !!elements.statusFilter,
         tagFilter: !!elements.tagFilter,
         groupBySelect: !!elements.groupBySelect,
+        resetFiltersBtn: !!elements.resetFiltersBtn,
         annotationsList: !!elements.annotationsList,
         resolveAllBtn: !!elements.resolveAllBtn,
         deleteResolvedBtn: !!elements.deleteResolvedBtn
@@ -511,6 +558,72 @@ window.addEventListener('load', () => {
 });
 
 function setupEventListeners() {
+  if (!elements.workflowSelect) {
+    console.warn('[Annotative] workflow-select element not found');
+  }
+  elements.workflowSelect?.addEventListener('change', (e) => {
+    elements.runWorkflowBtn.disabled = !e.target.value;
+  });
+
+  if (!elements.runWorkflowBtn) {
+    console.warn('[Annotative] btn-run-workflow element not found');
+  }
+  elements.runWorkflowBtn?.addEventListener('click', () => {
+    const action = elements.workflowSelect?.value;
+    if (!action) {
+      return;
+    }
+
+    handlers.handleSidebarAction(action);
+    if (elements.workflowSelect) {
+      elements.workflowSelect.value = '';
+    }
+    elements.runWorkflowBtn.disabled = true;
+  });
+
+  if (!elements.searchInput) {
+    console.warn('[Annotative] filter-search element not found');
+  }
+  const handleSearchInput = debounce((value) => {
+    state.filters.search = value.trim();
+    updateFilterControls(state.filters);
+    notifyFilterStateChanged();
+    applyFiltersAndRender();
+  }, 120);
+
+  elements.searchInput?.addEventListener('input', (e) => {
+    handleSearchInput(e.target.value);
+  });
+
+  if (!elements.clearSearchBtn) {
+    console.warn('[Annotative] btn-clear-search element not found');
+  }
+  elements.clearSearchBtn?.addEventListener('click', () => {
+    state.filters.search = '';
+    if (elements.searchInput) {
+      elements.searchInput.value = '';
+      elements.searchInput.focus();
+    }
+    updateFilterControls(state.filters);
+    notifyFilterStateChanged();
+    applyFiltersAndRender();
+  });
+
+  if (!elements.resetFiltersBtn) {
+    console.warn('[Annotative] btn-reset-filters element not found');
+  }
+  elements.resetFiltersBtn?.addEventListener('click', () => {
+    state.filters = {
+      status: 'all',
+      tag: 'all',
+      search: '',
+      groupBy: 'file',
+    };
+    updateFilterControls(state.filters);
+    notifyFilterStateChanged();
+    applyFiltersAndRender();
+  });
+
   if (!elements.statusFilter) {
     console.warn('[Annotative] filter-status element not found');
   }

@@ -19,7 +19,15 @@ export type WebviewToExtensionCommand =
   | 'addTag'
   | 'removeTag'
   | 'manageTags'
+  | 'sidebarAction'
   | 'filterStateChanged';
+
+export type SidebarAction =
+  | 'reviewMarkdownPlan'
+  | 'reviewLastAIResponse'
+  | 'reviewLocalDiff'
+  | 'exportForAI'
+  | 'showAnnotativeCommands';
 
 export interface WebviewMessage {
   command: WebviewToExtensionCommand;
@@ -29,6 +37,7 @@ export interface WebviewMessage {
   resolved?: boolean;
   tag?: string;
   tags?: string[];
+  action?: SidebarAction;
   [key: string]: unknown;
 }
 

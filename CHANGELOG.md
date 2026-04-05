@@ -4,6 +4,19 @@
 
 All notable changes to Annotative are documented in this file.
 
+## [3.1.0] - 2026-04-05
+
+### Added
+
+- Persistent AI review workflows for markdown plans, AI responses, and local diffs
+- Shared review artifact storage under `.annotative/reviews/` with structured annotation targeting and export history
+- Dedicated review panel flows with reusable exports for generic Markdown and Copilot review prompts
+
+### Changed
+
+- Product messaging, release metadata, and README guidance now position Annotative around persistent AI review workflows
+- Sidebar workflows and command palette entry points now surface plan review, AI response review, and local diff review as first-class features
+
 ## [3.0.2] - 2026-03-24
 
 ### Changed

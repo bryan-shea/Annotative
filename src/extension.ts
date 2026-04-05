@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
-import { AnnotationManager } from './managers';
-import { SidebarWebview } from './ui';
+import { AiResponseReviewService, AnnotationManager, LocalDiffReviewService, MarkdownPlanReviewService, ReviewArtifactManager } from './managers';
+import { PlanReviewPanel, SidebarWebview } from './ui';
 import { registerChatParticipant, registerChatVariableIfAvailable } from './copilotChatParticipant';
 import {
     registerAnnotationCommands,
+    registerAiResponseReviewCommands,
     registerExportCommands,
     registerFilterCommands,
+    registerLocalDiffReviewCommands,
     registerNavigationCommands,
+    registerPlanReviewCommands,
     registerSidebarCommands,
     registerTagCommands,
     type CommandContext
@@ -26,11 +29,21 @@ const ANNOTATION_COLORS = [
 
 let annotationManager: AnnotationManager;
 let sidebarWebview: SidebarWebview;
+let reviewArtifactManager: ReviewArtifactManager;
+let aiResponseReviewService: AiResponseReviewService;
+let localDiffReviewService: LocalDiffReviewService;
+let markdownPlanReviewService: MarkdownPlanReviewService;
+let planReviewPanel: PlanReviewPanel;
 
 export function activate(context: vscode.ExtensionContext) {
     // Initialize core managers
     annotationManager = new AnnotationManager(context);
+    reviewArtifactManager = new ReviewArtifactManager();
+    aiResponseReviewService = new AiResponseReviewService(reviewArtifactManager);
+    localDiffReviewService = new LocalDiffReviewService(reviewArtifactManager);
+    markdownPlanReviewService = new MarkdownPlanReviewService(reviewArtifactManager);
     sidebarWebview = new SidebarWebview(context.extensionUri, annotationManager);
+    planReviewPanel = new PlanReviewPanel(context.extensionUri, reviewArtifactManager);
 
     // Register sidebar webview provider
     context.subscriptions.push(
@@ -60,15 +73,23 @@ export function activate(context: vscode.ExtensionContext) {
     const cmdContext: CommandContext = {
         annotationManager,
         sidebarWebview,
+        reviewArtifactManager,
+        aiResponseReviewService,
+        localDiffReviewService,
+        markdownPlanReviewService,
+        planReviewPanel,
         ANNOTATION_COLORS
     };
 
     // Register all command modules
     context.subscriptions.push(
         ...Object.values(registerAnnotationCommands(context, cmdContext)),
+        ...Object.values(registerAiResponseReviewCommands(context, cmdContext)),
         ...Object.values(registerExportCommands(context, cmdContext)),
         ...Object.values(registerFilterCommands(context, cmdContext)),
+        ...Object.values(registerLocalDiffReviewCommands(context, cmdContext)),
         ...Object.values(registerNavigationCommands(context, cmdContext)),
+        ...Object.values(registerPlanReviewCommands(context, cmdContext)),
         ...Object.values(registerSidebarCommands(context, cmdContext)),
         ...Object.values(registerTagCommands(context, cmdContext))
     );
@@ -115,9 +136,11 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     context.subscriptions.push(annotationManager);
+    context.subscriptions.push(planReviewPanel);
 }
 
 export function deactivate() {
     annotationManager?.dispose();
+    planReviewPanel?.dispose();
     sidebarWebview?.dispose();
 }

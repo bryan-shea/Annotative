@@ -13,6 +13,25 @@
       "sourceMaps": true
     },
     {
+      "name": "Annotative Smoke Test",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--disable-extensions",
+        "--disable-workspace-trust",
+        "--skip-welcome",
+        "--skip-release-notes",
+        "--user-data-dir=${workspaceFolder}/.vscode-smoke/user-data",
+        "--extensions-dir=${workspaceFolder}/.vscode-smoke/extensions",
+        "${workspaceFolder}/smoke-workspace"
+      ],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "npm: compile",
+      "sourceMaps": true
+    },
+    {
       "name": "Run Extension (without build)",
       "type": "extensionHost",
       "request": "launch",
